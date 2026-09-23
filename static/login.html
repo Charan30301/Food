@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Preorder - Login</title>
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .card { background: #1e293b; padding: 2.5rem; border-radius: 16px; width: 100%; max-width: 420px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; }
+        h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        p { color: #94a3b8; font-size: 0.9rem; margin-bottom: 1.5rem; }
+        .google-btn-container { display: flex; justify-content: center; margin-bottom: 1.5rem; }
+        .hidden { display: none; }
+        .input-group { text-align: left; margin-bottom: 1.25rem; }
+        label { display: block; font-size: 0.85rem; color: #cbd5e1; margin-bottom: 0.5rem; }
+        input[type="text"] { width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff; font-size: 1rem; }
+        input[type="text"]:focus { outline: 2px solid #38bdf8; }
+        .verified-badge { background: #064e3b; color: #6ee7b7; padding: 0.5rem; border-radius: 6px; font-size: 0.85rem; margin-bottom: 1rem; }
+        .btn-submit { width: 100%; padding: 0.8rem; border: none; border-radius: 8px; background: #0284c7; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-submit:hover { background: #0369a1; }
+        .error-msg { color: #f87171; font-size: 0.85rem; margin-top: 0.75rem; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>Hotel Food Preorder</h1>
+    <p id="subheading">Sign in with your Google account to continue</p>
+
+    <!-- STEP 1: Google One-Click Login -->
+    <div id="googleSection">
+        <div id="g_id_onload"
+             data-client_id="{{ google_client_id }}"
+             data-callback="handleCredentialResponse"
+             data-auto_prompt="false">
+        </div>
+        <div class="google-btn-container">
+            <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="filled_black" data-text="signin_with" data-size="large"></div>
+        </div>
+    </div>
+
+    <!-- STEP 2: Only shows if user is NOT in PostgreSQL -->
+    <form id="usernameForm" class="hidden" onsubmit="handleRegistration(event)">
+        <div class="verified-badge">
+            ✓ Gmail Connected: <strong id="userEmailDisplay"></strong>
+        </div>
+
+        <div class="input-group">
+            <label for="username">Enter Your Name / Username</label>
+            <input type="text" id="username" placeholder="e.g. John Doe" required autocomplete="off" />
+        </div>
+
+        <button type="submit" class="btn-submit">Continue to Menu</button>
+    </form>
+
+    <div id="errorBox" class="error-msg"></div>
+</div>
+
+<script>
+    let verifiedEmail = "";
+
+    // Callback when user signs into Google
+    async function handleCredentialResponse(response) {
+        document.getElementById("errorBox").textContent = "";
+
+        try {
+            // Send token to Flask backend
+            const res = await fetch("/api/auth/google", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ credential: response.credential })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                document.getElementById("errorBox").textContent = data.error || "Authentication failed";
+                return;
+            }
+
+            // Case 1: User already in DB -> Skip login immediately to Menu!
+            if (data.exists) {
+                window.location.href = data.redirect_url;
+                return;
+            }
+
+            // Case 2: User is NEW -> Hide Google button, show only Username input
+            verifiedEmail = data.email;
+            document.getElementById("googleSection").classList.add("hidden");
+            document.getElementById("subheading").textContent = "Finish your profile to preorder meals";
+            document.getElementById("userEmailDisplay").textContent = verifiedEmail;
+            document.getElementById("usernameForm").classList.remove("hidden");
+            document.getElementById("username").focus();
+
+        } catch (err) {
+            document.getElementById("errorBox").textContent = "Network error connecting to backend.";
+        }
+    }
+
+    // Submit username to Flask
+    async function handleRegistration(e) {
+        e.preventDefault();
+        const username = document.getElementById("username").value.trim();
+
+        if (!username) return;
+
+        try {
+            const res = await fetch("/api/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: verifiedEmail, username: username })
+            });
+
+            const data = await res.json();
+            if (res.ok && data.success) {
+                window.location.href = data.redirect_url;
+            } else {
+                document.getElementById("errorBox").textContent = data.error || "Registration failed.";
+            }
+        } catch (err) {
+            document.getElementById("errorBox").textContent = "Server error while saving user.";
+        }
+    }
+</script>
+</body>
+</html>

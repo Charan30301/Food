@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hotel Menu & Pre-order</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #f8fafc; padding: 2rem; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 1rem; }
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
+        .card { background: #1e293b; padding: 1.5rem; border-radius: 12px; }
+        .price { color: #38bdf8; font-weight: bold; margin: 0.5rem 0; }
+        button { background: #10b981; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        a.logout { color: #f87171; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>Grand Palace Hotel - Preorder Menu</h1>
+            <p style="color:#94a3b8">Welcome, <strong>{{ username }}</strong> ({{ email }})</p>
+        </div>
+        <a href="/logout" class="logout">Logout</a>
+    </div>
+
+    <div class="menu-grid">
+        <div class="card">
+            <h3>Special Dum Biryani</h3>
+            <div class="price">₹320</div>
+            <button>Pre-order</button>
+        </div>
+        <div class="card">
+            <h3>Paneer Butter Masala</h3>
+            <div class="price">₹260</div>
+            <button>Pre-order</button>
+        </div>
+        <div class="card">
+            <h3>Butter Naan (2 pcs)</h3>
+            <div class="price">₹80</div>
+            <button>Pre-order</button>
+        </div>
+    </div>
+</body>
+</html>
