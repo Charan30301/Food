@@ -3,6 +3,7 @@ import json
 import re
 import hmac
 import hashlib
+import importlib
 from urllib.parse import urlencode
 from urllib.request import urlopen
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
@@ -10,35 +11,40 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import psycopg2
 from psycopg2.extras import RealDictCursor
-import importlib
 
 try:
     razorpay = importlib.import_module("razorpay")
-except ImportError:
+except ModuleNotFoundError:
     razorpay = None
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "hotel_secret_key_12345")
+app.secret_key = "hotel_secret_key_12345"
+
+# ==========================================
+# Testing & Configuration Controls
+# ==========================================
+TEST_MODE = True                               # True = Auto-login & Instant test order
+TEST_USER_EMAIL = "test_customer@gmail.com"    # Default test email
+TEST_USERNAME = "Test Customer"                # Default test username
 
 # --- Google OAuth Client ID ---
-GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com")
+GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
 
 # --- Merchant Payment Gateway Keys (Razorpay) ---
-RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID", "rzp_test_YourKeyIdHere")
-RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET", "YourKeySecretHere")
-RAZORPAY_WEBHOOK_SECRET = os.environ.get("RAZORPAY_WEBHOOK_SECRET", "YourWebhookSecretHere")
+RAZORPAY_KEY_ID = "rzp_test_YourKeyIdHere"
+RAZORPAY_KEY_SECRET = "YourKeySecretHere"
+RAZORPAY_WEBHOOK_SECRET = "YourWebhookSecretHere"
 
-client = (
-    razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
-    if razorpay is not None
-    else None
-)
+if razorpay:
+    client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
+else:
+    client = None
 
 # --- PostgreSQL Connection Configuration ---
 DB_CONFIG = {
     "dbname": "hotel_db",
     "user": "postgres",
-    "password": "kerasuchi",  # Replace with production DB password
+    "password": "kerasuchi",  # Replace with your DB password
     "host": "localhost",
     "port": 5432
 }
@@ -67,7 +73,7 @@ def clean_old_orders():
         print(f"Error cleaning old orders: {e}")
 
 # ==========================================
-# 1. Cart Code Helpers
+# 1. Cart Code Parsers & Encoders
 # ==========================================
 def parse_cart_code(code_str):
     cart = {}
@@ -85,23 +91,28 @@ def build_cart_code(cart_dict):
             parts.append(f"{item_id}+{qty}a")
     return "".join(parts)
 
-def verify_google_token(token):
-    query = urlencode({"id_token": token})
-    with urlopen(f"https://oauth2.googleapis.com/tokeninfo?{query}", timeout=10) as response:
-        idinfo = json.loads(response.read())
-
-    if idinfo.get("aud") != GOOGLE_CLIENT_ID:
-        raise ValueError("Invalid Google token audience")
-    return idinfo
-
 # ==========================================
-# 2. Main Page Navigation
+# 2. Page Routes
 # ==========================================
 @app.route("/")
 def index():
     clean_old_orders()
     if "user_email" in session:
         return redirect(url_for("menu_page"))
+
+    if TEST_MODE:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO users (email, username)
+                    VALUES (%s, %s)
+                    ON CONFLICT (email) DO NOTHING;
+                """, (TEST_USER_EMAIL, TEST_USERNAME))
+                conn.commit()
+        session["user_email"] = TEST_USER_EMAIL
+        session["username"] = TEST_USERNAME
+        return redirect(url_for("menu_page"))
+
     return render_template("login.html", google_client_id=GOOGLE_CLIENT_ID)
 
 @app.route("/menu")
@@ -115,11 +126,11 @@ def cart_page():
     if "user_email" not in session:
         return redirect(url_for("index"))
     return render_template(
-        "cart.html", 
+        "cart1.html", 
         email=session["user_email"], 
         username=session.get("username", "Guest"), 
         rzp_key=RAZORPAY_KEY_ID,
-        test_mode=False
+        test_mode=TEST_MODE
     )
 
 @app.route("/logout")
@@ -128,80 +139,20 @@ def logout():
     return redirect(url_for("index"))
 
 # ==========================================
-# 3. Google OAuth Endpoints
-# ==========================================
-@app.route("/api/auth/google", methods=["POST"])
-def verify_google():
-    data = request.get_json() or {}
-    token = data.get("credential")
-
-    if not token:
-        return jsonify({"error": "Missing Google token"}), 400
-
-    try:
-        idinfo = verify_google_token(token)
-        gmail = idinfo.get("email")
-
-        if not gmail:
-            return jsonify({"error": "Email not provided by Google"}), 400
-
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT id, email, username FROM users WHERE email = %s;", (gmail,))
-                user = cur.fetchone()
-
-        if user:
-            session["user_email"] = user["email"]
-            session["username"] = user["username"]
-            return jsonify({"exists": True, "email": user["email"], "username": user["username"], "redirect_url": "/menu"})
-        else:
-            return jsonify({"exists": False, "email": gmail})
-
-    except ValueError:
-        return jsonify({"error": "Invalid Google token"}), 401
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/api/register", methods=["POST"])
-def register():
-    data = request.get_json() or {}
-    email = data.get("email", "").strip()
-    username = data.get("username", "").strip()
-
-    if not email or not username:
-        return jsonify({"error": "Email and username required"}), 400
-
-    try:
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    INSERT INTO users (email, username)
-                    VALUES (%s, %s)
-                    ON CONFLICT (email) DO UPDATE SET username = EXCLUDED.username
-                    RETURNING id, email, username;
-                """, (email, username))
-                user = cur.fetchone()
-                conn.commit()
-
-        session["user_email"] = user["email"]
-        session["username"] = user["username"]
-        return jsonify({"success": True, "redirect_url": "/menu"})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-# ==========================================
-# 4. Menu & Cart CRUD Endpoints
+# 3. Customer Menu & Cart CRUD Endpoints
 # ==========================================
 @app.route("/api/menu", methods=["GET"])
 def get_menu():
     clean_old_orders()
-    user_email = session.get("user_email")
-    if not user_email:
-        return jsonify({"error": "Unauthorized"}), 401
+    user_email = session.get("user_email", TEST_USER_EMAIL)
 
     with get_db() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT id, item_name, category, price::float, photo_url, is_active FROM menu_items ORDER BY id ASC;")
+            cur.execute("""
+                SELECT id, item_name, category, price::float, photo_url, is_active 
+                FROM menu_items 
+                ORDER BY id ASC;
+            """)
             items = cur.fetchall()
 
             cur.execute("SELECT cart_code, total_price::float FROM carts WHERE user_email = %s;", (user_email,))
@@ -210,14 +161,16 @@ def get_menu():
     cart_dict = parse_cart_code(cart_row["cart_code"]) if cart_row else {}
     total_price = cart_row["total_price"] if cart_row else 0.0
 
-    return jsonify({"items": items, "cart": cart_dict, "cart_code": cart_row["cart_code"] if cart_row else "", "total_price": total_price})
+    return jsonify({
+        "items": items,
+        "cart": cart_dict,
+        "cart_code": cart_row["cart_code"] if cart_row else "",
+        "total_price": total_price
+    })
 
 @app.route("/api/cart/update", methods=["POST"])
 def update_cart():
-    user_email = session.get("user_email")
-    if not user_email:
-        return jsonify({"error": "Unauthorized"}), 401
-
+    user_email = session.get("user_email", TEST_USER_EMAIL)
     data = request.get_json() or {}
     item_id = int(data.get("itemId"))
     delta = int(data.get("delta", 0))
@@ -257,9 +210,7 @@ def update_cart():
 
 @app.route("/api/cart/items", methods=["GET"])
 def get_cart_items():
-    user_email = session.get("user_email")
-    if not user_email:
-        return jsonify({"error": "Unauthorized"}), 401
+    user_email = session.get("user_email", TEST_USER_EMAIL)
 
     with get_db() as conn:
         with conn.cursor() as cur:
@@ -291,128 +242,43 @@ def get_cart_items():
     return jsonify({"items": detailed_items, "total_price": cart_row["total_price"], "cart_code": cart_row["cart_code"]})
 
 # ==========================================
-# 5. Real Razorpay Payment Endpoints
+# 4. Instant Test Order Creation
 # ==========================================
-@app.route("/api/payment/create-order", methods=["POST"])
-def create_payment_order():
-    user_email = session.get("user_email")
-    if not user_email:
-        return jsonify({"error": "Unauthorized"}), 401
-
-    if client is None:
-        return jsonify({"error": "Razorpay package is not installed"}), 503
+@app.route("/api/test/place-order", methods=["POST"])
+def test_place_order():
+    clean_old_orders()
+    user_email = session.get("user_email", TEST_USER_EMAIL)
 
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT cart_code, total_price::float FROM carts WHERE user_email = %s;", (user_email,))
             cart = cur.fetchone()
 
-    if not cart or not cart["cart_code"] or cart["total_price"] <= 0:
-        return jsonify({"error": "Cart is empty"}), 400
+            if not cart or not cart["cart_code"] or cart["total_price"] <= 0:
+                return jsonify({"error": "Cart is empty"}), 400
 
-    amount_in_paise = int(round(cart["total_price"] * 100))
+            fake_gw_id = f"test_order_{os.urandom(4).hex()}"
+            fake_pay_id = f"test_pay_{os.urandom(4).hex()}"
 
-    try:
-        order_data = {
-            "amount": amount_in_paise,
-            "currency": "INR",
-            "receipt": f"rcpt_{user_email[:8]}",
-            "notes": {"user_email": user_email, "items_code": cart["cart_code"]}
-        }
-        rzp_order = client.order.create(data=order_data)
+            cur.execute("""
+                INSERT INTO orders (user_email, items_code, total_amount, gateway_order_id, payment_id, payment_status, order_status)
+                VALUES (%s, %s, %s, %s, %s, 'paid', 'placed')
+                RETURNING id;
+            """, (user_email, cart["cart_code"], cart["total_price"], fake_gw_id, fake_pay_id))
+            order_id = cur.fetchone()["id"]
 
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    INSERT INTO orders (user_email, items_code, total_amount, gateway_order_id, payment_status, order_status)
-                    VALUES (%s, %s, %s, %s, 'pending', 'placed')
-                    ON CONFLICT (gateway_order_id) DO NOTHING;
-                """, (user_email, cart["cart_code"], cart["total_price"], rzp_order["id"]))
-                conn.commit()
+            cur.execute("UPDATE carts SET cart_code = '', total_price = 0 WHERE user_email = %s;", (user_email,))
+            conn.commit()
 
-        return jsonify({"success": True, "gateway_order_id": rzp_order["id"], "amount": amount_in_paise, "currency": "INR"})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/api/payment/verify", methods=["POST"])
-def verify_payment():
-    data = request.get_json() or {}
-    razorpay_order_id = data.get("razorpay_order_id")
-    razorpay_payment_id = data.get("razorpay_payment_id")
-    razorpay_signature = data.get("razorpay_signature")
-    user_email = session.get("user_email")
-
-    params_dict = {
-        'razorpay_order_id': razorpay_order_id,
-        'razorpay_payment_id': razorpay_payment_id,
-        'razorpay_signature': razorpay_signature
-    }
-
-    try:
-        client.utility.verify_payment_signature(params_dict)
-
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    UPDATE orders 
-                    SET payment_id = %s, payment_status = 'paid', updated_at = NOW()
-                    WHERE gateway_order_id = %s;
-                """, (razorpay_payment_id, razorpay_order_id))
-
-                cur.execute("UPDATE carts SET cart_code = '', total_price = 0 WHERE user_email = %s;", (user_email,))
-                conn.commit()
-
-        return jsonify({"success": True, "redirect_url": "/menu"})
-    except Exception:
-        return jsonify({"error": "Signature verification failed"}), 400
-
-@app.route("/api/payment/webhook", methods=["POST"])
-def razorpay_webhook():
-    raw_payload = request.get_data()
-    received_signature = request.headers.get("X-Razorpay-Signature")
-
-    if not received_signature:
-        return jsonify({"error": "Missing signature"}), 400
-
-    expected_signature = hmac.new(
-        key=RAZORPAY_WEBHOOK_SECRET.encode('utf-8'),
-        msg=raw_payload,
-        digestmod=hashlib.sha256
-    ).hexdigest()
-
-    if not hmac.compare_digest(expected_signature, received_signature):
-        return jsonify({"error": "Invalid webhook signature"}), 400
-
-    event_data = json.loads(raw_payload.decode('utf-8'))
-    if event_data.get("event") == "payment.captured":
-        payment_entity = event_data["payload"]["payment"]["entity"]
-        gateway_order_id = payment_entity.get("order_id")
-        payment_id = payment_entity.get("id")
-        user_email = payment_entity.get("notes", {}).get("user_email")
-
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    UPDATE orders 
-                    SET payment_id = %s, payment_status = 'paid', updated_at = NOW()
-                    WHERE gateway_order_id = %s;
-                """, (payment_id, gateway_order_id))
-
-                if user_email:
-                    cur.execute("UPDATE carts SET cart_code = '', total_price = 0 WHERE user_email = %s;", (user_email,))
-                conn.commit()
-
-    return jsonify({"status": "ok"}), 200
+    return jsonify({"success": True, "order_id": order_id, "redirect_url": "/menu"})
 
 # ==========================================
-# 6. Customer Active Order & Status Alerts
+# 5. Customer Active Order & Status Alerts
 # ==========================================
 @app.route("/api/order/active", methods=["GET"])
 def check_active_order():
     clean_old_orders()
-    user_email = session.get("user_email")
-    if not user_email:
-        return jsonify({"has_active_order": False})
+    user_email = session.get("user_email", TEST_USER_EMAIL)
 
     with get_db() as conn:
         with conn.cursor() as cur:
@@ -457,14 +323,11 @@ def check_active_order():
     return jsonify({"has_active_order": False})
 
 # ==========================================
-# 7. Profile & Order History
+# 6. Profile & Full Order History
 # ==========================================
 @app.route("/api/profile/update-username", methods=["POST"])
 def update_username():
-    user_email = session.get("user_email")
-    if not user_email:
-        return jsonify({"error": "Unauthorized"}), 401
-
+    user_email = session.get("user_email", TEST_USER_EMAIL)
     data = request.get_json() or {}
     new_username = data.get("username", "").strip()
 
@@ -484,9 +347,7 @@ def update_username():
 @app.route("/api/profile/orders", methods=["GET"])
 def get_user_orders():
     clean_old_orders()
-    user_email = session.get("user_email")
-    if not user_email:
-        return jsonify({"error": "Unauthorized"}), 401
+    user_email = session.get("user_email", TEST_USER_EMAIL)
 
     try:
         with get_db() as conn:
@@ -527,7 +388,7 @@ def get_user_orders():
         return jsonify({"error": str(e)}), 500
 
 # ==========================================
-# 8. Admin Management Endpoints
+# 7. Admin Operations Endpoints
 # ==========================================
 @app.route("/admin")
 def admin_page():
@@ -594,6 +455,7 @@ def admin_get_orders():
             cur.execute("SELECT id, item_name, price::float FROM menu_items;")
             menu_map = {row["id"]: row for row in cur.fetchall()}
 
+            # Hide delivered and cancelled from the active list
             cur.execute("""
                 SELECT o.id, o.user_email, COALESCE(u.username, 'Customer') AS username,
                        o.items_code, o.total_amount::float, o.payment_status,
@@ -731,6 +593,7 @@ def admin_save_menu_item():
             conn.commit()
 
     return jsonify({"success": True})
+
 @app.route("/api/admin/menu/delete", methods=["POST"])
 def admin_delete_menu_item():
     if not session.get("is_admin"):

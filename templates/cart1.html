@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cart & Bill - Grand Palace Hotel</title>
-    <!-- Razorpay Standard Checkout Script -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <style>
         :root {
@@ -63,11 +62,14 @@
             <span>To Pay</span>
             <span id="totalPayableLabel">₹0.00</span>
         </div>
-        <button class="pay-btn" id="payBtn" onclick="initiatePayment()" style="margin-top: 1.25rem;">Pay with UPI / Apps</button>
+        <button class="pay-btn" id="payBtn" onclick="initiatePayment()" style="margin-top: 1.25rem;">
+            {% if test_mode %}Place Test Order (Instant){% else %}Pay with UPI / Apps{% endif %}
+        </button>
     </div>
 </div>
 
 <script>
+    const IS_TEST_MODE = "{{ 'true' if test_mode else 'false' }}" === "true";
     const RZP_KEY_ID = "{{ rzp_key }}";
     const USER_EMAIL = "{{ email }}";
     const USER_NAME = "{{ username }}";
@@ -108,10 +110,29 @@
     async function initiatePayment() {
         const payBtn = document.getElementById('payBtn');
         payBtn.disabled = true;
-        payBtn.textContent = 'Opening Secure Gateway...';
 
+        // If running in TEST_MODE, place the order directly without gateway popups
+        if (IS_TEST_MODE) {
+            payBtn.textContent = 'Placing Test Order...';
+            try {
+                const res = await fetch('/api/test/place-order', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.href = data.redirect_url;
+                } else {
+                    alert(data.error || 'Failed to place test order');
+                    payBtn.disabled = false;
+                }
+            } catch (err) {
+                alert('Network error while placing test order');
+                payBtn.disabled = false;
+            }
+            return;
+        }
+
+        // Standard Razorpay Gateway Flow
+        payBtn.textContent = 'Opening Secure Gateway...';
         try {
-            // 1. Ask Flask backend to generate the gateway order
             const res = await fetch('/api/payment/create-order', { method: 'POST' });
             const data = await res.json();
 
@@ -122,7 +143,6 @@
                 return;
             }
 
-            // 2. Launch Standard Checkout Modal / UPI Intent
             const options = {
                 "key": RZP_KEY_ID,
                 "amount": data.amount,
@@ -130,14 +150,9 @@
                 "name": "Grand Palace Hotel",
                 "description": "Preorder Food Payment",
                 "order_id": data.gateway_order_id,
-                "prefill": {
-                    "name": USER_NAME,
-                    "email": USER_EMAIL
-                },
+                "prefill": { "name": USER_NAME, "email": USER_EMAIL },
                 "theme": { "color": "#0284c7" },
-                // 3. Callback on Payment Success
                 "handler": async function (response) {
-                    payBtn.textContent = "Verifying Payment...";
                     const verifyRes = await fetch('/api/payment/verify', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -147,7 +162,6 @@
                             razorpay_signature: response.razorpay_signature
                         })
                     });
-
                     const verifyData = await verifyRes.json();
                     if (verifyData.success) {
                         window.location.href = verifyData.redirect_url;
@@ -155,23 +169,13 @@
                         alert("Verification failed: " + verifyData.error);
                         payBtn.disabled = false;
                     }
-                },
-                "modal": {
-                    "ondismiss": function () {
-                        payBtn.disabled = false;
-                        payBtn.textContent = 'Pay with UPI / Apps';
-                    }
                 }
             };
-
             const rzp = new Razorpay(options);
             rzp.open();
-
         } catch (err) {
-            console.error(err);
             alert("Unable to open payment modal");
             payBtn.disabled = false;
-            payBtn.textContent = 'Pay with UPI / Apps';
         }
     }
 

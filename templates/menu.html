@@ -18,7 +18,7 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
-        body { background-color: var(--bg); color: var(--text-main); min-height: 100vh; padding-bottom: 120px; }
+        body { background-color: var(--bg); color: var(--text-main); min-height: 100vh; padding-bottom: 120px; overflow-x: hidden; }
 
         header {
             position: sticky; top: 0; z-index: 100;
@@ -38,8 +38,9 @@
         .profile-btn {
             display: flex; align-items: center; gap: 0.5rem; background: var(--card-bg);
             border: 1px solid var(--card-border); padding: 0.5rem 1rem; border-radius: 9999px;
-            color: var(--text-main); font-size: 0.9rem;
+            color: var(--text-main); font-size: 0.9rem; cursor: pointer; transition: 0.2s;
         }
+        .profile-btn:hover { border-color: var(--primary); background: #253348; }
 
         .categories-container {
             max-width: 1400px; margin: 1.25rem auto 0.5rem; padding: 0 1.5rem;
@@ -53,7 +54,6 @@
         }
         .cat-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
-        /* Grid: 4 Desktop, 2 Mobile */
         .menu-list {
             max-width: 1400px; margin: 1.5rem auto; padding: 0 1.5rem;
             display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem;
@@ -61,7 +61,6 @@
 
         @media (max-width: 768px) {
             .menu-list { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: 0 0.75rem; }
-            .item-text h3 { font-size: 0.95rem !important; }
             .photo-container { height: 140px !important; }
         }
 
@@ -70,7 +69,6 @@
             border-radius: 14px; overflow: hidden; display: flex; flex-direction: column;
             justify-content: space-between;
         }
-
         .photo-container { position: relative; width: 100%; height: 180px; background: #000; }
         .photo-container img { width: 100%; height: 100%; object-fit: cover; }
 
@@ -93,18 +91,87 @@
         .item-category { font-size: 0.8rem; color: var(--text-muted); text-transform: capitalize; }
         .item-price { font-size: 1.15rem; font-weight: 700; color: #38bdf8; }
 
-        /* Floating Bottom Action Bars */
+        /* Floating Bars */
         .floating-action-bar {
             position: fixed; bottom: 20px; right: 20px; padding: 0.85rem 1.25rem;
             border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: none;
-            align-items: center; gap: 1.25rem; z-index: 1000; cursor: pointer; text-decoration: none;
+            align-items: center; gap: 1.25rem; z-index: 900; cursor: pointer; text-decoration: none;
         }
         .floating-action-bar.visible { display: flex; }
-
         .cart-bar { background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; }
         .order-placed-bar { background: linear-gradient(135deg, #d97706, #b45309); color: #fff; }
-
         .badge { font-size: 1.1rem; font-weight: 800; background: rgba(255,255,255,0.2); padding: 0.35rem 0.75rem; border-radius: 8px; }
+
+        /* Step Progress Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center; z-index: 1500;
+        }
+        .modal-overlay.open { display: flex; }
+        .progress-box {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 16px; padding: 2rem; width: 92%; max-width: 550px; text-align: center;
+        }
+
+        /* 4-Step Row Layout */
+        .stepper-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin: 2rem 0; position: relative;
+        }
+        .stepper-row::before {
+            content: ''; position: absolute; top: 12px; left: 10%; right: 10%;
+            height: 3px; background: #334155; z-index: 1;
+        }
+        .step-col {
+            position: relative; z-index: 2; display: flex; flex-direction: column;
+            align-items: center; gap: 0.4rem; flex: 1;
+        }
+        .step-dot {
+            width: 24px; height: 24px; border-radius: 50%; background: #334155;
+            border: 3px solid #0f172a; transition: 0.3s;
+        }
+        .step-dot.green { background: var(--success); box-shadow: 0 0 10px rgba(16, 185, 129, 0.6); }
+        .step-name { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+        .step-name.active { color: #fff; }
+
+        /* Slide-out Sidebar */
+        .sidebar-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px);
+            z-index: 1100; opacity: 0; pointer-events: none; transition: 0.3s;
+        }
+        .sidebar-overlay.active { opacity: 1; pointer-events: auto; }
+        .profile-sidebar {
+            position: fixed; top: 0; right: -450px; width: 100%; max-width: 420px;
+            height: 100%; background: #0f172a; border-left: 1px solid var(--card-border);
+            box-shadow: -10px 0 25px rgba(0, 0, 0, 0.7); z-index: 1200;
+            display: flex; flex-direction: column; transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .profile-sidebar.open { right: 0; }
+        .sidebar-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; }
+        .sidebar-close-btn { background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; }
+        .sidebar-body { flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
+
+        .profile-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 1.25rem; }
+        .username-input-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+        .username-input { flex: 1; padding: 0.65rem 0.85rem; background: #0b1329; border: 1px solid var(--card-border); border-radius: 8px; color: #fff; outline: none; }
+        .save-username-btn { background: var(--primary); color: #fff; border: none; padding: 0.65rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; }
+
+        .orders-list { display: flex; flex-direction: column; gap: 0.85rem; }
+        .order-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+        .order-status-pill { padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+        .pill-placed { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .pill-accepted { background: rgba(2, 132, 199, 0.2); color: #38bdf8; }
+        .pill-preparing { background: rgba(234, 88, 12, 0.2); color: #fb923c; }
+        .pill-prepared { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .pill-delivered { background: rgba(16, 185, 129, 0.4); color: #10b981; }
+        .pill-cancelled { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+        .cancel-reason-tag {
+            background: rgba(239, 68, 68, 0.1); border-left: 3px solid #ef4444;
+            padding: 0.4rem 0.6rem; font-size: 0.8rem; color: #fca5a5; margin-top: 0.2rem;
+        }
     </style>
 </head>
 <body>
@@ -115,9 +182,9 @@
                 <span class="search-icon">🔍</span>
                 <input type="text" id="searchInput" class="search-input" placeholder="Search dishes or items...">
             </div>
-            <div class="profile-btn" title="{{ email }}">
+            <div class="profile-btn" onclick="openProfileSidebar()" title="{{ email }}">
                 <span>👤</span>
-                <span>{{ username }}</span>
+                <span id="navUsernameDisplay">{{ username }}</span>
             </div>
         </div>
     </header>
@@ -131,7 +198,7 @@
 
     <main class="menu-list" id="menuContainer"></main>
 
-    <!-- State 1: Active Cart -> Clicking goes to /cart -->
+    <!-- State 1: Active Cart -->
     <a href="/cart" class="floating-action-bar cart-bar" id="cartBar">
         <div>
             <h4 style="font-size:0.95rem;">View Cart</h4>
@@ -140,55 +207,192 @@
         <div class="badge" id="cartTotalLabel">₹0.00</div>
     </a>
 
-    <!-- State 2: Order Placed (Replaces cart until Admin marks Delivered) -->
-    <div class="floating-action-bar order-placed-bar" id="orderPlacedBar">
+    <!-- State 2: Order Placed Button -->
+    <div class="floating-action-bar order-placed-bar" id="orderPlacedBar" onclick="openOrderProgressModal()">
         <div>
             <h4 style="font-size:0.95rem;">Order Placed!</h4>
-            <div style="font-size:0.75rem; color:#fef3c7;" id="orderStatusText">Kitchen is preparing your food</div>
+            <div style="font-size:0.75rem; color:#fef3c7;" id="orderStatusText">Tap to track status</div>
         </div>
         <div class="badge">#<span id="activeOrderId"></span></div>
     </div>
+
+    <!-- 4-Stage Progress Tracker Modal -->
+    <div class="modal-overlay" id="orderProgressModal">
+        <div class="progress-box">
+            <h3>Order #<span id="modalOrderId"></span> Status</h3>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.3rem;">Real-time kitchen update</p>
+
+            <div class="stepper-row">
+                <div class="step-col">
+                    <div class="step-dot" id="dotAccepted"></div>
+                    <span class="step-name" id="labelAccepted">Accepted</span>
+                </div>
+                <div class="step-col">
+                    <div class="step-dot" id="dotPreparing"></div>
+                    <span class="step-name" id="labelPreparing">Preparing</span>
+                </div>
+                <div class="step-col">
+                    <div class="step-dot" id="dotPrepared"></div>
+                    <span class="step-name" id="labelPrepared">Prepared</span>
+                </div>
+                <div class="step-col">
+                    <div class="step-dot" id="dotDelivered"></div>
+                    <span class="step-name" id="labelDelivered">Delivered</span>
+                </div>
+            </div>
+
+            <button class="save-username-btn" onclick="closeOrderProgressModal()" style="width:100%;">Close Status</button>
+        </div>
+    </div>
+
+    <!-- Profile Drawer & Orders History -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeProfileSidebar()"></div>
+    <aside class="profile-sidebar" id="profileSidebar">
+        <div class="sidebar-header">
+            <h3>My Profile</h3>
+            <button class="sidebar-close-btn" onclick="closeProfileSidebar()">&times;</button>
+        </div>
+        <div class="sidebar-body">
+            <div class="profile-card">
+                <label style="font-size:0.8rem; color:var(--text-muted);">Verified Gmail</label>
+                <div style="font-size:0.9rem; color:#38bdf8; margin-bottom:0.75rem;">{{ email }}</div>
+
+                <label style="font-size:0.8rem; color:var(--text-muted);">Display Name</label>
+                <div class="username-input-row">
+                    <input type="text" id="profileUsernameInput" class="username-input" value="{{ username }}">
+                    <button class="save-username-btn" onclick="saveNewUsername()">Save</button>
+                </div>
+                <div id="usernameStatusMsg" style="font-size:0.8rem; margin-top:0.4rem;"></div>
+            </div>
+
+            <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                    <h4>All Orders History</h4>
+                    <button onclick="fetchOrderHistory()" style="background:none; border:none; color:var(--primary); font-size:0.85rem; cursor:pointer;">Refresh</button>
+                </div>
+                <div class="orders-list" id="ordersHistoryList"></div>
+            </div>
+
+            <a href="/logout" style="margin-top:auto; padding:0.8rem; background:rgba(239, 68, 68, 0.15); color:#ef4444; text-align:center; border-radius:8px; text-decoration:none; font-weight:600;">Log Out</a>
+        </div>
+    </aside>
 
     <script>
         let menuItems = [];
         let cartData = {};
         let currentCategory = 'all';
         let searchQuery = '';
+        let activeOrder = null;
+        let lastReportedStatus = null;
 
-        async function init() {
-            // Check active order status first
+        // ==========================================
+        // Live Status Polling & Alerts
+        // ==========================================
+        async function checkOrderStatus() {
             const orderRes = await fetch('/api/order/active');
-            const orderData = await orderRes.json();
-
+            const data = await orderRes.json();
             const orderPlacedBar = document.getElementById('orderPlacedBar');
             const cartBar = document.getElementById('cartBar');
 
-            if (orderData.has_active_order) {
-                // Customer has placed order -> Show "Order Placed" badge
-                orderPlacedBar.classList.add('visible');
-                document.getElementById('activeOrderId').textContent = orderData.order_id;
-                document.getElementById('orderStatusText').textContent = `Status: ${orderData.status.toUpperCase()}`;
-                cartBar.classList.remove('visible');
-            } else {
-                // No active order -> Show cart flow if items exist
+            // 1. Check if an alert was sent by admin (Cancelled or Delivered)
+            if (data.alert) {
+                if (data.status === 'cancelled') {
+                    alert(`⚠️ Your Order #${data.order_id} was CANCELLED by the restaurant.\nReason: ${data.reason}`);
+                } else if (data.status === 'delivered') {
+                    alert(`🎉 Your Order #${data.order_id} has been DELIVERED! Enjoy your meal.`);
+                }
+                activeOrder = null;
                 orderPlacedBar.classList.remove('visible');
+                closeOrderProgressModal();
+                loadMenuAndCart();
+                return;
             }
 
+            // 2. Active order is in progress ('placed', 'accepted', 'preparing', 'prepared')
+            if (data.has_active_order) {
+                // If status changed, alert the user
+                if (lastReportedStatus && lastReportedStatus !== data.status) {
+                    alert(`🔔 Order Update: Order #${data.order_id} is now ${data.status.toUpperCase()}!`);
+                }
+                lastReportedStatus = data.status;
+
+                activeOrder = data;
+                orderPlacedBar.classList.add('visible');
+                document.getElementById('activeOrderId').textContent = data.order_id;
+                document.getElementById('orderStatusText').textContent = `Status: ${data.status.toUpperCase()} (Tap to track)`;
+                cartBar.classList.remove('visible');
+
+                // If tracker modal is open, refresh green dots
+                updateStepperDots(data.status);
+            } else {
+                // Delivered or Cancelled -> Disappears from page
+                orderPlacedBar.classList.remove('visible');
+                activeOrder = null;
+            }
+        }
+
+        function openOrderProgressModal() {
+            if (!activeOrder) return;
+            document.getElementById('modalOrderId').textContent = activeOrder.order_id;
+            updateStepperDots(activeOrder.status);
+            document.getElementById('orderProgressModal').classList.add('open');
+        }
+
+        function closeOrderProgressModal() {
+            document.getElementById('orderProgressModal').classList.remove('open');
+        }
+
+        function updateStepperDots(status) {
+            // Stage hierarchy
+            const stages = ['accepted', 'preparing', 'prepared', 'delivered'];
+            const currentIndex = stages.indexOf(status);
+
+            const dotMap = {
+                'accepted': document.getElementById('dotAccepted'),
+                'preparing': document.getElementById('dotPreparing'),
+                'prepared': document.getElementById('dotPrepared'),
+                'delivered': document.getElementById('dotDelivered')
+            };
+
+            const labelMap = {
+                'accepted': document.getElementById('labelAccepted'),
+                'preparing': document.getElementById('labelPreparing'),
+                'prepared': document.getElementById('labelPrepared'),
+                'delivered': document.getElementById('labelDelivered')
+            };
+
+            stages.forEach((st, idx) => {
+                // Dots change into green cumulatively if step is reached or passed
+                if (idx <= currentIndex) {
+                    dotMap[st].classList.add('green');
+                    labelMap[st].classList.add('active');
+                } else {
+                    dotMap[st].classList.remove('green');
+                    labelMap[st].classList.remove('active');
+                }
+            });
+        }
+
+        // ==========================================
+        // Menu & Cart Functions
+        // ==========================================
+        async function init() {
+            await checkOrderStatus();
             await loadMenuAndCart();
+            // Polling every 5 seconds for live status changes
+            setInterval(checkOrderStatus, 5000);
         }
 
         async function loadMenuAndCart() {
             try {
                 const res = await fetch('/api/menu');
                 const data = await res.json();
-                
                 menuItems = data.items;
                 cartData = data.cart || {};
-                
                 updateCartUI(data.cart_code, data.total_price);
                 renderMenu();
             } catch (err) {
-                console.error("Failed loading menu:", err);
+                console.error(err);
             }
         }
 
@@ -224,11 +428,7 @@
 
                 if (item.is_active) {
                     if (qty === 0) {
-                        actionControlsHtml = `
-                            <div class="action-ctrl">
-                                <button class="action-btn" onclick="updateItemQuantity(${item.id}, 1)">+</button>
-                            </div>
-                        `;
+                        actionControlsHtml = `<div class="action-ctrl"><button class="action-btn" onclick="updateItemQuantity(${item.id}, 1)">+</button></div>`;
                     } else {
                         actionControlsHtml = `
                             <div class="action-ctrl">
@@ -276,7 +476,6 @@
             const cartBar = document.getElementById('cartBar');
             const orderPlacedBar = document.getElementById('orderPlacedBar');
 
-            // If an order is already placed and running, don't show the cart button
             if (orderPlacedBar.classList.contains('visible')) {
                 cartBar.classList.remove('visible');
                 return;
@@ -289,6 +488,90 @@
             } else {
                 cartBar.classList.remove('visible');
             }
+        }
+
+        // ==========================================
+        // Profile & Full Orders History
+        // ==========================================
+        function openProfileSidebar() {
+            document.getElementById('profileSidebar').classList.add('open');
+            document.getElementById('sidebarOverlay').classList.add('active');
+            fetchOrderHistory();
+        }
+
+        function closeProfileSidebar() {
+            document.getElementById('profileSidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('active');
+        }
+
+        async function saveNewUsername() {
+            const newName = document.getElementById('profileUsernameInput').value.trim();
+            const msgEl = document.getElementById('usernameStatusMsg');
+
+            if (!newName) return;
+
+            const res = await fetch('/api/profile/update-username', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: newName })
+            });
+            const data = await res.json();
+            if (data.success) {
+                msgEl.style.color = '#10b981';
+                msgEl.textContent = 'Username updated!';
+                document.getElementById('navUsernameDisplay').textContent = data.username;
+                setTimeout(() => { msgEl.textContent = ''; }, 2000);
+            }
+        }
+
+        async function fetchOrderHistory() {
+            const listEl = document.getElementById('ordersHistoryList');
+            listEl.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">Loading orders...</div>';
+
+            const res = await fetch('/api/profile/orders');
+            const data = await res.json();
+
+            if (!data.orders || data.orders.length === 0) {
+                listEl.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">No past orders.</div>';
+                return;
+            }
+
+            listEl.innerHTML = '';
+            data.orders.forEach(order => {
+                const card = document.createElement('div');
+                card.className = 'order-card';
+
+                let pillClass = `pill-${order.order_status}`;
+                const itemsHtml = order.items.map(item => `<div>• ${item}</div>`).join('');
+
+                // Display cancellation reason if order was cancelled
+                let reasonHtml = '';
+                if (order.order_status === 'cancelled') {
+                    reasonHtml = `<div class="cancel-reason-tag"><strong>Reason:</strong> ${order.cancellation_reason || 'Restaurant was unable to prepare this order.'}</div>`;
+                }
+
+                card.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <strong>Order #${order.id}</strong>
+                            <div style="font-size:0.75rem; color:var(--text-muted);">${order.date} at ${order.time}</div>
+                        </div>
+                        <span class="order-status-pill ${pillClass}">${order.order_status}</span>
+                    </div>
+
+                    <div style="font-size:0.85rem; color:#cbd5e1; border-top:1px dashed var(--card-border); padding-top:0.4rem;">
+                        ${itemsHtml}
+                    </div>
+
+                    ${reasonHtml}
+
+                    <div style="display:flex; justify-content:space-between; font-weight:700; margin-top:0.3rem;">
+                        <span>Total</span>
+                        <span style="color:#38bdf8;">₹${order.total_amount.toFixed(2)}</span>
+                    </div>
+                `;
+                listEl.appendChild(card);
+            });
         }
 
         init();
