@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grand Palace Hotel - Operations Dashboard</title>
+    <style>
+        :root {
+            --bg: #0b1329;
+            --card-bg: #1e293b;
+            --card-border: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #0284c7;
+            --success: #10b981;
+            --danger: #ef4444;
+            --amber: #f59e0b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background: var(--bg); color: var(--text-main); min-height: 100vh; padding-bottom: 3rem; }
+
+        header {
+            background: rgba(11, 19, 41, 0.95); border-bottom: 1px solid var(--card-border);
+            padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100;
+        }
+
+        .header-title { display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem; font-weight: 700; }
+        .admin-profile-btn {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            padding: 0.5rem 1.2rem; border-radius: 9999px; color: #fff; cursor: pointer;
+            display: flex; align-items: center; gap: 0.5rem; font-weight: 600;
+        }
+
+        .profile-dropdown-menu {
+            position: absolute; top: 65px; right: 2rem; background: var(--card-bg);
+            border: 1px solid var(--card-border); border-radius: 12px; width: 220px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: none; flex-direction: column; z-index: 110;
+        }
+        .profile-dropdown-menu.show { display: flex; }
+        .dropdown-item {
+            padding: 0.85rem 1.25rem; color: #fff; border: none; background: none; text-align: left;
+            font-size: 0.9rem; cursor: pointer; transition: 0.2s;
+        }
+        .dropdown-item:hover { background: #283548; }
+
+        .container { max-width: 1400px; margin: 2rem auto; padding: 0 1.5rem; }
+
+        .tab-controls { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+        .tab-btn {
+            background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-muted);
+            padding: 0.7rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 700;
+        }
+        .tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+        .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.25rem; }
+        .order-card {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem;
+        }
+        .order-head { display: flex; justify-content: space-between; align-items: flex-start; }
+        .order-user { font-size: 1.05rem; font-weight: 700; color: #fff; }
+        .order-time { font-size: 0.8rem; color: var(--text-muted); text-align: right; }
+        .order-items-box {
+            background: #0f172a; border-radius: 8px; padding: 0.75rem; font-size: 0.85rem;
+            display: flex; flex-direction: column; gap: 0.4rem; max-height: 180px; overflow-y: auto;
+        }
+        .order-item-line { display: flex; justify-content: space-between; }
+        .order-total-line { display: flex; justify-content: space-between; font-weight: 800; font-size: 1.1rem; color: #38bdf8; }
+
+        .initial-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem; }
+        .in-progress-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; margin-top: 0.5rem; }
+
+        .btn-action {
+            border: none; padding: 0.65rem 0.5rem; border-radius: 6px; font-weight: 700; font-size: 0.8rem;
+            cursor: pointer; text-transform: uppercase; transition: 0.2s; text-align: center;
+        }
+        .btn-accept { background: #0284c7; color: white; }
+        .btn-cancel { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
+        .btn-prep { background: #f59e0b; color: #000; }
+        .btn-ready { background: #38bdf8; color: #000; }
+        .btn-deliver { background: #10b981; color: white; }
+        .btn-action.active { outline: 3px solid #fff; }
+
+        .menu-table-container { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 1rem; border-bottom: 1px solid var(--card-border); }
+        th { background: #162032; font-size: 0.85rem; text-transform: uppercase; color: var(--text-muted); }
+        .dish-thumb { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7);
+            display: none; align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; width: 100%; max-width: 480px; padding: 2rem; }
+        .modal-box h3 { margin-bottom: 1rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 0.75rem; background: #0f172a; border: 1px solid var(--card-border);
+            border-radius: 8px; color: #fff; font-size: 0.95rem; outline: none;
+        }
+        .modal-buttons { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; }
+        .btn-secondary { background: #334155; color: #fff; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; }
+        .btn-primary { background: var(--primary); color: #fff; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; font-weight: 700; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title">
+            <span>🛡️</span>
+            <span>Hotel Operations Admin</span>
+        </div>
+
+        <div>
+            <button class="admin-profile-btn" onclick="toggleDropdown()">
+                <span>⚙️ Options</span>
+                <span>▼</span>
+            </button>
+            <div class="profile-dropdown-menu" id="profileDropdown">
+                <button class="dropdown-item" onclick="openPasswordModal()">🔑 Change Admin Password</button>
+                <button class="dropdown-item" onclick="switchTab('menuTab')">📋 Manage Menu List</button>
+                <button class="dropdown-item" onclick="logoutAdmin()" style="color: #ef4444;">🚪 Sign Out</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="tab-controls">
+            <button class="tab-btn active" id="ordersTabBtn" onclick="switchTab('ordersTab')">Active Kitchen Orders</button>
+            <button class="tab-btn" id="menuTabBtn" onclick="switchTab('menuTab')">Menu Item Catalog</button>
+        </div>
+
+        <!-- TAB 1: Active Orders -->
+        <section id="ordersTab">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h3>Active Orders in Queue</h3>
+                <button class="btn-secondary" onclick="loadAdminOrders()">↻ Refresh Orders</button>
+            </div>
+            <div class="orders-grid" id="ordersGrid">
+                <div style="color:var(--text-muted); padding:2rem;">Loading active orders...</div>
+            </div>
+        </section>
+
+        <!-- TAB 2: Menu Editing -->
+        <section id="menuTab" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h3>Live Restaurant Menu</h3>
+                <button class="btn-primary" onclick="openItemModal()">+ Add New Food Item</button>
+            </div>
+            <div class="menu-table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Photo</th>
+                            <th>Dish Name</th>
+                            <th>Category</th>
+                            <th>Price (₹)</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="menuTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <!-- MODAL: Password Change -->
+    <div class="modal-overlay" id="passwordModal">
+        <div class="modal-box">
+            <h3>Update Admin Security Password</h3>
+            <div class="form-group">
+                <label>New Admin Password (Min 6 Characters)</label>
+                <input type="password" id="newAdminPasswordInput" placeholder="Enter new secret password" />
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-secondary" onclick="closePasswordModal()">Cancel</button>
+                <button class="btn-primary" onclick="saveAdminPassword()">Save New Password</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Add/Edit Menu Item -->
+    <div class="modal-overlay" id="itemModal">
+        <div class="modal-box">
+            <h3 id="itemModalTitle">Add Menu Dish</h3>
+            <form id="menuItemForm" onsubmit="handleSaveMenuItem(event)" enctype="multipart/form-data">
+                <input type="hidden" id="editItemId" name="id" />
+
+                <div class="form-group">
+                    <label>Dish Name</label>
+                    <input type="text" id="dishNameInput" name="item_name" required placeholder="e.g. Masala Dosa" />
+                </div>
+
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="dishCategorySelect" name="category">
+                        <option value="tiffins">Tiffins</option>
+                        <option value="fast food">Fast Food</option>
+                        <option value="meals">Meals</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Price (₹)</label>
+                    <input type="number" step="0.01" id="dishPriceInput" name="price" required placeholder="120.00" />
+                </div>
+
+                <div class="form-group">
+                    <label>Upload New Photo (Overrides current photo)</label>
+                    <input type="file" id="dishFileInput" name="image_file" accept="image/*" />
+                </div>
+
+                <!-- Changed type from "url" to "text" so local paths like /static/uploads/... are allowed -->
+                <div class="form-group">
+                    <label>Photo URL / Local Path</label>
+                    <input type="text" id="dishUrlInput" name="image_url" placeholder="https://... or /static/uploads/..." />
+                </div>
+
+                <div class="form-group">
+                    <label>Availability Dot</label>
+                    <select id="dishActiveSelect" name="is_active">
+                        <option value="true">Active (Green Dot)</option>
+                        <option value="false">Inactive (Red Dot)</option>
+                    </select>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" class="btn-secondary" onclick="closeItemModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Dish</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleDropdown() {
+            document.getElementById("profileDropdown").classList.toggle("show");
+        }
+
+        window.onclick = function(e) {
+            if (!e.target.closest('.admin-profile-btn')) {
+                document.getElementById("profileDropdown").classList.remove("show");
+            }
+        }
+
+        function switchTab(tabId) {
+            document.getElementById("ordersTab").style.display = tabId === 'ordersTab' ? 'block' : 'none';
+            document.getElementById("menuTab").style.display = tabId === 'menuTab' ? 'block' : 'none';
+            document.getElementById("ordersTabBtn").classList.toggle("active", tabId === 'ordersTab');
+            document.getElementById("menuTabBtn").classList.toggle("active", tabId === 'menuTab');
+            document.getElementById("profileDropdown").classList.remove("show");
+            if (tabId === 'ordersTab') loadAdminOrders();
+            if (tabId === 'menuTab') loadAdminMenu();
+        }
+
+        async function loadAdminOrders() {
+            const grid = document.getElementById("ordersGrid");
+            try {
+                const res = await fetch("/api/admin/orders");
+                const data = await res.json();
+
+                if (!data.orders || data.orders.length === 0) {
+                    grid.innerHTML = '<div style="color:var(--text-muted); padding:2rem;">No active orders in kitchen queue.</div>';
+                    return;
+                }
+
+                grid.innerHTML = "";
+                data.orders.forEach(order => {
+                    const card = document.createElement("div");
+                    card.className = "order-card";
+
+                    const itemsHtml = order.items.map(item => `
+                        <div class="order-item-line">
+                            <span>${item.name} × ${item.quantity}</span>
+                            <span>₹${item.subtotal.toFixed(2)}</span>
+                        </div>
+                    `).join('');
+
+                    let actionHtml = '';
+                    if (order.order_status === 'placed') {
+                        actionHtml = `
+                            <div class="initial-actions">
+                                <button class="btn-action btn-accept" onclick="updateOrderStatus(${order.id}, 'accepted')">Accept</button>
+                                <button class="btn-action btn-cancel" onclick="cancelOrderPrompt(${order.id})">Cancel</button>
+                            </div>
+                        `;
+                    } else {
+                        actionHtml = `
+                            <div class="in-progress-actions">
+                                <button class="btn-action btn-prep ${order.order_status === 'preparing' ? 'active' : ''}" 
+                                    onclick="updateOrderStatus(${order.id}, 'preparing')">Preparing</button>
+                                <button class="btn-action btn-ready ${order.order_status === 'prepared' ? 'active' : ''}" 
+                                    onclick="updateOrderStatus(${order.id}, 'prepared')">Prepared</button>
+                                <button class="btn-action btn-deliver" 
+                                    onclick="updateOrderStatus(${order.id}, 'delivered')">Delivered</button>
+                            </div>
+                        `;
+                    }
+
+                    card.innerHTML = `
+                        <div class="order-head">
+                            <div>
+                                <div class="order-user">${order.username}</div>
+                                <div style="font-size:0.75rem; color:var(--text-muted);">${order.user_email}</div>
+                            </div>
+                            <div class="order-time">${order.time}<br>${order.date}</div>
+                        </div>
+                        <div class="order-items-box">${itemsHtml}</div>
+                        <div class="order-total-line">
+                            <span>Total Payable</span>
+                            <span>₹${order.total_amount.toFixed(2)}</span>
+                        </div>
+                        <div style="font-size:0.8rem; font-weight:bold; margin-top:0.2rem;">
+                            Current Stage: <span style="color:#38bdf8; text-transform:uppercase;">${order.order_status}</span>
+                        </div>
+                        ${actionHtml}
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (err) {
+                grid.innerHTML = '<div style="color:#ef4444; padding:1rem;">Failed loading orders.</div>';
+            }
+        }
+
+        async function updateOrderStatus(orderId, status, reason = "") {
+            const res = await fetch("/api/admin/order/update-status", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ order_id: orderId, status: status, reason: reason })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(`Order #${orderId} status successfully updated to: ${status.toUpperCase()}`);
+                loadAdminOrders();
+            } else {
+                alert(data.error || "Failed updating status");
+            }
+        }
+
+        function cancelOrderPrompt(orderId) {
+            const confirmCancel = confirm("Are you sure you want to cancel this order?");
+            if (!confirmCancel) return;
+
+            const reason = prompt("Please enter the reason for cancellation (this will be shown to the customer):", "Items out of stock");
+            if (reason === null) return;
+
+            updateOrderStatus(orderId, "cancelled", reason.trim());
+        }
+
+        let currentMenuItems = [];
+        async function loadAdminMenu() {
+            const tbody = document.getElementById("menuTableBody");
+            try {
+                const res = await fetch("/api/admin/menu/items");
+                const data = await res.json();
+                currentMenuItems = data.items;
+
+                tbody.innerHTML = "";
+                data.items.forEach(item => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td><img src="${item.photo_url}" class="dish-thumb" onerror="this.src='https://via.placeholder.com/50'"/></td>
+                        <td><strong>${item.item_name}</strong></td>
+                        <td style="text-transform:capitalize;">${item.category}</td>
+                        <td>₹${item.price.toFixed(2)}</td>
+                        <td>${item.is_active ? '🟢 Active' : '🔴 Inactive'}</td>
+                        <td>
+                            <button class="btn-secondary" onclick="editMenuItem(${item.id})">Edit</button>
+                            <button class="btn-secondary" style="background:#ef4444;" onclick="deleteMenuItem(${item.id})">Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="6" style="color:#ef4444;">Failed to load menu.</td></tr>';
+            }
+        }
+
+        function openItemModal() {
+            document.getElementById("itemModalTitle").textContent = "Add Menu Dish";
+            document.getElementById("editItemId").value = "";
+            document.getElementById("dishNameInput").value = "";
+            document.getElementById("dishPriceInput").value = "";
+            document.getElementById("dishUrlInput").value = "";
+            document.getElementById("dishFileInput").value = "";
+            document.getElementById("dishActiveSelect").value = "true";
+            document.getElementById("itemModal").classList.add("open");
+        }
+
+        function editMenuItem(id) {
+            const item = currentMenuItems.find(i => i.id === id);
+            if (!item) return;
+
+            document.getElementById("itemModalTitle").textContent = "Edit Menu Dish";
+            document.getElementById("editItemId").value = item.id;
+            document.getElementById("dishNameInput").value = item.item_name;
+            document.getElementById("dishCategorySelect").value = item.category;
+            document.getElementById("dishPriceInput").value = item.price;
+            document.getElementById("dishUrlInput").value = item.photo_url || "";
+            document.getElementById("dishFileInput").value = ""; // Clear file selector so old photo is kept if not replaced
+            document.getElementById("dishActiveSelect").value = item.is_active ? "true" : "false";
+            document.getElementById("itemModal").classList.add("open");
+        }
+
+        function closeItemModal() {
+            document.getElementById("itemModal").classList.remove("open");
+        }
+
+        async function handleSaveMenuItem(e) {
+            e.preventDefault();
+            const form = document.getElementById("menuItemForm");
+            const formData = new FormData(form);
+
+            const res = await fetch("/api/admin/menu/save", {
+                method: "POST",
+                body: formData
+            });
+            const data = await res.json();
+            if (data.success) {
+                closeItemModal();
+                loadAdminMenu();
+            } else {
+                alert(data.error || "Save failed");
+            }
+        }
+
+        async function deleteMenuItem(id) {
+            if (!confirm("Are you sure you want to delete this menu dish?")) return;
+            const res = await fetch("/api/admin/menu/delete", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id })
+            });
+            const data = await res.json();
+            if (data.success) loadAdminMenu();
+        }
+
+        function openPasswordModal() {
+            document.getElementById("newAdminPasswordInput").value = "";
+            document.getElementById("passwordModal").classList.add("open");
+        }
+        function closePasswordModal() {
+            document.getElementById("passwordModal").classList.remove("open");
+        }
+
+        async function saveAdminPassword() {
+            const newPassword = document.getElementById("newAdminPasswordInput").value.trim();
+            if (newPassword.length < 6) {
+                alert("Password must be at least 6 characters");
+                return;
+            }
+            const res = await fetch("/api/admin/change-password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ new_password: newPassword })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert("Admin password updated!");
+                closePasswordModal();
+            } else {
+                alert(data.error || "Update failed");
+            }
+        }
+
+        async function logoutAdmin() {
+            await fetch("/api/admin/logout", { method: "POST" });
+            window.location.reload();
+        }
+
+        loadAdminOrders();
+        setInterval(loadAdminOrders, 10000);
+    </script>
+</body>
+</html>

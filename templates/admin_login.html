@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Admin Login</title>
+    <style>
+        :root {
+            --bg: #0b1329;
+            --card-bg: #1e293b;
+            --card-border: #334155;
+            --primary: #0284c7;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background: var(--bg); color: var(--text-main); display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .login-card { background: var(--card-bg); border: 1px solid var(--card-border); padding: 2.5rem; border-radius: 14px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; }
+        h2 { margin-bottom: 0.5rem; }
+        p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+        input[type="password"] { width: 100%; padding: 0.8rem; background: #0f172a; border: 1px solid var(--card-border); border-radius: 8px; color: #fff; font-size: 1rem; margin-bottom: 1.25rem; outline: none; }
+        input[type="password"]:focus { border-color: var(--primary); }
+        .btn-login { width: 100%; padding: 0.8rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
+        .btn-login:hover { background: #0369a1; }
+        .error-msg { color: #ef4444; font-size: 0.85rem; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h2>Admin Authentication</h2>
+        <p>Enter the security key to access the operations panel</p>
+        <form id="adminLoginForm" onsubmit="handleLogin(event)">
+            <input type="password" id="adminPassword" placeholder="Admin Password" required autofocus autocomplete="current-password" />
+            <button type="submit" class="btn-login">Unlock Admin Panel</button>
+        </form>
+        <div id="errMsg" class="error-msg"></div>
+    </div>
+
+    <script>
+        async function handleLogin(e) {
+            e.preventDefault();
+            const password = document.getElementById("adminPassword").value.trim();
+            const err = document.getElementById("errMsg");
+            err.textContent = "";
+
+            try {
+                const res = await fetch("/api/admin/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ password })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    window.location.reload();
+                } else {
+                    err.textContent = data.error || "Authentication failed";
+                }
+            } catch (error) {
+                err.textContent = "Server communication error";
+            }
+        }
+    </script>
+</body>
+</html>

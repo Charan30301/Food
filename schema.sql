@@ -44,12 +44,36 @@ SELECT setval('menu_items_id_seq', (SELECT COALESCE(MAX(id), 1) FROM menu_items)
 CREATE TABLE IF NOT EXISTS orders (
     id SERIAL PRIMARY KEY,
     user_email VARCHAR(255) NOT NULL REFERENCES users(email) ON DELETE CASCADE,
-    items_code TEXT NOT NULL,           -- e.g. '9+2a55+1a'
+    items_code TEXT NOT NULL,
     total_amount NUMERIC(10, 2) NOT NULL,
-    payment_method VARCHAR(50) DEFAULT 'UPI',
-    status VARCHAR(50) DEFAULT 'placed', -- 'placed', 'preparing', 'delivered', 'cancelled'
+    gateway_order_id VARCHAR(100) UNIQUE,
+    payment_id VARCHAR(100),
+    payment_status VARCHAR(50) DEFAULT 'pending', -- 'pending', 'paid', 'failed'
+    order_status VARCHAR(50) DEFAULT 'placed',    -- 'placed', 'preparing', 'delivered'
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_email, status);
+CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_email, order_status, payment_status);
+DELETE FROM orders WHERE created_at < NOW() - INTERVAL '3 months';
+CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at);
+
+-- 1. Admin authentication table
+CREATE TABLE IF NOT EXISTS admin_auth (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert default admin account (Username: admin, Password: adminpassword123)
+-- Uses Werkzeug default pbkdf2:sha256 hash
+INSERT INTO admin_auth (username, password_hash)
+VALUES ('admin', 'scrypt:32768:8:1$K5jL796Z5H7VwHwA$a48b30ce379b360566370bb03cb8eeae4a1be9989fe943be1772fe2440ea9d885a08fb6f595f039bb38ff8e5d0f1eb7c8a6669fcf78c3c1bcce2ad3203f707f1')
+ON CONFLICT (username) DO NOTHING;
+
+ALTER TABLE orders 
+ADD COLUMN IF NOT EXISTS cancellation_reason TEXT DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS customer_alert BOOLEAN DEFAULT FALSE;
+-- 2. Create upload storage directory check
+-- (Flask handles creating the static/uploads folder automatically)
