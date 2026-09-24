@@ -2,42 +2,296 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Hotel Menu & Pre-order</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grand Palace Hotel - Menu</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #f8fafc; padding: 2rem; }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 1rem; }
-        .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
-        .card { background: #1e293b; padding: 1.5rem; border-radius: 12px; }
-        .price { color: #38bdf8; font-weight: bold; margin: 0.5rem 0; }
-        button { background: #10b981; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        a.logout { color: #f87171; text-decoration: none; }
+        :root {
+            --bg: #0b1329;
+            --card-bg: #1e293b;
+            --card-border: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #0284c7;
+            --success: #10b981;
+            --danger: #ef4444;
+            --amber: #f59e0b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background-color: var(--bg); color: var(--text-main); min-height: 100vh; padding-bottom: 120px; }
+
+        header {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(11, 19, 41, 0.95); backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--card-border); padding: 1rem 1.5rem;
+        }
+
+        .top-bar { display: flex; align-items: center; gap: 1rem; max-width: 1400px; margin: 0 auto; }
+        .search-container { flex: 1; position: relative; }
+        .search-input {
+            width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem;
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 9999px; color: #fff; font-size: 0.95rem; outline: none;
+        }
+        .search-icon { position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+
+        .profile-btn {
+            display: flex; align-items: center; gap: 0.5rem; background: var(--card-bg);
+            border: 1px solid var(--card-border); padding: 0.5rem 1rem; border-radius: 9999px;
+            color: var(--text-main); font-size: 0.9rem;
+        }
+
+        .categories-container {
+            max-width: 1400px; margin: 1.25rem auto 0.5rem; padding: 0 1.5rem;
+            display: flex; gap: 0.75rem; overflow-x: auto;
+        }
+
+        .cat-btn {
+            background: var(--card-bg); color: var(--text-muted); border: 1px solid var(--card-border);
+            padding: 0.6rem 1.4rem; border-radius: 9999px; font-size: 0.9rem; font-weight: 600;
+            cursor: pointer; text-transform: capitalize; white-space: nowrap;
+        }
+        .cat-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+        /* Grid: 4 Desktop, 2 Mobile */
+        .menu-list {
+            max-width: 1400px; margin: 1.5rem auto; padding: 0 1.5rem;
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .menu-list { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: 0 0.75rem; }
+            .item-text h3 { font-size: 0.95rem !important; }
+            .photo-container { height: 140px !important; }
+        }
+
+        .item-card {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 14px; overflow: hidden; display: flex; flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .photo-container { position: relative; width: 100%; height: 180px; background: #000; }
+        .photo-container img { width: 100%; height: 100%; object-fit: cover; }
+
+        .status-dot {
+            position: absolute; top: 10px; left: 10px; width: 12px; height: 12px;
+            border-radius: 50%; border: 2px solid #fff; z-index: 2;
+        }
+        .status-dot.active { background-color: var(--success); }
+        .status-dot.inactive { background-color: var(--danger); }
+
+        .action-ctrl {
+            position: absolute; bottom: 10px; right: 10px; background: #ffffff;
+            border-radius: 9999px; display: flex; align-items: center; z-index: 2;
+        }
+        .action-btn { background: none; border: none; padding: 0.45rem 0.75rem; font-size: 1rem; cursor: pointer; color: #0f172a; }
+        .qty-label { font-size: 0.9rem; min-width: 20px; text-align: center; color: #0f172a; font-weight: bold; }
+
+        .item-info { padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: flex-end; }
+        .item-text h3 { font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-category { font-size: 0.8rem; color: var(--text-muted); text-transform: capitalize; }
+        .item-price { font-size: 1.15rem; font-weight: 700; color: #38bdf8; }
+
+        /* Floating Bottom Action Bars */
+        .floating-action-bar {
+            position: fixed; bottom: 20px; right: 20px; padding: 0.85rem 1.25rem;
+            border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: none;
+            align-items: center; gap: 1.25rem; z-index: 1000; cursor: pointer; text-decoration: none;
+        }
+        .floating-action-bar.visible { display: flex; }
+
+        .cart-bar { background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; }
+        .order-placed-bar { background: linear-gradient(135deg, #d97706, #b45309); color: #fff; }
+
+        .badge { font-size: 1.1rem; font-weight: 800; background: rgba(255,255,255,0.2); padding: 0.35rem 0.75rem; border-radius: 8px; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div>
-            <h1>Grand Palace Hotel - Preorder Menu</h1>
-            <p style="color:#94a3b8">Welcome, <strong>{{ username }}</strong> ({{ email }})</p>
+
+    <header>
+        <div class="top-bar">
+            <div class="search-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search dishes or items...">
+            </div>
+            <div class="profile-btn" title="{{ email }}">
+                <span>👤</span>
+                <span>{{ username }}</span>
+            </div>
         </div>
-        <a href="/logout" class="logout">Logout</a>
+    </header>
+
+    <div class="categories-container">
+        <button class="cat-btn active" onclick="filterCategory('all', this)">All</button>
+        <button class="cat-btn" onclick="filterCategory('tiffins', this)">Tiffins</button>
+        <button class="cat-btn" onclick="filterCategory('fast food', this)">Fast Food</button>
+        <button class="cat-btn" onclick="filterCategory('meals', this)">Meals</button>
     </div>
 
-    <div class="menu-grid">
-        <div class="card">
-            <h3>Special Dum Biryani</h3>
-            <div class="price">₹320</div>
-            <button>Pre-order</button>
+    <main class="menu-list" id="menuContainer"></main>
+
+    <!-- State 1: Active Cart -> Clicking goes to /cart -->
+    <a href="/cart" class="floating-action-bar cart-bar" id="cartBar">
+        <div>
+            <h4 style="font-size:0.95rem;">View Cart</h4>
+            <div style="font-size:0.75rem; color:#bae6fd;" id="cartCodeLabel"></div>
         </div>
-        <div class="card">
-            <h3>Paneer Butter Masala</h3>
-            <div class="price">₹260</div>
-            <button>Pre-order</button>
+        <div class="badge" id="cartTotalLabel">₹0.00</div>
+    </a>
+
+    <!-- State 2: Order Placed (Replaces cart until Admin marks Delivered) -->
+    <div class="floating-action-bar order-placed-bar" id="orderPlacedBar">
+        <div>
+            <h4 style="font-size:0.95rem;">Order Placed!</h4>
+            <div style="font-size:0.75rem; color:#fef3c7;" id="orderStatusText">Kitchen is preparing your food</div>
         </div>
-        <div class="card">
-            <h3>Butter Naan (2 pcs)</h3>
-            <div class="price">₹80</div>
-            <button>Pre-order</button>
-        </div>
+        <div class="badge">#<span id="activeOrderId"></span></div>
     </div>
+
+    <script>
+        let menuItems = [];
+        let cartData = {};
+        let currentCategory = 'all';
+        let searchQuery = '';
+
+        async function init() {
+            // Check active order status first
+            const orderRes = await fetch('/api/order/active');
+            const orderData = await orderRes.json();
+
+            const orderPlacedBar = document.getElementById('orderPlacedBar');
+            const cartBar = document.getElementById('cartBar');
+
+            if (orderData.has_active_order) {
+                // Customer has placed order -> Show "Order Placed" badge
+                orderPlacedBar.classList.add('visible');
+                document.getElementById('activeOrderId').textContent = orderData.order_id;
+                document.getElementById('orderStatusText').textContent = `Status: ${orderData.status.toUpperCase()}`;
+                cartBar.classList.remove('visible');
+            } else {
+                // No active order -> Show cart flow if items exist
+                orderPlacedBar.classList.remove('visible');
+            }
+
+            await loadMenuAndCart();
+        }
+
+        async function loadMenuAndCart() {
+            try {
+                const res = await fetch('/api/menu');
+                const data = await res.json();
+                
+                menuItems = data.items;
+                cartData = data.cart || {};
+                
+                updateCartUI(data.cart_code, data.total_price);
+                renderMenu();
+            } catch (err) {
+                console.error("Failed loading menu:", err);
+            }
+        }
+
+        function filterCategory(category, buttonEl) {
+            currentCategory = category;
+            document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
+            buttonEl.classList.add('active');
+            renderMenu();
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            searchQuery = e.target.value.toLowerCase().trim();
+            renderMenu();
+        });
+
+        function renderMenu() {
+            const container = document.getElementById('menuContainer');
+            container.innerHTML = '';
+
+            const filtered = menuItems.filter(item => {
+                const matchesCat = currentCategory === 'all' || item.category.toLowerCase() === currentCategory.toLowerCase();
+                const matchesSearch = item.item_name.toLowerCase().includes(searchQuery);
+                return matchesCat && matchesSearch;
+            });
+
+            filtered.forEach(item => {
+                const qty = cartData[item.id] || 0;
+                const card = document.createElement('div');
+                card.className = 'item-card';
+
+                const dotClass = item.is_active ? 'active' : 'inactive';
+                let actionControlsHtml = '';
+
+                if (item.is_active) {
+                    if (qty === 0) {
+                        actionControlsHtml = `
+                            <div class="action-ctrl">
+                                <button class="action-btn" onclick="updateItemQuantity(${item.id}, 1)">+</button>
+                            </div>
+                        `;
+                    } else {
+                        actionControlsHtml = `
+                            <div class="action-ctrl">
+                                <button class="action-btn" onclick="updateItemQuantity(${item.id}, -1)">−</button>
+                                <span class="qty-label">${qty}</span>
+                                <button class="action-btn" onclick="updateItemQuantity(${item.id}, 1)">+</button>
+                            </div>
+                        `;
+                    }
+                }
+
+                card.innerHTML = `
+                    <div class="photo-container">
+                        <img src="${item.photo_url || 'https://via.placeholder.com/600x400'}" alt="${item.item_name}">
+                        <span class="status-dot ${dotClass}"></span>
+                        ${actionControlsHtml}
+                    </div>
+                    <div class="item-info">
+                        <div class="item-text">
+                            <h3>${item.item_name}</h3>
+                            <div class="item-category">${item.category}</div>
+                        </div>
+                        <div class="item-price">₹${item.price.toFixed(2)}</div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function updateItemQuantity(itemId, delta) {
+            const res = await fetch('/api/cart/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ itemId, delta })
+            });
+            const data = await res.json();
+            if (data.success) {
+                cartData = data.cart;
+                updateCartUI(data.cart_code, data.total_price);
+                renderMenu();
+            }
+        }
+
+        function updateCartUI(cartCode, totalPrice) {
+            const cartBar = document.getElementById('cartBar');
+            const orderPlacedBar = document.getElementById('orderPlacedBar');
+
+            // If an order is already placed and running, don't show the cart button
+            if (orderPlacedBar.classList.contains('visible')) {
+                cartBar.classList.remove('visible');
+                return;
+            }
+
+            if (Object.keys(cartData).length > 0) {
+                cartBar.classList.add('visible');
+                document.getElementById('cartCodeLabel').textContent = cartCode;
+                document.getElementById('cartTotalLabel').textContent = `₹${totalPrice.toFixed(2)}`;
+            } else {
+                cartBar.classList.remove('visible');
+            }
+        }
+
+        init();
+    </script>
 </body>
 </html>

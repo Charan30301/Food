@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart & Bill - Grand Palace Hotel</title>
+    <style>
+        :root {
+            --bg: #0b1329;
+            --card-bg: #1e293b;
+            --border: #334155;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --primary: #0284c7;
+            --success: #10b981;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: var(--bg); color: var(--text); padding: 1.5rem 1rem 4rem; }
+        .container { max-width: 650px; margin: 0 auto; }
+
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+        .back-btn { background: none; border: none; color: var(--primary); font-size: 1rem; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; text-decoration: none; }
+
+        /* --- Item Rows --- */
+        .cart-list { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem; }
+        .cart-row {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* 2-line height compact photo */
+        .item-thumb {
+            width: 48px;
+            height: 48px;
+            border-radius: 6px;
+            object-fit: cover;
+            flex-shrink: 0;
+            background: #000;
+        }
+
+        .item-details { flex: 1; min-width: 0; }
+        .item-details h4 { font-size: 0.95rem; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-cat { font-size: 0.75rem; color: var(--muted); text-transform: capitalize; }
+
+        .item-qty-badge {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: var(--text);
+            white-space: nowrap;
+        }
+
+        .item-line-total {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #38bdf8;
+            min-width: 70px;
+            text-align: right;
+        }
+
+        /* --- Bill Summary Box --- */
+        .bill-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .bill-row { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--muted); }
+        .bill-total {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #fff;
+            border-top: 1px dashed var(--border);
+            padding-top: 0.75rem;
+            margin-top: 0.75rem;
+        }
+
+        /* --- UPI Payment Row --- */
+        .pay-row {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 1rem;
+            border-radius: 12px;
+        }
+
+        .upi-select {
+            flex: 1;
+            padding: 0.75rem;
+            background: #0f172a;
+            color: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        .pay-btn {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s;
+            white-space: nowrap;
+        }
+
+        .pay-btn:hover { background: #059669; }
+        .pay-btn:disabled { background: #475569; cursor: not-allowed; }
+
+        .empty-cart-msg { text-align: center; color: var(--muted); padding: 3rem 1rem; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <a href="/menu" class="back-btn">← Back to Menu</a>
+        <h2>Cart & Checkout</h2>
+    </div>
+
+    <!-- Rows of items -->
+    <div class="cart-list" id="cartItemsList"></div>
+
+    <!-- Bill Details -->
+    <div class="bill-card" id="billBox" style="display:none;">
+        <div class="bill-row">
+            <span>Subtotal</span>
+            <span id="subtotalLabel">₹0.00</span>
+        </div>
+        <div class="bill-row">
+            <span>Taxes & Hotel Charges</span>
+            <span>₹0.00</span>
+        </div>
+        <div class="bill-total">
+            <span>Total Payable</span>
+            <span id="totalPayableLabel">₹0.00</span>
+        </div>
+    </div>
+
+    <!-- UPI App Selector & Pay Button -->
+    <div class="pay-row" id="payRow" style="display:none;">
+        <select class="upi-select" id="upiAppSelector">
+            <option value="any">Pay with Any UPI App</option>
+            <option value="gpay">Google Pay (GPay)</option>
+            <option value="phonepe">PhonePe</option>
+            <option value="paytm">Paytm</option>
+            <option value="bhim">BHIM UPI</option>
+        </select>
+        <button class="pay-btn" id="payBtn" onclick="processPayment()">Pay Now</button>
+    </div>
+</div>
+
+<script>
+    let currentCartTotal = 0;
+
+    async function loadCartData() {
+        try {
+            const res = await fetch('/api/cart/items');
+            const data = await res.json();
+
+            const list = document.getElementById('cartItemsList');
+            const billBox = document.getElementById('billBox');
+            const payRow = document.getElementById('payRow');
+
+            if (!data.items || data.items.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-cart-msg">
+                        <p style="font-size:1.1rem; margin-bottom:1rem;">Your cart is empty.</p>
+                        <a href="/menu" style="color:var(--primary); font-weight:600;">Explore Menu</a>
+                    </div>
+                `;
+                billBox.style.display = 'none';
+                payRow.style.display = 'none';
+                return;
+            }
+
+            currentCartTotal = data.total_price;
+            list.innerHTML = '';
+
+            data.items.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'cart-row';
+                row.innerHTML = `
+                    <img src="${item.photo_url || 'https://via.placeholder.com/100'}" class="item-thumb" alt="${item.item_name}">
+                    <div class="item-details">
+                        <h4>${item.item_name}</h4>
+                        <div class="item-cat">${item.category}</div>
+                    </div>
+                    <div class="item-qty-badge">${item.quantity} pcs</div>
+                    <div class="item-line-total">₹${item.line_total.toFixed(2)}</div>
+                `;
+                list.appendChild(row);
+            });
+
+            document.getElementById('subtotalLabel').textContent = `₹${currentCartTotal.toFixed(2)}`;
+            document.getElementById('totalPayableLabel').textContent = `₹${currentCartTotal.toFixed(2)}`;
+            billBox.style.display = 'block';
+            payRow.style.display = 'flex';
+
+        } catch (err) {
+            console.error('Failed loading cart:', err);
+        }
+    }
+
+    async function processPayment() {
+        const payBtn = document.getElementById('payBtn');
+        payBtn.disabled = true;
+        payBtn.textContent = 'Processing...';
+
+        try {
+            const res = await fetch('/api/order/create', { method: 'POST' });
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                alert(data.error || 'Failed to initialize order');
+                payBtn.disabled = false;
+                payBtn.textContent = 'Pay Now';
+                return;
+            }
+
+            // Construct specific UPI App intents if desired
+            let upiUri = data.upi_url;
+            const selectedApp = document.getElementById('upiAppSelector').value;
+            
+            // App-specific intent prefixes for mobile
+            if (selectedApp === 'gpay') {
+                upiUri = upiUri.replace('upi://', 'gpay://upi/');
+            } else if (selectedApp === 'phonepe') {
+                upiUri = upiUri.replace('upi://', 'phonepe://');
+            } else if (selectedApp === 'paytm') {
+                upiUri = upiUri.replace('upi://', 'paytmmp://');
+            }
+
+            // Redirect user to UPI App
+            window.location.href = upiUri;
+
+            // Redirect back to menu after short delay so they see "Order Placed"
+            setTimeout(() => {
+                window.location.href = '/menu';
+            }, 2500);
+
+        } catch (err) {
+            console.error(err);
+            alert('Payment execution failed.');
+            payBtn.disabled = false;
+            payBtn.textContent = 'Pay Now';
+        }
+    }
+
+    loadCartData();
+</script>
+</body>
+</html>
