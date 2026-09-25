@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cart & Bill - Grand Palace Hotel</title>
-    <!-- Razorpay Standard Checkout Script -->
+    <title>Review Order & Cart - Grand Palace Hotel</title>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <style>
         :root {
@@ -15,12 +14,13 @@
             --muted: #94a3b8;
             --primary: #0284c7;
             --success: #10b981;
+            --danger: #ef4444;
+            --amber: #f59e0b;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
         body { background-color: var(--bg); color: var(--text); padding: 1.5rem 1rem 4rem; }
         .container { max-width: 600px; margin: 0 auto; }
-
         .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
         .back-btn { color: var(--primary); text-decoration: none; font-size: 1rem; }
 
@@ -31,21 +31,24 @@
         }
         .item-thumb { width: 48px; height: 48px; border-radius: 6px; object-fit: cover; }
         .item-details { flex: 1; }
-        .item-details h4 { font-size: 0.95rem; margin-bottom: 0.2rem; }
-        .item-cat { font-size: 0.75rem; color: var(--muted); text-transform: capitalize; }
         .item-qty-badge { background: #0f172a; border: 1px solid var(--border); padding: 0.25rem 0.5rem; border-radius: 6px; font-size: 0.85rem; }
         .item-line-total { font-weight: 700; color: #38bdf8; min-width: 70px; text-align: right; }
 
-        .bill-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; }
+        .bill-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
         .bill-total { display: flex; justify-content: space-between; font-size: 1.25rem; font-weight: 800; border-top: 1px dashed var(--border); padding-top: 0.75rem; margin-top: 0.75rem; }
 
-        .pay-btn {
+        .action-btn {
             width: 100%; background: var(--success); color: white; border: none;
-            padding: 1rem; border-radius: 8px; font-size: 1.1rem; font-weight: 700; cursor: pointer;
-            transition: background 0.2s;
+            padding: 1rem; border-radius: 8px; font-size: 1.1rem; font-weight: 700; cursor: pointer; margin-top: 1.25rem;
         }
-        .pay-btn:hover { background: #059669; }
-        .pay-btn:disabled { background: #475569; cursor: not-allowed; }
+        .action-btn:disabled { background: #475569; cursor: not-allowed; }
+
+        /* Waiting Timer Banner */
+        .timer-box {
+            display: none; background: #0f172a; border: 2px solid var(--amber);
+            border-radius: 12px; padding: 1.5rem; text-align: center; margin-top: 1.5rem;
+        }
+        .timer-val { font-size: 2.2rem; font-weight: 800; color: var(--amber); margin: 0.5rem 0; }
     </style>
 </head>
 <body>
@@ -53,7 +56,7 @@
 <div class="container">
     <div class="header">
         <a href="/menu" class="back-btn">← Back to Menu</a>
-        <h2>Review & Pay</h2>
+        <h2>Checkout & Confirm</h2>
     </div>
 
     <div class="cart-list" id="cartItemsList"></div>
@@ -63,15 +66,28 @@
             <span>To Pay</span>
             <span id="totalPayableLabel">₹0.00</span>
         </div>
-        <button class="pay-btn" id="payBtn" onclick="initiatePayment()" style="margin-top: 1.25rem;">Pay with UPI / Apps</button>
+        <button class="action-btn" id="confirmOrderBtn" onclick="requestOrderAcceptance()">Place Order & Await Acceptance</button>
+    </div>
+
+    <!-- 1-Minute Acceptance Timer -->
+    <div class="timer-box" id="timerBox">
+        <h3>Waiting for Kitchen to Accept...</h3>
+        <p style="color:var(--muted); font-size:0.85rem;">The restaurant has 1 minute to accept your order request.</p>
+        <div class="timer-val" id="timerDisplay">01:00</div>
+        <p style="font-size:0.8rem; color:var(--amber);">Payment will open immediately upon acceptance.</p>
     </div>
 </div>
 
 <script>
+    const IS_TEST_MODE = "{{ 'true' if test_mode else 'false' }}" === "true";
     const RZP_KEY_ID = "{{ rzp_key }}";
     const USER_EMAIL = "{{ email }}";
     const USER_NAME = "{{ username }}";
     let cartTotal = 0;
+    let submittedOrderId = null;
+    let timerInterval = null;
+    let pollInterval = null;
+    let secondsLeft = 60;
 
     async function loadCartData() {
         const res = await fetch('/api/cart/items');
@@ -90,10 +106,10 @@
         data.items.forEach(item => {
             list.innerHTML += `
                 <div class="cart-row">
-                    <img src="${item.photo_url}" class="item-thumb" alt="${item.item_name}">
+                    <img src="${item.photo_url}" class="item-thumb" alt="${item.item_name}" onerror="this.src='https://via.placeholder.com/48'">
                     <div class="item-details">
                         <h4>${item.item_name}</h4>
-                        <div class="item-cat">${item.category}</div>
+                        <div style="font-size:0.75rem; color:var(--muted); text-transform:capitalize;">${item.category}</div>
                     </div>
                     <div class="item-qty-badge">${item.quantity} pcs</div>
                     <div class="item-line-total">₹${item.line_total.toFixed(2)}</div>
@@ -105,74 +121,137 @@
         billBox.style.display = 'block';
     }
 
-    async function initiatePayment() {
-        const payBtn = document.getElementById('payBtn');
-        payBtn.disabled = true;
-        payBtn.textContent = 'Opening Secure Gateway...';
+    // Step 1: Submit order to kitchen & start 1-minute timer
+    async function requestOrderAcceptance() {
+        const btn = document.getElementById('confirmOrderBtn');
+        btn.disabled = true;
+        btn.textContent = "Submitting to Kitchen...";
 
         try {
-            // 1. Ask Flask backend to generate the gateway order
-            const res = await fetch('/api/payment/create-order', { method: 'POST' });
+            const res = await fetch('/api/order/submit-request', { method: 'POST' });
             const data = await res.json();
 
             if (!res.ok) {
-                alert(data.error || "Order creation failed");
-                payBtn.disabled = false;
-                payBtn.textContent = 'Pay with UPI / Apps';
+                alert(data.error || "Order submission failed");
+                btn.disabled = false;
+                btn.textContent = "Place Order & Await Acceptance";
                 return;
             }
 
-            // 2. Launch Standard Checkout Modal / UPI Intent
-            const options = {
-                "key": RZP_KEY_ID,
-                "amount": data.amount,
-                "currency": data.currency,
-                "name": "Grand Palace Hotel",
-                "description": "Preorder Food Payment",
-                "order_id": data.gateway_order_id,
-                "prefill": {
-                    "name": USER_NAME,
-                    "email": USER_EMAIL
-                },
-                "theme": { "color": "#0284c7" },
-                // 3. Callback on Payment Success
-                "handler": async function (response) {
-                    payBtn.textContent = "Verifying Payment...";
-                    const verifyRes = await fetch('/api/payment/verify', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            razorpay_order_id: response.razorpay_order_id,
-                            razorpay_payment_id: response.razorpay_payment_id,
-                            razorpay_signature: response.razorpay_signature
-                        })
-                    });
+            submittedOrderId = data.order_id;
+            document.getElementById('billBox').style.display = 'none';
+            document.getElementById('timerBox').style.display = 'block';
 
-                    const verifyData = await verifyRes.json();
-                    if (verifyData.success) {
-                        window.location.href = verifyData.redirect_url;
-                    } else {
-                        alert("Verification failed: " + verifyData.error);
-                        payBtn.disabled = false;
-                    }
-                },
-                "modal": {
-                    "ondismiss": function () {
-                        payBtn.disabled = false;
-                        payBtn.textContent = 'Pay with UPI / Apps';
-                    }
-                }
-            };
+            // Start 1-Minute Countdown
+            secondsLeft = 60;
+            timerInterval = setInterval(handleTimerTick, 1000);
 
-            const rzp = new Razorpay(options);
-            rzp.open();
+            // Poll for acceptance
+            pollInterval = setInterval(checkIfAccepted, 2000);
 
         } catch (err) {
-            console.error(err);
-            alert("Unable to open payment modal");
-            payBtn.disabled = false;
-            payBtn.textContent = 'Pay with UPI / Apps';
+            alert("Network error submitting order");
+            btn.disabled = false;
         }
+    }
+
+    function handleTimerTick() {
+        secondsLeft--;
+        const mins = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
+        const secs = String(secondsLeft % 60).padStart(2, '0');
+        document.getElementById('timerDisplay').textContent = `${mins}:${secs}`;
+
+        if (secondsLeft <= 0) {
+            clearInterval(timerInterval);
+            clearInterval(pollInterval);
+            handleTimeoutCancellation();
+        }
+    }
+
+    async function checkIfAccepted() {
+        try {
+            const res = await fetch('/api/order/active');
+            const data = await res.json();
+
+            // Admin accepted the order
+            if (data.has_active_order && data.order_id === submittedOrderId && data.status !== 'placed') {
+                clearInterval(timerInterval);
+                clearInterval(pollInterval);
+                launchPaymentFlow(data);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async function handleTimeoutCancellation() {
+        await fetch('/api/order/timeout-cancel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order_id: submittedOrderId })
+        });
+        alert("The kitchen is not accepting orders, please try again in a few minutes.");
+        window.location.href = "/menu";
+    }
+
+    // Step 2: Payment Gateway or Mock Flow upon acceptance
+    async function launchPaymentFlow(orderData) {
+        if (IS_TEST_MODE) {
+            const confirmTest = confirm(`Kitchen Accepted Order #${orderData.daily_order_number}! Complete test payment of ₹${orderData.total_amount}?`);
+            if (confirmTest) {
+                await fetch('/api/payment/confirm-test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ order_id: submittedOrderId })
+                });
+                alert("Payment Success!");
+                window.location.href = "/menu";
+            } else {
+                // User backed out without payment
+                alert("Payment was not completed. Your order is placed with payment pending.");
+                window.location.href = "/menu";
+            }
+            return;
+        }
+
+        // Live Razorpay Checkout
+        const options = {
+            "key": RZP_KEY_ID,
+            "amount": Math.round(orderData.total_amount * 100),
+            "currency": "INR",
+            "name": "Grand Palace Hotel",
+            "description": `Order #${orderData.daily_order_number}`,
+            "order_id": orderData.gateway_order_id,
+            "prefill": { "name": USER_NAME, "email": USER_EMAIL },
+            "theme": { "color": "#0284c7" },
+            "handler": async function (response) {
+                const verifyRes = await fetch('/api/payment/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature
+                    })
+                });
+                const verifyData = await verifyRes.json();
+                if (verifyData.success) {
+                    window.location.href = "/menu";
+                } else {
+                    alert("Payment verification failed");
+                    window.location.href = "/menu";
+                }
+            },
+            "modal": {
+                "ondismiss": function() {
+                    alert("Payment not completed. Please settle payment to confirm your order.");
+                    window.location.href = "/menu";
+                }
+            }
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.open();
     }
 
     loadCartData();
