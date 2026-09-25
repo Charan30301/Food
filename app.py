@@ -62,6 +62,30 @@ def clean_old_orders():
     except Exception as e:
         print(f"Cleanup error: {e}")
 
+def get_setting(key, default="true"):
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT value FROM system_settings WHERE key = %s;", (key,))
+                row = cur.fetchone()
+                return row["value"] if row else default
+    except Exception:
+        return default
+
+def bump_menu_version():
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO system_settings (key, value)
+                    VALUES ('menu_version', '1')
+                    ON CONFLICT (key) DO UPDATE 
+                    SET value = (COALESCE(system_settings.value::int, 1) + 1)::text;
+                """)
+                conn.commit()
+    except Exception as e:
+        print(f"Version bump error: {e}")
+
 def get_next_daily_order_number(cur):
     cur.execute("""
         SELECT COALESCE(MAX(daily_order_number), -1) + 1 AS next_num
@@ -183,6 +207,9 @@ def get_menu():
     if not user_email:
         return jsonify({"error": "Unauthorized"}), 401
 
+    kitchen_open = get_setting("kitchen_open", "true") == "true"
+    current_version = int(get_setting("menu_version", "1"))
+
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT id, item_name, category, price::float, photo_url, is_active FROM menu_items ORDER BY id ASC;")
@@ -194,7 +221,14 @@ def get_menu():
     cart_dict = parse_cart_code(cart_row["cart_code"]) if cart_row else {}
     total_price = cart_row["total_price"] if cart_row else 0.0
 
-    return jsonify({"items": items, "cart": cart_dict, "cart_code": cart_row["cart_code"] if cart_row else "", "total_price": total_price})
+    return jsonify({
+        "items": items,
+        "cart": cart_dict,
+        "cart_code": cart_row["cart_code"] if cart_row else "",
+        "total_price": total_price,
+        "kitchen_open": kitchen_open,
+        "menu_version": current_version
+    })
 
 @app.route("/api/cart/update", methods=["POST"])
 def update_cart():
@@ -224,7 +258,7 @@ def update_cart():
 
             if cart_dict:
                 item_ids = list(cart_dict.keys())
-                cur.execute("SELECT id, price::float FROM menu_items WHERE id = ANY(%s);", (item_ids,))
+                cur.execute("SELECT id, price::float FROM menu_items WHERE id = ANY(%s::int[]);", (item_ids,))
                 prices = {row["id"]: row["price"] for row in cur.fetchall()}
                 for i_id, qty in cart_dict.items():
                     total_price += prices.get(i_id, 0.0) * qty
@@ -256,7 +290,7 @@ def get_cart_items():
             cart_dict = parse_cart_code(cart_row["cart_code"])
             item_ids = list(cart_dict.keys())
 
-            cur.execute("SELECT id, item_name, category, price::float, photo_url FROM menu_items WHERE id = ANY(%s);", (item_ids,))
+            cur.execute("SELECT id, item_name, category, price::float, photo_url FROM menu_items WHERE id = ANY(%s::int[]);", (item_ids,))
             menu_data = cur.fetchall()
 
     detailed_items = []
@@ -276,6 +310,9 @@ def get_cart_items():
 
 @app.route("/api/order/submit-request", methods=["POST"])
 def submit_order_request():
+    if get_setting("kitchen_open", "true") != "true":
+        return jsonify({"error": "The kitchen is currently closed and not accepting preorders."}), 403
+
     user_email = session.get("user_email")
     if not user_email:
         return jsonify({"error": "Unauthorized"}), 401
@@ -287,6 +324,13 @@ def submit_order_request():
 
             if not cart or not cart["cart_code"] or cart["total_price"] <= 0:
                 return jsonify({"error": "Cart is empty"}), 400
+
+            # Cancel lingering unaccepted orders for this customer
+            cur.execute("""
+                UPDATE orders 
+                SET order_status = 'cancelled', cancellation_reason = 'Superseded by new request'
+                WHERE user_email = %s AND order_status = 'placed' AND payment_status != 'paid';
+            """, (user_email,))
 
             daily_num = get_next_daily_order_number(cur)
             order_data = {
@@ -303,8 +347,6 @@ def submit_order_request():
                 RETURNING id, daily_order_number;
             """, (user_email, cart["cart_code"], cart["total_price"], rzp_order["id"], daily_num))
             new_order = cur.fetchone()
-
-            cur.execute("UPDATE carts SET cart_code = '', total_price = 0 WHERE user_email = %s;", (user_email,))
             conn.commit()
 
     return jsonify({
@@ -337,6 +379,7 @@ def timeout_cancel_order():
 @app.route("/api/payment/verify", methods=["POST"])
 def verify_payment():
     data = request.get_json() or {}
+    user_email = session.get("user_email")
     params_dict = {
         'razorpay_order_id': data.get("razorpay_order_id"),
         'razorpay_payment_id': data.get("razorpay_payment_id"),
@@ -350,9 +393,12 @@ def verify_payment():
             with conn.cursor() as cur:
                 cur.execute("""
                     UPDATE orders 
-                    SET payment_id = %s, payment_status = 'paid', updated_at = NOW()
+                    SET payment_id = %s, payment_status = 'paid', customer_alert = TRUE, updated_at = NOW()
                     WHERE gateway_order_id = %s;
                 """, (params_dict['razorpay_payment_id'], params_dict['razorpay_order_id']))
+
+                # Empty cart only after payment is verified
+                cur.execute("UPDATE carts SET cart_code = '', total_price = 0 WHERE user_email = %s;", (user_email,))
                 conn.commit()
 
         return jsonify({"success": True, "redirect_url": "/menu"})
@@ -378,6 +424,7 @@ def razorpay_webhook():
         payment_entity = event_data["payload"]["payment"]["entity"]
         gateway_order_id = payment_entity.get("order_id")
         payment_id = payment_entity.get("id")
+        user_email = payment_entity.get("notes", {}).get("user_email")
 
         with get_db() as conn:
             with conn.cursor() as cur:
@@ -386,6 +433,9 @@ def razorpay_webhook():
                     SET payment_id = %s, payment_status = 'paid', updated_at = NOW()
                     WHERE gateway_order_id = %s;
                 """, (payment_id, gateway_order_id))
+
+                if user_email:
+                    cur.execute("UPDATE carts SET cart_code = '', total_price = 0 WHERE user_email = %s;", (user_email,))
                 conn.commit()
 
     return jsonify({"status": "ok"}), 200
@@ -396,6 +446,9 @@ def check_active_order():
     user_email = session.get("user_email")
     if not user_email:
         return jsonify({"has_active_order": False})
+
+    kitchen_open = get_setting("kitchen_open", "true") == "true"
+    menu_version = int(get_setting("menu_version", "1"))
 
     with get_db() as conn:
         with conn.cursor() as cur:
@@ -415,7 +468,9 @@ def check_active_order():
                     "alert": True,
                     "order_id": alert_order["id"],
                     "status": alert_order["order_status"],
-                    "reason": alert_order["cancellation_reason"] or "Order cancelled"
+                    "reason": alert_order["cancellation_reason"] or "Order cancelled",
+                    "kitchen_open": kitchen_open,
+                    "menu_version": menu_version
                 })
 
             cur.execute("""
@@ -428,95 +483,43 @@ def check_active_order():
             """, (user_email,))
             order = cur.fetchone()
 
-    if order:
-        return jsonify({
-            "has_active_order": True,
-            "order_id": order["id"],
-            "daily_order_number": order["daily_order_number"],
-            "status": order["order_status"],
-            "payment_status": order["payment_status"],
-            "total_amount": order["total_amount"],
-            "gateway_order_id": order["gateway_order_id"],
-            "seconds_elapsed": order["seconds_elapsed"]
-        })
+            if order:
+                elapsed = order["seconds_elapsed"]
+                if order["order_status"] == 'placed' and elapsed >= 60:
+                    cur.execute("""
+                        UPDATE orders 
+                        SET order_status = 'cancelled',
+                            cancellation_reason = 'The kitchen is not accepting orders, please try again in a few minutes.',
+                            customer_alert = TRUE,
+                            updated_at = NOW()
+                        WHERE id = %s;
+                    """, (order["id"],))
+                    conn.commit()
+                    return jsonify({
+                        "has_active_order": False,
+                        "alert": True,
+                        "order_id": order["id"],
+                        "status": "cancelled",
+                        "reason": "The kitchen is not accepting orders, please try again in a few minutes.",
+                        "kitchen_open": kitchen_open,
+                        "menu_version": menu_version
+                    })
 
-    return jsonify({"has_active_order": False, "alert": False})
+                seconds_remaining = max(0, 60 - elapsed) if order["order_status"] == 'placed' else 0
+                return jsonify({
+                    "has_active_order": True,
+                    "order_id": order["id"],
+                    "daily_order_number": order["daily_order_number"],
+                    "status": order["order_status"],
+                    "payment_status": order["payment_status"],
+                    "total_amount": order["total_amount"],
+                    "gateway_order_id": order["gateway_order_id"],
+                    "seconds_left": seconds_remaining,
+                    "kitchen_open": kitchen_open,
+                    "menu_version": menu_version
+                })
 
-@app.route("/api/admin/orders", methods=["GET"])
-def admin_get_orders():
-    if not session.get("is_admin"):
-        return jsonify({"error": "Unauthorized"}), 401
-
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT id, item_name, price::float FROM menu_items;")
-            menu_map = {row["id"]: row for row in cur.fetchall()}
-
-            cur.execute("""
-                SELECT o.id, o.user_email, COALESCE(u.username, 'Customer') AS username,
-                       o.items_code, o.total_amount::float, o.payment_status,
-                       o.order_status, o.daily_order_number, o.created_at
-                FROM orders o
-                LEFT JOIN users u ON o.user_email = u.email
-                WHERE o.order_status NOT IN ('delivered', 'cancelled')
-                ORDER BY o.created_at ASC;
-            """)
-            orders_rows = cur.fetchall()
-
-    new_orders = []
-    active_orders = []
-
-    for o in orders_rows:
-        parsed_code = parse_cart_code(o["items_code"])
-        items_detail = [{"name": menu_map.get(i_id, {"item_name": f"Dish #{i_id}"})["item_name"], "quantity": qty, "subtotal": round(menu_map.get(i_id, {"price": 0.0})["price"] * qty, 2)} for i_id, qty in parsed_code.items()]
-
-        order_dict = {
-            "id": o["id"],
-            "daily_order_number": o["daily_order_number"],
-            "username": o["username"],
-            "user_email": o["user_email"],
-            "total_amount": o["total_amount"],
-            "payment_status": o["payment_status"],
-            "order_status": o["order_status"],
-            "time": o["created_at"].strftime("%I:%M %p") if o["created_at"] else "",
-            "items": items_detail
-        }
-
-        if o["order_status"] == 'placed':
-            new_orders.append(order_dict)
-        else:
-            active_orders.append(order_dict)
-
-    return jsonify({
-        "new_orders": new_orders,
-        "active_orders": active_orders,
-        "new_count": len(new_orders),
-        "active_count": len(active_orders)
-    })
-
-@app.route("/api/admin/order/update-status", methods=["POST"])
-def admin_update_order_status():
-    if not session.get("is_admin"):
-        return jsonify({"error": "Unauthorized"}), 401
-
-    data = request.get_json() or {}
-    order_id = data.get("order_id")
-    new_status = data.get("status")
-    reason = data.get("reason", "").strip()
-
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("""
-                UPDATE orders 
-                SET order_status = %s, 
-                    cancellation_reason = CASE WHEN %s = 'cancelled' THEN %s ELSE cancellation_reason END,
-                    customer_alert = TRUE,
-                    updated_at = NOW()
-                WHERE id = %s;
-            """, (new_status, new_status, reason, order_id))
-            conn.commit()
-
-    return jsonify({"success": True})
+    return jsonify({"has_active_order": False, "alert": False, "kitchen_open": kitchen_open, "menu_version": menu_version})
 
 @app.route("/admin")
 def admin_page():
@@ -565,6 +568,112 @@ def admin_change_password():
                 VALUES ('admin', %s, NOW())
                 ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash, updated_at = NOW();
             """, (hashed,))
+            conn.commit()
+
+    return jsonify({"success": True})
+
+@app.route("/api/admin/orders", methods=["GET"])
+def admin_get_orders():
+    if not session.get("is_admin"):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    kitchen_open = get_setting("kitchen_open", "true") == "true"
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id, item_name, price::float FROM menu_items;")
+            menu_map = {row["id"]: row for row in cur.fetchall()}
+
+            cur.execute("""
+                SELECT o.id, o.user_email, COALESCE(u.username, 'Customer') AS username,
+                       o.items_code, o.total_amount::float, o.payment_status,
+                       o.order_status, o.daily_order_number, o.created_at
+                FROM orders o
+                LEFT JOIN users u ON o.user_email = u.email
+                WHERE o.order_status NOT IN ('delivered', 'cancelled')
+                ORDER BY o.created_at ASC;
+            """)
+            orders_rows = cur.fetchall()
+
+    new_orders = []
+    active_orders = []
+
+    for o in orders_rows:
+        parsed_code = parse_cart_code(o["items_code"])
+        items_detail = [{"name": menu_map.get(i_id, {"item_name": f"Dish #{i_id}"})["item_name"], "quantity": qty, "subtotal": round(menu_map.get(i_id, {"price": 0.0})["price"] * qty, 2)} for i_id, qty in parsed_code.items()]
+
+        order_dict = {
+            "id": o["id"],
+            "daily_order_number": o["daily_order_number"],
+            "username": o["username"],
+            "user_email": o["user_email"],
+            "total_amount": o["total_amount"],
+            "payment_status": o["payment_status"],
+            "order_status": o["order_status"],
+            "time": o["created_at"].strftime("%I:%M %p") if o["created_at"] else "",
+            "items": items_detail
+        }
+
+        if o["order_status"] == 'placed':
+            new_orders.append(order_dict)
+        else:
+            active_orders.append(order_dict)
+
+    return jsonify({
+        "new_orders": new_orders,
+        "active_orders": active_orders,
+        "new_count": len(new_orders),
+        "active_count": len(active_orders),
+        "kitchen_open": kitchen_open
+    })
+
+@app.route("/api/admin/kitchen-toggle", methods=["POST"])
+def admin_toggle_kitchen():
+    if not session.get("is_admin"):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    current = get_setting("kitchen_open", "true") == "true"
+    new_status = "false" if current else "true"
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO system_settings (key, value)
+                VALUES ('kitchen_open', %s)
+                ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+            """, (new_status,))
+            conn.commit()
+
+    bump_menu_version()
+    return jsonify({"success": True, "kitchen_open": new_status == "true"})
+
+@app.route("/api/admin/menu/sync", methods=["POST"])
+def admin_sync_menu():
+    if not session.get("is_admin"):
+        return jsonify({"error": "Unauthorized"}), 401
+    bump_menu_version()
+    return jsonify({"success": True, "message": "Menu update pushed to all clients."})
+
+@app.route("/api/admin/order/update-status", methods=["POST"])
+def admin_update_order_status():
+    if not session.get("is_admin"):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json() or {}
+    order_id = data.get("order_id")
+    new_status = data.get("status")
+    reason = data.get("reason", "").strip()
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE orders 
+                SET order_status = %s, 
+                    cancellation_reason = CASE WHEN %s = 'cancelled' THEN %s ELSE cancellation_reason END,
+                    customer_alert = TRUE,
+                    updated_at = NOW()
+                WHERE id = %s;
+            """, (new_status, new_status, reason, order_id))
             conn.commit()
 
     return jsonify({"success": True})
@@ -622,6 +731,7 @@ def admin_save_menu_item():
                 """, (item_name, category, price_val, final_photo_url, is_active))
             conn.commit()
 
+    bump_menu_version()
     return jsonify({"success": True})
 
 @app.route("/api/admin/menu/delete", methods=["POST"])
@@ -633,7 +743,36 @@ def admin_delete_menu_item():
         with conn.cursor() as cur:
             cur.execute("DELETE FROM menu_items WHERE id = %s;", (item_id,))
             conn.commit()
+    bump_menu_version()
     return jsonify({"success": True})
+
+@app.route("/api/admin/photos", methods=["GET"])
+def admin_get_photos():
+    if not session.get("is_admin"):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    photos = []
+    if os.path.exists(UPLOAD_FOLDER):
+        for fname in os.listdir(UPLOAD_FOLDER):
+            if allowed_file(fname):
+                photos.append({
+                    "filename": fname,
+                    "url": f"/static/uploads/{fname}"
+                })
+    return jsonify({"photos": photos})
+
+@app.route("/api/admin/photos/delete", methods=["POST"])
+def admin_delete_photo():
+    if not session.get("is_admin"):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    fname = secure_filename(request.get_json().get("filename", ""))
+    target = os.path.join(UPLOAD_FOLDER, fname)
+
+    if os.path.exists(target):
+        os.remove(target)
+        return jsonify({"success": True})
+    return jsonify({"error": "File not found"}), 404
 
 @app.route("/api/profile/orders", methods=["GET"])
 def get_user_orders():

@@ -40,10 +40,11 @@
         .action-btn {
             width: 100%; background: var(--success); color: white; border: none;
             padding: 1rem; border-radius: 8px; font-size: 1.1rem; font-weight: 700; cursor: pointer; margin-top: 1.25rem;
+            transition: 0.2s;
         }
         .action-btn:disabled { background: #475569; cursor: not-allowed; }
+        .btn-pay-now { background: #0284c7 !important; box-shadow: 0 0 15px rgba(2, 132, 199, 0.5); }
 
-        /* Waiting Timer Banner */
         .timer-box {
             display: none; background: #0f172a; border: 2px solid var(--amber);
             border-radius: 12px; padding: 1.5rem; text-align: center; margin-top: 1.5rem;
@@ -66,30 +67,64 @@
             <span>To Pay</span>
             <span id="totalPayableLabel">₹0.00</span>
         </div>
-        <button class="action-btn" id="confirmOrderBtn" onclick="requestOrderAcceptance()">Place Order & Await Acceptance</button>
+        <!-- Dynamic Two-Stage Button -->
+        <button class="action-btn" id="mainActionButton" onclick="handleActionButtonClick()">Place Order & Await Acceptance</button>
     </div>
 
     <!-- 1-Minute Acceptance Timer -->
     <div class="timer-box" id="timerBox">
-        <h3>Waiting for Kitchen to Accept...</h3>
-        <p style="color:var(--muted); font-size:0.85rem;">The restaurant has 1 minute to accept your order request.</p>
+        <h3 id="timerHeader">Waiting for Kitchen to Accept...</h3>
+        <p style="color:var(--muted); font-size:0.85rem;" id="timerSubtext">The restaurant has 1 minute to accept your order request.</p>
         <div class="timer-val" id="timerDisplay">01:00</div>
-        <p style="font-size:0.8rem; color:var(--amber);">Payment will open immediately upon acceptance.</p>
+        <p style="font-size:0.8rem; color:var(--amber);" id="timerFooter">Once accepted, the button will convert to "Pay Now".</p>
     </div>
 </div>
 
 <script>
-    const IS_TEST_MODE = "{{ 'true' if test_mode else 'false' }}" === "true";
-    const RZP_KEY_ID = "{{ rzp_key }}";
-    const USER_EMAIL = "{{ email }}";
-    const USER_NAME = "{{ username }}";
+
+
     let cartTotal = 0;
     let submittedOrderId = null;
+    let currentActiveOrder = null;
     let timerInterval = null;
     let pollInterval = null;
     let secondsLeft = 60;
+    let orderState = "cart"; // "cart" | "awaiting_acceptance" | "accepted_unpaid"
 
     async function loadCartData() {
+        // 1. Check existing order state on server first
+        const statusRes = await fetch('/api/order/active');
+        const statusData = await statusRes.json();
+
+        // Case A: Order already submitted, awaiting kitchen acceptance within 60s
+        if (statusData.has_active_order && statusData.status === 'placed') {
+            submittedOrderId = statusData.order_id;
+            currentActiveOrder = statusData;
+            secondsLeft = statusData.seconds_left !== undefined ? statusData.seconds_left : 60;
+            orderState = "awaiting_acceptance";
+
+            await renderCartItems();
+            setAwaitingAcceptanceUI();
+            return;
+        }
+
+        // Case B: Kitchen already accepted, but user hasn't paid yet!
+        if (statusData.has_active_order && statusData.status !== 'placed' && statusData.payment_status !== 'paid') {
+            submittedOrderId = statusData.order_id;
+            currentActiveOrder = statusData;
+            orderState = "accepted_unpaid";
+
+            await renderCartItems();
+            setPayNowUI();
+            return;
+        }
+
+        // Case C: Standard fresh cart
+        orderState = "cart";
+        await renderCartItems();
+    }
+
+    async function renderCartItems() {
         const res = await fetch('/api/cart/items');
         const data = await res.json();
         const list = document.getElementById('cartItemsList');
@@ -121,9 +156,18 @@
         billBox.style.display = 'block';
     }
 
-    // Step 1: Submit order to kitchen & start 1-minute timer
+    // Controls the single primary button's click behavior
+    function handleActionButtonClick() {
+        if (orderState === "cart") {
+            requestOrderAcceptance();
+        } else if (orderState === "accepted_unpaid") {
+            launchPaymentFlow(currentActiveOrder);
+        }
+    }
+
+    // Step 1: User clicks "Place Order & Await Acceptance"
     async function requestOrderAcceptance() {
-        const btn = document.getElementById('confirmOrderBtn');
+        const btn = document.getElementById('mainActionButton');
         btn.disabled = true;
         btn.textContent = "Submitting to Kitchen...";
 
@@ -139,27 +183,55 @@
             }
 
             submittedOrderId = data.order_id;
-            document.getElementById('billBox').style.display = 'none';
-            document.getElementById('timerBox').style.display = 'block';
-
-            // Start 1-Minute Countdown
+            orderState = "awaiting_acceptance";
             secondsLeft = 60;
-            timerInterval = setInterval(handleTimerTick, 1000);
 
-            // Poll for acceptance
-            pollInterval = setInterval(checkIfAccepted, 2000);
+            setAwaitingAcceptanceUI();
 
         } catch (err) {
             alert("Network error submitting order");
             btn.disabled = false;
+            btn.textContent = "Place Order & Await Acceptance";
         }
+    }
+
+    function setAwaitingAcceptanceUI() {
+        const btn = document.getElementById('mainActionButton');
+        btn.disabled = true;
+        btn.className = "action-btn";
+        btn.textContent = "Awaiting Kitchen Acceptance...";
+
+        document.getElementById('timerBox').style.display = 'block';
+        updateTimerDisplay();
+
+        clearInterval(timerInterval);
+        clearInterval(pollInterval);
+
+        timerInterval = setInterval(handleTimerTick, 1000);
+        pollInterval = setInterval(checkIfAccepted, 2000);
+    }
+
+    function setPayNowUI() {
+        clearInterval(timerInterval);
+        clearInterval(pollInterval);
+
+        document.getElementById('timerBox').style.display = 'none';
+
+        const btn = document.getElementById('mainActionButton');
+        btn.disabled = false;
+        btn.className = "action-btn btn-pay-now";
+        btn.textContent = `Pay Now (Accepted) - ₹${currentActiveOrder ? currentActiveOrder.total_amount.toFixed(2) : cartTotal.toFixed(2)}`;
+    }
+
+    function updateTimerDisplay() {
+        const mins = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
+        const secs = String(secondsLeft % 60).padStart(2, '0');
+        document.getElementById('timerDisplay').textContent = `${mins}:${secs}`;
     }
 
     function handleTimerTick() {
         secondsLeft--;
-        const mins = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
-        const secs = String(secondsLeft % 60).padStart(2, '0');
-        document.getElementById('timerDisplay').textContent = `${mins}:${secs}`;
+        updateTimerDisplay();
 
         if (secondsLeft <= 0) {
             clearInterval(timerInterval);
@@ -173,11 +245,12 @@
             const res = await fetch('/api/order/active');
             const data = await res.json();
 
-            // Admin accepted the order
+            // When admin clicks Accept, the order status changes away from 'placed'
             if (data.has_active_order && data.order_id === submittedOrderId && data.status !== 'placed') {
-                clearInterval(timerInterval);
-                clearInterval(pollInterval);
-                launchPaymentFlow(data);
+                currentActiveOrder = data;
+                orderState = "accepted_unpaid";
+                setPayNowUI();
+                alert(`🎉 Kitchen has ACCEPTED your order! Click 'Pay Now' to complete your order.`);
             }
         } catch (e) {
             console.error(e);
@@ -194,33 +267,52 @@
         window.location.href = "/menu";
     }
 
-    // Step 2: Payment Gateway or Mock Flow upon acceptance
+    // Step 2: User clicks "Pay Now (Accepted)"
+    // Read the test_mode variable passed from Flask
+    const IS_TEST_MODE = "{{ 'true' if test_mode else 'false' }}" === "true";
+    const RZP_KEY_ID = "{{ rzp_key }}";
+    const USER_EMAIL = "{{ email }}";
+    const USER_NAME = "{{ username }}";
+
+    // ... (rest of your variables and functions stay identical) ...
+
     async function launchPaymentFlow(orderData) {
+        // --- 1. IF IN TEST MODE: BYPASS RAZORPAY GATEWAY ENTIRELY ---
         if (IS_TEST_MODE) {
-            const confirmTest = confirm(`Kitchen Accepted Order #${orderData.daily_order_number}! Complete test payment of ₹${orderData.total_amount}?`);
+            const confirmTest = confirm(`Kitchen Accepted Order #${orderData.daily_order_number}!\n\n[TEST MODE] Click OK to place order and confirm test payment of ₹${orderData.total_amount.toFixed(2)}.`);
+            
             if (confirmTest) {
-                await fetch('/api/payment/confirm-test', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ order_id: submittedOrderId })
-                });
-                alert("Payment Success!");
-                window.location.href = "/menu";
+                try {
+                    const payRes = await fetch('/api/payment/confirm-test', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ order_id: orderData.order_id })
+                    });
+                    const payData = await payRes.json();
+                    
+                    if (payData.success) {
+                        alert("✅ Test Payment Successful! Your order has been placed.");
+                        window.location.href = "/menu";
+                    } else {
+                        alert("❌ Failed to record test payment.");
+                    }
+                } catch (err) {
+                    alert("Network error confirming test payment.");
+                }
             } else {
-                // User backed out without payment
-                alert("Payment was not completed. Your order is placed with payment pending.");
+                alert("Payment was not completed. The order placed button will not activate until payment is complete.");
                 window.location.href = "/menu";
             }
             return;
         }
 
-        // Live Razorpay Checkout
+        // --- 2. REAL RAZORPAY GATEWAY (Only runs when test_mode is False) ---
         const options = {
             "key": RZP_KEY_ID,
             "amount": Math.round(orderData.total_amount * 100),
             "currency": "INR",
             "name": "Grand Palace Hotel",
-            "description": `Order #${orderData.daily_order_number}`,
+            "description": `Token #${orderData.daily_order_number}`,
             "order_id": orderData.gateway_order_id,
             "prefill": { "name": USER_NAME, "email": USER_EMAIL },
             "theme": { "color": "#0284c7" },
@@ -236,15 +328,15 @@
                 });
                 const verifyData = await verifyRes.json();
                 if (verifyData.success) {
+                    alert("Payment Verified! Your order is placed.");
                     window.location.href = "/menu";
                 } else {
                     alert("Payment verification failed");
-                    window.location.href = "/menu";
                 }
             },
             "modal": {
                 "ondismiss": function() {
-                    alert("Payment not completed. Please settle payment to confirm your order.");
+                    alert("Payment cancelled. Order placed button will not activate until payment is complete.");
                     window.location.href = "/menu";
                 }
             }

@@ -42,6 +42,12 @@
         }
         .profile-btn:hover { border-color: var(--primary); background: #253348; }
 
+        .kitchen-banner {
+            display: none; background: #ef4444; color: white; text-align: center;
+            padding: 0.65rem; font-weight: 700; font-size: 0.9rem;
+        }
+        .kitchen-banner.show { display: block; }
+
         .categories-container {
             max-width: 1400px; margin: 1.25rem auto 0.5rem; padding: 0 1.5rem;
             display: flex; gap: 0.75rem; overflow-x: auto;
@@ -83,7 +89,7 @@
             position: absolute; bottom: 10px; right: 10px; background: #ffffff;
             border-radius: 9999px; display: flex; align-items: center; z-index: 2;
         }
-        .action-btn { background: none; border: none; padding: 0.45rem 0.75rem; font-size: 1rem; cursor: pointer; color: #0f172a; }
+        .action-btn { background: none; border: none; padding: 0.45rem 0.75rem; font-size: 1rem; cursor: pointer; color: #0f172a; font-weight: bold; }
         .qty-label { font-size: 0.9rem; min-width: 20px; text-align: center; color: #0f172a; font-weight: bold; }
 
         .item-info { padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: flex-end; }
@@ -99,10 +105,7 @@
         }
         .floating-action-bar.visible { display: flex; }
         .cart-bar { background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; }
-        
-        /* Floating Order Bar Colors */
-        .order-placed-bar { background: linear-gradient(135deg, #d97706, #b45309); color: #fff; }
-        .order-unpaid-bar { background: linear-gradient(135deg, #ef4444, #b91c1c) !important; color: #fff; }
+        .order-placed-bar { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
 
         .badge { font-size: 1.1rem; font-weight: 800; background: rgba(255,255,255,0.2); padding: 0.35rem 0.75rem; border-radius: 8px; }
 
@@ -124,7 +127,6 @@
         .step-dot { width: 24px; height: 24px; border-radius: 50%; background: #334155; border: 3px solid #0f172a; transition: 0.3s; }
         .step-dot.green { background: var(--success); box-shadow: 0 0 10px rgba(16, 185, 129, 0.6); }
         .step-name { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
-        .step-name.active { color: #fff; }
 
         /* Slide-out Sidebar */
         .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); z-index: 1100; opacity: 0; pointer-events: none; transition: 0.3s; }
@@ -153,6 +155,8 @@
 </head>
 <body>
 
+    <div class="kitchen-banner" id="kitchenClosedBanner">⚠️ The Kitchen is currently CLOSED. Preorders are temporarily paused.</div>
+
     <header>
         <div class="top-bar">
             <div class="search-container">
@@ -175,20 +179,20 @@
 
     <main class="menu-list" id="menuContainer"></main>
 
-    <!-- State 1: Active Cart -->
+    <!-- State 1: Active Cart Button (ALWAYS visible until payment is PAID) -->
     <a href="/cart" class="floating-action-bar cart-bar" id="cartBar">
         <div>
-            <h4 style="font-size:0.95rem;">View Cart</h4>
+            <h4 style="font-size:0.95rem;" id="cartBarTitle">View Cart</h4>
             <div style="font-size:0.75rem; color:#bae6fd;" id="cartCodeLabel"></div>
         </div>
         <div class="badge" id="cartTotalLabel">₹0.00</div>
     </a>
 
-    <!-- State 2: Order Placed Button (Shows Token # and turns red if payment pending) -->
+    <!-- State 2: Order Placed Button (ONLY appears when order is PAID) -->
     <div class="floating-action-bar order-placed-bar" id="orderPlacedBar" onclick="openOrderProgressModal()">
         <div>
-            <h4 style="font-size:0.95rem;" id="orderBarTitle">Order Placed</h4>
-            <div style="font-size:0.75rem; color:#fef3c7;" id="orderStatusText">Tap to track status</div>
+            <h4 style="font-size:0.95rem;">Order Placed!</h4>
+            <div style="font-size:0.75rem; color:#dcfce7;" id="orderStatusText">Kitchen is preparing your food</div>
         </div>
         <div class="badge">Token #<span id="activeTokenId">0</span></div>
     </div>
@@ -197,24 +201,24 @@
     <div class="modal-overlay" id="orderProgressModal">
         <div class="progress-box">
             <h3>Token #<span id="modalOrderId">0</span> Status</h3>
-            <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.3rem;" id="modalPaymentInfo"></p>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.3rem;">Payment Verified • Preparing</p>
 
             <div class="stepper-row">
                 <div class="step-col">
                     <div class="step-dot" id="dotAccepted"></div>
-                    <span class="step-name" id="labelAccepted">Accepted</span>
+                    <span class="step-name">Accepted</span>
                 </div>
                 <div class="step-col">
                     <div class="step-dot" id="dotPreparing"></div>
-                    <span class="step-name" id="labelPreparing">Preparing</span>
+                    <span class="step-name">Preparing</span>
                 </div>
                 <div class="step-col">
                     <div class="step-dot" id="dotPrepared"></div>
-                    <span class="step-name" id="labelPrepared">Prepared</span>
+                    <span class="step-name">Prepared</span>
                 </div>
                 <div class="step-col">
                     <div class="step-dot" id="dotDelivered"></div>
-                    <span class="step-name" id="labelDelivered">Delivered</span>
+                    <span class="step-name">Delivered</span>
                 </div>
             </div>
 
@@ -260,70 +264,93 @@
         let currentCategory = 'all';
         let searchQuery = '';
         let activeOrder = null;
+        let lastReportedStatus = null;
+        let localMenuVersion = null;
 
-let lastReportedStatus = null;
+        async function checkOrderStatus() {
+            try {
+                const res = await fetch('/api/order/active');
+                const data = await res.json();
+                const orderPlacedBar = document.getElementById('orderPlacedBar');
+                const cartBar = document.getElementById('cartBar');
 
-async function checkOrderStatus() {
-    try {
-        const res = await fetch('/api/order/active');
-        const data = await res.json();
-        const bar = document.getElementById('orderPlacedBar');
-        const cartBar = document.getElementById('cartBar');
+                // Kitchen toggle banner
+                const closedBanner = document.getElementById('kitchenClosedBanner');
+                if (!data.kitchen_open) {
+                    closedBanner.classList.add('show');
+                } else {
+                    closedBanner.classList.remove('show');
+                }
 
-        // 1. TERMINAL ALERTS (Cancelled or Delivered)
-        if (data.alert) {
-            if (data.status === 'cancelled') {
-                alert(`⚠️ Order Notice:\n${data.reason}`);
-            } else if (data.status === 'delivered') {
-                alert(`🎉 Your Order #${data.order_id} has been delivered! Enjoy your meal.`);
+                // Automatic live menu reload on sync
+                if (localMenuVersion !== null && data.menu_version && data.menu_version !== localMenuVersion) {
+                    localMenuVersion = data.menu_version;
+                    loadMenuAndCart();
+                } else if (localMenuVersion === null && data.menu_version) {
+                    localMenuVersion = data.menu_version;
+                }
+
+                // 1. Terminal Alerts (Cancellation or Delivery)
+                if (data.alert) {
+                    if (data.status === 'cancelled') {
+                        alert(`⚠️ Order Notice:\n${data.reason}`);
+                    } else if (data.status === 'delivered') {
+                        alert(`🎉 Your Order #${data.order_id} has been delivered! Enjoy your meal.`);
+                    }
+                    activeOrder = null;
+                    lastReportedStatus = null;
+                    orderPlacedBar.classList.remove('visible');
+                    closeOrderProgressModal();
+                    loadMenuAndCart();
+                    return;
+                }
+
+                // 2. Active Orders Logic: STRICT BUTTON TRANSITION RULE
+                if (data.has_active_order) {
+                    activeOrder = data;
+
+                    // Trigger alert if status transitioned
+                    if (lastReportedStatus && lastReportedStatus !== data.status) {
+                        alert(`🔔 Kitchen Update: Token #${data.daily_order_number} is now ${data.status.toUpperCase()}!`);
+                    }
+                    lastReportedStatus = data.status;
+
+                    if (data.payment_status === 'paid') {
+                        // PAYMENT DONE -> Hide cart button, show green "Order Placed" button
+                        cartBar.classList.remove('visible');
+                        orderPlacedBar.classList.add('visible');
+                        document.getElementById('activeTokenId').textContent = data.daily_order_number;
+                        document.getElementById('orderStatusText').textContent = `Kitchen Status: ${data.status.toUpperCase()}`;
+                        updateStepperDots(data.status);
+                    } else {
+                        // PAYMENT NOT DONE -> KEEP CART BUTTON VISIBLE!
+                        orderPlacedBar.classList.remove('visible');
+                        cartBar.classList.add('visible');
+
+                        if (data.status === 'placed') {
+                            const secs = data.seconds_left !== undefined ? data.seconds_left : 60;
+                            document.getElementById('cartBarTitle').textContent = `Awaiting Kitchen (${secs}s)`;
+                        } else {
+                            // Accepted by kitchen but user closed gateway -> show payment pending prompt
+                            document.getElementById('cartBarTitle').textContent = "Pay Now (Accepted)";
+                        }
+                    }
+                } else {
+                    // No running active order
+                    orderPlacedBar.classList.remove('visible');
+                    activeOrder = null;
+                    lastReportedStatus = null;
+                    document.getElementById('cartBarTitle').textContent = "View Cart";
+                    updateCartUI(cartCodeCached, cartTotalCached);
+                }
+            } catch (err) {
+                console.error("Status check error:", err);
             }
-            activeOrder = null;
-            lastReportedStatus = null;
-            bar.classList.remove('visible');
-            closeOrderProgressModal();
-            loadMenuAndCart();
-            return;
         }
-
-        // 2. ACTIVE PROGRESS ALERTS (Placed -> Accepted -> Preparing -> Prepared)
-        if (data.has_active_order) {
-            activeOrder = data;
-            bar.classList.add('visible');
-            if (cartBar) cartBar.classList.remove('visible');
-
-            document.getElementById('activeTokenId').textContent = data.daily_order_number;
-
-            // Trigger alert whenever the kitchen updates the status
-            if (lastReportedStatus && lastReportedStatus !== data.status) {
-                alert(`🔔 Kitchen Update: Token #${data.daily_order_number} is now ${data.status.toUpperCase()}!`);
-            }
-            lastReportedStatus = data.status;
-
-            if (data.payment_status !== 'paid') {
-                bar.classList.add('order-unpaid-bar');
-                document.getElementById('orderBarTitle').textContent = "Payment Not Done!";
-                document.getElementById('orderStatusText').textContent = "Tap to view status & pay";
-            } else {
-                bar.classList.remove('order-unpaid-bar');
-                document.getElementById('orderBarTitle').textContent = "Order Placed";
-                document.getElementById('orderStatusText').textContent = `Status: ${data.status.toUpperCase()}`;
-            }
-
-            updateStepperDots(data.status);
-        } else {
-            bar.classList.remove('visible');
-            activeOrder = null;
-            lastReportedStatus = null;
-        }
-    } catch (err) {
-        console.error("Status check error:", err);
-    }
-}
 
         function openOrderProgressModal() {
             if (!activeOrder) return;
             document.getElementById('modalOrderId').textContent = activeOrder.daily_order_number;
-            document.getElementById('modalPaymentInfo').textContent = activeOrder.payment_status === 'paid' ? 'Payment Status: PAID' : 'Payment Status: PAYMENT PENDING';
             updateStepperDots(activeOrder.status);
             document.getElementById('orderProgressModal').classList.add('open');
         }
@@ -336,35 +363,45 @@ async function checkOrderStatus() {
             const stages = ['accepted', 'preparing', 'prepared', 'delivered'];
             const currentIndex = stages.indexOf(status);
 
-            const dotMap = {
-                'accepted': document.getElementById('dotAccepted'),
-                'preparing': document.getElementById('dotPreparing'),
-                'prepared': document.getElementById('dotPrepared'),
-                'delivered': document.getElementById('dotDelivered')
-            };
+            const dots = [
+                document.getElementById('dotAccepted'),
+                document.getElementById('dotPreparing'),
+                document.getElementById('dotPrepared'),
+                document.getElementById('dotDelivered')
+            ];
 
-            stages.forEach((st, idx) => {
+            dots.forEach((dot, idx) => {
                 if (idx <= currentIndex) {
-                    dotMap[st].classList.add('green');
+                    dot.classList.add('green');
                 } else {
-                    dotMap[st].classList.remove('green');
+                    dot.classList.remove('green');
                 }
             });
         }
 
         async function init() {
-            await checkOrderStatus();
             await loadMenuAndCart();
-            setInterval(checkOrderStatus, 4000);
+            await checkOrderStatus();
+            setInterval(checkOrderStatus, 2000);
         }
 
+        let cartCodeCached = "";
+        let cartTotalCached = 0.0;
+
         async function loadMenuAndCart() {
-            const res = await fetch('/api/menu');
-            const data = await res.json();
-            menuItems = data.items;
-            cartData = data.cart || {};
-            updateCartUI(data.cart_code, data.total_price);
-            renderMenu();
+            try {
+                const res = await fetch('/api/menu');
+                const data = await res.json();
+                menuItems = data.items || [];
+                cartData = data.cart || {};
+                localMenuVersion = data.menu_version;
+                cartCodeCached = data.cart_code || '';
+                cartTotalCached = data.total_price || 0.0;
+                updateCartUI(cartCodeCached, cartTotalCached);
+                renderMenu();
+            } catch (err) {
+                console.error("Failed loading menu:", err);
+            }
         }
 
         function filterCategory(category, buttonEl) {
@@ -390,7 +427,7 @@ async function checkOrderStatus() {
             });
 
             filtered.forEach(item => {
-                const qty = cartData[item.id] || 0;
+                const qty = cartData[item.id] !== undefined ? cartData[item.id] : (cartData[String(item.id)] || 0);
                 const card = document.createElement('div');
                 card.className = 'item-card';
 
@@ -420,7 +457,7 @@ async function checkOrderStatus() {
                             <h3>${item.item_name}</h3>
                             <div class="item-category">${item.category}</div>
                         </div>
-                        <div class="item-price">₹${item.price.toFixed(2)}</div>
+                        <div class="item-price">₹${Number(item.price).toFixed(2)}</div>
                     </div>
                 `;
                 container.appendChild(card);
@@ -428,16 +465,25 @@ async function checkOrderStatus() {
         }
 
         async function updateItemQuantity(itemId, delta) {
-            const res = await fetch('/api/cart/update', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ itemId, delta })
-            });
-            const data = await res.json();
-            if (data.success) {
-                cartData = data.cart;
-                updateCartUI(data.cart_code, data.total_price);
-                renderMenu();
+            try {
+                const res = await fetch('/api/cart/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ itemId, delta })
+                });
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    cartData = data.cart;
+                    cartCodeCached = data.cart_code;
+                    cartTotalCached = data.total_price;
+                    updateCartUI(data.cart_code, data.total_price);
+                    renderMenu();
+                } else {
+                    alert("Cart Update Error: " + (data.error || "Server rejected update"));
+                }
+            } catch (err) {
+                console.error("Cart update request failed:", err);
             }
         }
 
@@ -445,15 +491,16 @@ async function checkOrderStatus() {
             const cartBar = document.getElementById('cartBar');
             const orderPlacedBar = document.getElementById('orderPlacedBar');
 
+            // If order is paid and in progress, never show cart bar
             if (orderPlacedBar.classList.contains('visible')) {
                 cartBar.classList.remove('visible');
                 return;
             }
 
-            if (Object.keys(cartData).length > 0) {
+            if (Object.keys(cartData).length > 0 || (activeOrder && activeOrder.payment_status !== 'paid')) {
                 cartBar.classList.add('visible');
                 document.getElementById('cartCodeLabel').textContent = cartCode;
-                document.getElementById('cartTotalLabel').textContent = `₹${totalPrice.toFixed(2)}`;
+                document.getElementById('cartTotalLabel').textContent = `₹${Number(totalPrice).toFixed(2)}`;
             } else {
                 cartBar.classList.remove('visible');
             }
@@ -513,7 +560,7 @@ async function checkOrderStatus() {
                     <div style="font-size:0.85rem; color:#cbd5e1; border-top:1px dashed var(--card-border); padding-top:0.4rem;">${itemsHtml}</div>
                     ${reasonHtml}
                     <div style="display:flex; justify-content:space-between; font-weight:700; margin-top:0.3rem;">
-                        <span>Total (Payment: ${order.payment_status.toUpperCase()})</span>
+                        <span>Total (${order.payment_status.toUpperCase()})</span>
                         <span style="color:#38bdf8;">₹${order.total_amount.toFixed(2)}</span>
                     </div>
                 `;
