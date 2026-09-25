@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grand Palace Hotel - Operations Dashboard</title>
+    <title>Hotel Admin Operations</title>
     <style>
         :root {
             --bg: #0b1329;
@@ -50,27 +50,47 @@
         .tab-controls { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
         .tab-btn {
             background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-muted);
-            padding: 0.7rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 700;
+            padding: 0.7rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 700; display: flex; align-items: center; gap: 0.6rem;
         }
         .tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .count-badge { background: #0f172a; padding: 0.15rem 0.6rem; border-radius: 9999px; font-size: 0.8rem; }
 
-        .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.25rem; }
+        /* Separate Sections */
+        .section-box {
+            background: rgba(30, 41, 59, 0.4); border: 1px solid var(--card-border);
+            border-radius: 14px; padding: 1.5rem; margin-bottom: 2rem;
+        }
+        .section-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--card-border);
+        }
+        .section-title { font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 0.6rem; }
+
+        .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 1.25rem; }
         .order-card {
             background: var(--card-bg); border: 1px solid var(--card-border);
-            border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem;
+            border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; position: relative;
         }
+
+        /* Top-Right Payment Status Dot Indicator */
+        .payment-dot {
+            width: 14px; height: 14px; border-radius: 50%; display: inline-block;
+            box-shadow: 0 0 8px rgba(0,0,0,0.5);
+        }
+        .dot-paid { background-color: var(--success); box-shadow: 0 0 8px var(--success); }
+        .dot-pending { background-color: var(--danger); box-shadow: 0 0 8px var(--danger); }
+
         .order-head { display: flex; justify-content: space-between; align-items: flex-start; }
-        .order-user { font-size: 1.05rem; font-weight: 700; color: #fff; }
-        .order-time { font-size: 0.8rem; color: var(--text-muted); text-align: right; }
+        .token-tag { background: #0284c7; color: white; padding: 0.2rem 0.6rem; border-radius: 6px; font-weight: 800; font-size: 0.9rem; }
+        .order-user { font-size: 1.05rem; font-weight: 700; margin-top: 0.2rem; }
+        .order-time { font-size: 0.8rem; color: var(--text-muted); }
+
         .order-items-box {
             background: #0f172a; border-radius: 8px; padding: 0.75rem; font-size: 0.85rem;
             display: flex; flex-direction: column; gap: 0.4rem; max-height: 180px; overflow-y: auto;
         }
         .order-item-line { display: flex; justify-content: space-between; }
         .order-total-line { display: flex; justify-content: space-between; font-weight: 800; font-size: 1.1rem; color: #38bdf8; }
-
-        .initial-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem; }
-        .in-progress-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; margin-top: 0.5rem; }
 
         .btn-action {
             border: none; padding: 0.65rem 0.5rem; border-radius: 6px; font-weight: 700; font-size: 0.8rem;
@@ -112,7 +132,7 @@
     <header>
         <div class="header-title">
             <span>🛡️</span>
-            <span>Hotel Operations Admin</span>
+            <span>Hotel Kitchen Operations</span>
         </div>
 
         <div>
@@ -130,18 +150,43 @@
 
     <div class="container">
         <div class="tab-controls">
-            <button class="tab-btn active" id="ordersTabBtn" onclick="switchTab('ordersTab')">Active Kitchen Orders</button>
-            <button class="tab-btn" id="menuTabBtn" onclick="switchTab('menuTab')">Menu Item Catalog</button>
+            <button class="tab-btn active" id="ordersTabBtn" onclick="switchTab('ordersTab')">
+                <span>Orders Manager</span>
+                <span class="count-badge" id="totalQueueBadge">0</span>
+            </button>
+            <button class="tab-btn" id="menuTabBtn" onclick="switchTab('menuTab')">
+                <span>Menu Item Catalog</span>
+            </button>
         </div>
 
-        <!-- TAB 1: Active Orders -->
+        <!-- TAB 1: Kitchen Orders (Distinct Boxes) -->
         <section id="ordersTab">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                <h3>Active Orders in Queue</h3>
-                <button class="btn-secondary" onclick="loadAdminOrders()">↻ Refresh Orders</button>
+            <!-- BOX 1: NEW INCOMING ORDERS -->
+            <div class="section-box" style="border-left: 4px solid var(--amber);">
+                <div class="section-header">
+                    <div class="section-title">
+                        <span>⏳ New Unaccepted Requests</span>
+                        <span class="count-badge" style="background:var(--amber); color:#000;" id="newOrdersBadge">0</span>
+                    </div>
+                    <span style="font-size:0.85rem; color:var(--text-muted);">Accept within 60s or order auto-cancels</span>
+                </div>
+                <div class="orders-grid" id="newOrdersGrid">
+                    <div style="color:var(--text-muted); padding:1rem;">No new incoming orders.</div>
+                </div>
             </div>
-            <div class="orders-grid" id="ordersGrid">
-                <div style="color:var(--text-muted); padding:2rem;">Loading active orders...</div>
+
+            <!-- BOX 2: ACTIVE PREPARATION ORDERS -->
+            <div class="section-box" style="border-left: 4px solid var(--primary);">
+                <div class="section-header">
+                    <div class="section-title">
+                        <span>🍳 Active In-Progress Orders</span>
+                        <span class="count-badge" style="background:var(--primary); color:#fff;" id="activeOrdersBadge">0</span>
+                    </div>
+                    <span style="font-size:0.85rem; color:var(--text-muted);">🟢 Green dot = Paid | 🔴 Red dot = Payment Pending</span>
+                </div>
+                <div class="orders-grid" id="activeOrdersGrid">
+                    <div style="color:var(--text-muted); padding:1rem;">No active orders in kitchen.</div>
+                </div>
             </div>
         </section>
 
@@ -169,33 +214,32 @@
         </section>
     </div>
 
-    <!-- MODAL: Password Change -->
+    <!-- Password Modal -->
     <div class="modal-overlay" id="passwordModal">
         <div class="modal-box">
-            <h3>Update Admin Security Password</h3>
+            <h3>Update Admin Password</h3>
             <div class="form-group">
-                <label>New Admin Password (Min 6 Characters)</label>
-                <input type="password" id="newAdminPasswordInput" placeholder="Enter new secret password" />
+                <label>New Secret Password</label>
+                <input type="password" id="newAdminPasswordInput" placeholder="Min 6 characters" />
             </div>
             <div class="modal-buttons">
                 <button class="btn-secondary" onclick="closePasswordModal()">Cancel</button>
-                <button class="btn-primary" onclick="saveAdminPassword()">Save New Password</button>
+                <button class="btn-primary" onclick="saveAdminPassword()">Save</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL: Add/Edit Menu Item -->
+    <!-- Menu Item Modal -->
     <div class="modal-overlay" id="itemModal">
         <div class="modal-box">
-            <h3 id="itemModalTitle">Add Menu Dish</h3>
+            <h3 id="itemModalTitle">Menu Dish</h3>
             <form id="menuItemForm" onsubmit="handleSaveMenuItem(event)" enctype="multipart/form-data">
                 <input type="hidden" id="editItemId" name="id" />
 
                 <div class="form-group">
                     <label>Dish Name</label>
-                    <input type="text" id="dishNameInput" name="item_name" required placeholder="e.g. Masala Dosa" />
+                    <input type="text" id="dishNameInput" name="item_name" required />
                 </div>
-
                 <div class="form-group">
                     <label>Category</label>
                     <select id="dishCategorySelect" name="category">
@@ -204,31 +248,25 @@
                         <option value="meals">Meals</option>
                     </select>
                 </div>
-
                 <div class="form-group">
                     <label>Price (₹)</label>
-                    <input type="number" step="0.01" id="dishPriceInput" name="price" required placeholder="120.00" />
+                    <input type="number" step="0.01" id="dishPriceInput" name="price" required />
                 </div>
-
                 <div class="form-group">
-                    <label>Upload New Photo (Overrides current photo)</label>
+                    <label>Upload Photo</label>
                     <input type="file" id="dishFileInput" name="image_file" accept="image/*" />
                 </div>
-
-                <!-- Changed type from "url" to "text" so local paths like /static/uploads/... are allowed -->
                 <div class="form-group">
                     <label>Photo URL / Local Path</label>
-                    <input type="text" id="dishUrlInput" name="image_url" placeholder="https://... or /static/uploads/..." />
+                    <input type="text" id="dishUrlInput" name="image_url" />
                 </div>
-
                 <div class="form-group">
-                    <label>Availability Dot</label>
+                    <label>Active</label>
                     <select id="dishActiveSelect" name="is_active">
                         <option value="true">Active (Green Dot)</option>
                         <option value="false">Inactive (Red Dot)</option>
                     </select>
                 </div>
-
                 <div class="modal-buttons">
                     <button type="button" class="btn-secondary" onclick="closeItemModal()">Cancel</button>
                     <button type="submit" class="btn-primary">Save Dish</button>
@@ -258,127 +296,140 @@
             if (tabId === 'menuTab') loadAdminMenu();
         }
 
+        // ==========================================
+        // Orders Logic (Separate Boxes & Indicators)
+        // ==========================================
         async function loadAdminOrders() {
-            const grid = document.getElementById("ordersGrid");
             try {
                 const res = await fetch("/api/admin/orders");
                 const data = await res.json();
 
-                if (!data.orders || data.orders.length === 0) {
-                    grid.innerHTML = '<div style="color:var(--text-muted); padding:2rem;">No active orders in kitchen queue.</div>';
-                    return;
-                }
+                document.getElementById("newOrdersBadge").textContent = data.new_count || 0;
+                document.getElementById("activeOrdersBadge").textContent = data.active_count || 0;
+                document.getElementById("totalQueueBadge").textContent = (data.new_count || 0) + (data.active_count || 0);
 
-                grid.innerHTML = "";
-                data.orders.forEach(order => {
-                    const card = document.createElement("div");
-                    card.className = "order-card";
+                const newGrid = document.getElementById("newOrdersGrid");
+                const activeGrid = document.getElementById("activeOrdersGrid");
 
-                    const itemsHtml = order.items.map(item => `
-                        <div class="order-item-line">
-                            <span>${item.name} × ${item.quantity}</span>
-                            <span>₹${item.subtotal.toFixed(2)}</span>
-                        </div>
-                    `).join('');
+                // 1. Render New Orders Box
+                if (!data.new_orders || data.new_orders.length === 0) {
+                    newGrid.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">No new incoming orders.</div>';
+                } else {
+                    newGrid.innerHTML = "";
+                    data.new_orders.forEach(order => {
+                        const card = document.createElement("div");
+                        card.className = "order-card";
+                        const itemsHtml = order.items.map(i => `<div class="order-item-line"><span>${i.name} × ${i.quantity}</span><span>₹${i.subtotal.toFixed(2)}</span></div>`).join('');
 
-                    let actionHtml = '';
-                    if (order.order_status === 'placed') {
-                        actionHtml = `
-                            <div class="initial-actions">
+                        card.innerHTML = `
+                            <div class="order-head">
+                                <div>
+                                    <span class="token-tag">Token #${order.daily_order_number}</span>
+                                    <div class="order-user">${order.username}</div>
+                                </div>
+                                <div class="order-time">${order.time}</div>
+                            </div>
+                            <div class="order-items-box">${itemsHtml}</div>
+                            <div class="order-total-line"><span>Total</span><span>₹${order.total_amount.toFixed(2)}</span></div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.4rem;">
                                 <button class="btn-action btn-accept" onclick="updateOrderStatus(${order.id}, 'accepted')">Accept</button>
                                 <button class="btn-action btn-cancel" onclick="cancelOrderPrompt(${order.id})">Cancel</button>
                             </div>
                         `;
-                    } else {
-                        actionHtml = `
-                            <div class="in-progress-actions">
-                                <button class="btn-action btn-prep ${order.order_status === 'preparing' ? 'active' : ''}" 
-                                    onclick="updateOrderStatus(${order.id}, 'preparing')">Preparing</button>
-                                <button class="btn-action btn-ready ${order.order_status === 'prepared' ? 'active' : ''}" 
-                                    onclick="updateOrderStatus(${order.id}, 'prepared')">Prepared</button>
-                                <button class="btn-action btn-deliver" 
-                                    onclick="updateOrderStatus(${order.id}, 'delivered')">Delivered</button>
+                        newGrid.appendChild(card);
+                    });
+                }
+
+                // 2. Render Active Orders Box
+                if (!data.active_orders || data.active_orders.length === 0) {
+                    activeGrid.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">No active orders in kitchen.</div>';
+                } else {
+                    activeGrid.innerHTML = "";
+                    data.active_orders.forEach(order => {
+                        const card = document.createElement("div");
+                        card.className = "order-card";
+                        const itemsHtml = order.items.map(i => `<div class="order-item-line"><span>${i.name} × ${i.quantity}</span><span>₹${i.subtotal.toFixed(2)}</span></div>`).join('');
+                        const isPaid = order.payment_status === 'paid';
+                        const dotClass = isPaid ? 'dot-paid' : 'dot-pending';
+
+                        card.innerHTML = `
+                            <div class="order-head">
+                                <div>
+                                    <span class="token-tag" style="background:#10b981;">Token #${order.daily_order_number}</span>
+                                    <div class="order-user">${order.username}</div>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:0.6rem;">
+                                    <span class="payment-dot ${dotClass}" title="${isPaid ? 'Payment Received' : 'Payment Pending'}"></span>
+                                    <span style="font-size:0.8rem; font-weight:700;">${isPaid ? 'PAID' : 'PENDING'}</span>
+                                </div>
+                            </div>
+                            <div class="order-items-box">${itemsHtml}</div>
+                            <div class="order-total-line"><span>Total</span><span>₹${order.total_amount.toFixed(2)}</span></div>
+                            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:0.4rem; margin-top:0.4rem;">
+                                <button class="btn-action btn-prep ${order.order_status === 'preparing' ? 'active' : ''}" onclick="updateOrderStatus(${order.id}, 'preparing')">Preparing</button>
+                                <button class="btn-action btn-ready ${order.order_status === 'prepared' ? 'active' : ''}" onclick="updateOrderStatus(${order.id}, 'prepared')">Prepared</button>
+                                <button class="btn-action btn-deliver" onclick="updateOrderStatus(${order.id}, 'delivered')">Delivered</button>
                             </div>
                         `;
-                    }
-
-                    card.innerHTML = `
-                        <div class="order-head">
-                            <div>
-                                <div class="order-user">${order.username}</div>
-                                <div style="font-size:0.75rem; color:var(--text-muted);">${order.user_email}</div>
-                            </div>
-                            <div class="order-time">${order.time}<br>${order.date}</div>
-                        </div>
-                        <div class="order-items-box">${itemsHtml}</div>
-                        <div class="order-total-line">
-                            <span>Total Payable</span>
-                            <span>₹${order.total_amount.toFixed(2)}</span>
-                        </div>
-                        <div style="font-size:0.8rem; font-weight:bold; margin-top:0.2rem;">
-                            Current Stage: <span style="color:#38bdf8; text-transform:uppercase;">${order.order_status}</span>
-                        </div>
-                        ${actionHtml}
-                    `;
-                    grid.appendChild(card);
-                });
+                        activeGrid.appendChild(card);
+                    });
+                }
             } catch (err) {
-                grid.innerHTML = '<div style="color:#ef4444; padding:1rem;">Failed loading orders.</div>';
+                console.error("Orders load failure:", err);
             }
         }
 
         async function updateOrderStatus(orderId, status, reason = "") {
-            const res = await fetch("/api/admin/order/update-status", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ order_id: orderId, status: status, reason: reason })
-            });
-            const data = await res.json();
-            if (data.success) {
-                alert(`Order #${orderId} status successfully updated to: ${status.toUpperCase()}`);
-                loadAdminOrders();
-            } else {
-                alert(data.error || "Failed updating status");
-            }
+    try {
+        const res = await fetch("/api/admin/order/update-status", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ order_id: orderId, status: status, reason: reason })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            // Trigger explicit alert to Admin on status change
+            alert(`✅ Order #${orderId} status successfully updated to: ${status.toUpperCase()}`);
+            loadAdminOrders();
+        } else {
+            alert("❌ Failed updating status: " + (data.error || "Unknown server error"));
         }
+    } catch (err) {
+        console.error(err);
+        alert("❌ Network error updating order status.");
+    }
+}
 
         function cancelOrderPrompt(orderId) {
-            const confirmCancel = confirm("Are you sure you want to cancel this order?");
-            if (!confirmCancel) return;
-
-            const reason = prompt("Please enter the reason for cancellation (this will be shown to the customer):", "Items out of stock");
+            if (!confirm("Are you sure you want to cancel this order?")) return;
+            const reason = prompt("Enter cancellation reason for customer:", "Kitchen busy");
             if (reason === null) return;
-
             updateOrderStatus(orderId, "cancelled", reason.trim());
         }
 
         let currentMenuItems = [];
         async function loadAdminMenu() {
             const tbody = document.getElementById("menuTableBody");
-            try {
-                const res = await fetch("/api/admin/menu/items");
-                const data = await res.json();
-                currentMenuItems = data.items;
-
-                tbody.innerHTML = "";
-                data.items.forEach(item => {
-                    const row = document.createElement("tr");
-                    row.innerHTML = `
-                        <td><img src="${item.photo_url}" class="dish-thumb" onerror="this.src='https://via.placeholder.com/50'"/></td>
-                        <td><strong>${item.item_name}</strong></td>
-                        <td style="text-transform:capitalize;">${item.category}</td>
-                        <td>₹${item.price.toFixed(2)}</td>
-                        <td>${item.is_active ? '🟢 Active' : '🔴 Inactive'}</td>
-                        <td>
-                            <button class="btn-secondary" onclick="editMenuItem(${item.id})">Edit</button>
-                            <button class="btn-secondary" style="background:#ef4444;" onclick="deleteMenuItem(${item.id})">Delete</button>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            } catch (err) {
-                tbody.innerHTML = '<tr><td colspan="6" style="color:#ef4444;">Failed to load menu.</td></tr>';
-            }
+            const res = await fetch("/api/admin/menu/items");
+            const data = await res.json();
+            currentMenuItems = data.items;
+            tbody.innerHTML = "";
+            data.items.forEach(item => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td><img src="${item.photo_url}" class="dish-thumb" onerror="this.src='https://via.placeholder.com/50'"/></td>
+                    <td><strong>${item.item_name}</strong></td>
+                    <td style="text-transform:capitalize;">${item.category}</td>
+                    <td>₹${item.price.toFixed(2)}</td>
+                    <td>${item.is_active ? '🟢 Active' : '🔴 Inactive'}</td>
+                    <td>
+                        <button class="btn-secondary" onclick="editMenuItem(${item.id})">Edit</button>
+                        <button class="btn-secondary" style="background:#ef4444;" onclick="deleteMenuItem(${item.id})">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
         }
 
         function openItemModal() {
@@ -395,65 +446,48 @@
         function editMenuItem(id) {
             const item = currentMenuItems.find(i => i.id === id);
             if (!item) return;
-
             document.getElementById("itemModalTitle").textContent = "Edit Menu Dish";
             document.getElementById("editItemId").value = item.id;
             document.getElementById("dishNameInput").value = item.item_name;
             document.getElementById("dishCategorySelect").value = item.category;
             document.getElementById("dishPriceInput").value = item.price;
             document.getElementById("dishUrlInput").value = item.photo_url || "";
-            document.getElementById("dishFileInput").value = ""; // Clear file selector so old photo is kept if not replaced
+            document.getElementById("dishFileInput").value = "";
             document.getElementById("dishActiveSelect").value = item.is_active ? "true" : "false";
             document.getElementById("itemModal").classList.add("open");
         }
 
-        function closeItemModal() {
-            document.getElementById("itemModal").classList.remove("open");
-        }
+        function closeItemModal() { document.getElementById("itemModal").classList.remove("open"); }
 
         async function handleSaveMenuItem(e) {
             e.preventDefault();
-            const form = document.getElementById("menuItemForm");
-            const formData = new FormData(form);
-
             const res = await fetch("/api/admin/menu/save", {
                 method: "POST",
-                body: formData
+                body: new FormData(document.getElementById("menuItemForm"))
             });
             const data = await res.json();
             if (data.success) {
                 closeItemModal();
                 loadAdminMenu();
-            } else {
-                alert(data.error || "Save failed");
             }
         }
 
         async function deleteMenuItem(id) {
-            if (!confirm("Are you sure you want to delete this menu dish?")) return;
-            const res = await fetch("/api/admin/menu/delete", {
+            if (!confirm("Delete this dish?")) return;
+            await fetch("/api/admin/menu/delete", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ id })
             });
-            const data = await res.json();
-            if (data.success) loadAdminMenu();
+            loadAdminMenu();
         }
 
-        function openPasswordModal() {
-            document.getElementById("newAdminPasswordInput").value = "";
-            document.getElementById("passwordModal").classList.add("open");
-        }
-        function closePasswordModal() {
-            document.getElementById("passwordModal").classList.remove("open");
-        }
+        function openPasswordModal() { document.getElementById("passwordModal").classList.add("open"); }
+        function closePasswordModal() { document.getElementById("passwordModal").classList.remove("open"); }
 
         async function saveAdminPassword() {
             const newPassword = document.getElementById("newAdminPasswordInput").value.trim();
-            if (newPassword.length < 6) {
-                alert("Password must be at least 6 characters");
-                return;
-            }
+            if (newPassword.length < 6) return alert("Min 6 characters");
             const res = await fetch("/api/admin/change-password", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -461,10 +495,8 @@
             });
             const data = await res.json();
             if (data.success) {
-                alert("Admin password updated!");
+                alert("Password updated");
                 closePasswordModal();
-            } else {
-                alert(data.error || "Update failed");
             }
         }
 
@@ -474,7 +506,7 @@
         }
 
         loadAdminOrders();
-        setInterval(loadAdminOrders, 10000);
+        setInterval(loadAdminOrders, 5000);
     </script>
 </body>
 </html>

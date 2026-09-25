@@ -99,7 +99,11 @@
         }
         .floating-action-bar.visible { display: flex; }
         .cart-bar { background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; }
+        
+        /* Floating Order Bar Colors */
         .order-placed-bar { background: linear-gradient(135deg, #d97706, #b45309); color: #fff; }
+        .order-unpaid-bar { background: linear-gradient(135deg, #ef4444, #b91c1c) !important; color: #fff; }
+
         .badge { font-size: 1.1rem; font-weight: 800; background: rgba(255,255,255,0.2); padding: 0.35rem 0.75rem; border-radius: 8px; }
 
         /* Step Progress Modal */
@@ -114,40 +118,18 @@
             border-radius: 16px; padding: 2rem; width: 92%; max-width: 550px; text-align: center;
         }
 
-        /* 4-Step Row Layout */
-        .stepper-row {
-            display: flex; justify-content: space-between; align-items: center;
-            margin: 2rem 0; position: relative;
-        }
-        .stepper-row::before {
-            content: ''; position: absolute; top: 12px; left: 10%; right: 10%;
-            height: 3px; background: #334155; z-index: 1;
-        }
-        .step-col {
-            position: relative; z-index: 2; display: flex; flex-direction: column;
-            align-items: center; gap: 0.4rem; flex: 1;
-        }
-        .step-dot {
-            width: 24px; height: 24px; border-radius: 50%; background: #334155;
-            border: 3px solid #0f172a; transition: 0.3s;
-        }
+        .stepper-row { display: flex; justify-content: space-between; align-items: center; margin: 2rem 0; position: relative; }
+        .stepper-row::before { content: ''; position: absolute; top: 12px; left: 10%; right: 10%; height: 3px; background: #334155; z-index: 1; }
+        .step-col { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; flex: 1; }
+        .step-dot { width: 24px; height: 24px; border-radius: 50%; background: #334155; border: 3px solid #0f172a; transition: 0.3s; }
         .step-dot.green { background: var(--success); box-shadow: 0 0 10px rgba(16, 185, 129, 0.6); }
         .step-name { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
         .step-name.active { color: #fff; }
 
         /* Slide-out Sidebar */
-        .sidebar-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px);
-            z-index: 1100; opacity: 0; pointer-events: none; transition: 0.3s;
-        }
+        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); z-index: 1100; opacity: 0; pointer-events: none; transition: 0.3s; }
         .sidebar-overlay.active { opacity: 1; pointer-events: auto; }
-        .profile-sidebar {
-            position: fixed; top: 0; right: -450px; width: 100%; max-width: 420px;
-            height: 100%; background: #0f172a; border-left: 1px solid var(--card-border);
-            box-shadow: -10px 0 25px rgba(0, 0, 0, 0.7); z-index: 1200;
-            display: flex; flex-direction: column; transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-        }
+        .profile-sidebar { position: fixed; top: 0; right: -450px; width: 100%; max-width: 420px; height: 100%; background: #0f172a; border-left: 1px solid var(--card-border); box-shadow: -10px 0 25px rgba(0, 0, 0, 0.7); z-index: 1200; display: flex; flex-direction: column; transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
         .profile-sidebar.open { right: 0; }
         .sidebar-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; }
         .sidebar-close-btn { background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; }
@@ -167,11 +149,6 @@
         .pill-prepared { background: rgba(16, 185, 129, 0.2); color: #34d399; }
         .pill-delivered { background: rgba(16, 185, 129, 0.4); color: #10b981; }
         .pill-cancelled { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
-
-        .cancel-reason-tag {
-            background: rgba(239, 68, 68, 0.1); border-left: 3px solid #ef4444;
-            padding: 0.4rem 0.6rem; font-size: 0.8rem; color: #fca5a5; margin-top: 0.2rem;
-        }
     </style>
 </head>
 <body>
@@ -207,20 +184,20 @@
         <div class="badge" id="cartTotalLabel">₹0.00</div>
     </a>
 
-    <!-- State 2: Order Placed Button -->
+    <!-- State 2: Order Placed Button (Shows Token # and turns red if payment pending) -->
     <div class="floating-action-bar order-placed-bar" id="orderPlacedBar" onclick="openOrderProgressModal()">
         <div>
-            <h4 style="font-size:0.95rem;">Order Placed!</h4>
+            <h4 style="font-size:0.95rem;" id="orderBarTitle">Order Placed</h4>
             <div style="font-size:0.75rem; color:#fef3c7;" id="orderStatusText">Tap to track status</div>
         </div>
-        <div class="badge">#<span id="activeOrderId"></span></div>
+        <div class="badge">Token #<span id="activeTokenId">0</span></div>
     </div>
 
     <!-- 4-Stage Progress Tracker Modal -->
     <div class="modal-overlay" id="orderProgressModal">
         <div class="progress-box">
-            <h3>Order #<span id="modalOrderId"></span> Status</h3>
-            <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.3rem;">Real-time kitchen update</p>
+            <h3>Token #<span id="modalOrderId">0</span> Status</h3>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.3rem;" id="modalPaymentInfo"></p>
 
             <div class="stepper-row">
                 <div class="step-col">
@@ -283,57 +260,70 @@
         let currentCategory = 'all';
         let searchQuery = '';
         let activeOrder = null;
-        let lastReportedStatus = null;
 
-        // ==========================================
-        // Live Status Polling & Alerts
-        // ==========================================
-        async function checkOrderStatus() {
-            const orderRes = await fetch('/api/order/active');
-            const data = await orderRes.json();
-            const orderPlacedBar = document.getElementById('orderPlacedBar');
-            const cartBar = document.getElementById('cartBar');
+let lastReportedStatus = null;
 
-            // 1. Check if an alert was sent by admin (Cancelled or Delivered)
-            if (data.alert) {
-                if (data.status === 'cancelled') {
-                    alert(`⚠️ Your Order #${data.order_id} was CANCELLED by the restaurant.\nReason: ${data.reason}`);
-                } else if (data.status === 'delivered') {
-                    alert(`🎉 Your Order #${data.order_id} has been DELIVERED! Enjoy your meal.`);
-                }
-                activeOrder = null;
-                orderPlacedBar.classList.remove('visible');
-                closeOrderProgressModal();
-                loadMenuAndCart();
-                return;
+async function checkOrderStatus() {
+    try {
+        const res = await fetch('/api/order/active');
+        const data = await res.json();
+        const bar = document.getElementById('orderPlacedBar');
+        const cartBar = document.getElementById('cartBar');
+
+        // 1. TERMINAL ALERTS (Cancelled or Delivered)
+        if (data.alert) {
+            if (data.status === 'cancelled') {
+                alert(`⚠️ Order Notice:\n${data.reason}`);
+            } else if (data.status === 'delivered') {
+                alert(`🎉 Your Order #${data.order_id} has been delivered! Enjoy your meal.`);
             }
-
-            // 2. Active order is in progress ('placed', 'accepted', 'preparing', 'prepared')
-            if (data.has_active_order) {
-                // If status changed, alert the user
-                if (lastReportedStatus && lastReportedStatus !== data.status) {
-                    alert(`🔔 Order Update: Order #${data.order_id} is now ${data.status.toUpperCase()}!`);
-                }
-                lastReportedStatus = data.status;
-
-                activeOrder = data;
-                orderPlacedBar.classList.add('visible');
-                document.getElementById('activeOrderId').textContent = data.order_id;
-                document.getElementById('orderStatusText').textContent = `Status: ${data.status.toUpperCase()} (Tap to track)`;
-                cartBar.classList.remove('visible');
-
-                // If tracker modal is open, refresh green dots
-                updateStepperDots(data.status);
-            } else {
-                // Delivered or Cancelled -> Disappears from page
-                orderPlacedBar.classList.remove('visible');
-                activeOrder = null;
-            }
+            activeOrder = null;
+            lastReportedStatus = null;
+            bar.classList.remove('visible');
+            closeOrderProgressModal();
+            loadMenuAndCart();
+            return;
         }
+
+        // 2. ACTIVE PROGRESS ALERTS (Placed -> Accepted -> Preparing -> Prepared)
+        if (data.has_active_order) {
+            activeOrder = data;
+            bar.classList.add('visible');
+            if (cartBar) cartBar.classList.remove('visible');
+
+            document.getElementById('activeTokenId').textContent = data.daily_order_number;
+
+            // Trigger alert whenever the kitchen updates the status
+            if (lastReportedStatus && lastReportedStatus !== data.status) {
+                alert(`🔔 Kitchen Update: Token #${data.daily_order_number} is now ${data.status.toUpperCase()}!`);
+            }
+            lastReportedStatus = data.status;
+
+            if (data.payment_status !== 'paid') {
+                bar.classList.add('order-unpaid-bar');
+                document.getElementById('orderBarTitle').textContent = "Payment Not Done!";
+                document.getElementById('orderStatusText').textContent = "Tap to view status & pay";
+            } else {
+                bar.classList.remove('order-unpaid-bar');
+                document.getElementById('orderBarTitle').textContent = "Order Placed";
+                document.getElementById('orderStatusText').textContent = `Status: ${data.status.toUpperCase()}`;
+            }
+
+            updateStepperDots(data.status);
+        } else {
+            bar.classList.remove('visible');
+            activeOrder = null;
+            lastReportedStatus = null;
+        }
+    } catch (err) {
+        console.error("Status check error:", err);
+    }
+}
 
         function openOrderProgressModal() {
             if (!activeOrder) return;
-            document.getElementById('modalOrderId').textContent = activeOrder.order_id;
+            document.getElementById('modalOrderId').textContent = activeOrder.daily_order_number;
+            document.getElementById('modalPaymentInfo').textContent = activeOrder.payment_status === 'paid' ? 'Payment Status: PAID' : 'Payment Status: PAYMENT PENDING';
             updateStepperDots(activeOrder.status);
             document.getElementById('orderProgressModal').classList.add('open');
         }
@@ -343,7 +333,6 @@
         }
 
         function updateStepperDots(status) {
-            // Stage hierarchy
             const stages = ['accepted', 'preparing', 'prepared', 'delivered'];
             const currentIndex = stages.indexOf(status);
 
@@ -354,46 +343,28 @@
                 'delivered': document.getElementById('dotDelivered')
             };
 
-            const labelMap = {
-                'accepted': document.getElementById('labelAccepted'),
-                'preparing': document.getElementById('labelPreparing'),
-                'prepared': document.getElementById('labelPrepared'),
-                'delivered': document.getElementById('labelDelivered')
-            };
-
             stages.forEach((st, idx) => {
-                // Dots change into green cumulatively if step is reached or passed
                 if (idx <= currentIndex) {
                     dotMap[st].classList.add('green');
-                    labelMap[st].classList.add('active');
                 } else {
                     dotMap[st].classList.remove('green');
-                    labelMap[st].classList.remove('active');
                 }
             });
         }
 
-        // ==========================================
-        // Menu & Cart Functions
-        // ==========================================
         async function init() {
             await checkOrderStatus();
             await loadMenuAndCart();
-            // Polling every 5 seconds for live status changes
-            setInterval(checkOrderStatus, 5000);
+            setInterval(checkOrderStatus, 4000);
         }
 
         async function loadMenuAndCart() {
-            try {
-                const res = await fetch('/api/menu');
-                const data = await res.json();
-                menuItems = data.items;
-                cartData = data.cart || {};
-                updateCartUI(data.cart_code, data.total_price);
-                renderMenu();
-            } catch (err) {
-                console.error(err);
-            }
+            const res = await fetch('/api/menu');
+            const data = await res.json();
+            menuItems = data.items;
+            cartData = data.cart || {};
+            updateCartUI(data.cart_code, data.total_price);
+            renderMenu();
         }
 
         function filterCategory(category, buttonEl) {
@@ -423,14 +394,12 @@
                 const card = document.createElement('div');
                 card.className = 'item-card';
 
-                const dotClass = item.is_active ? 'active' : 'inactive';
-                let actionControlsHtml = '';
-
+                let actionHtml = '';
                 if (item.is_active) {
                     if (qty === 0) {
-                        actionControlsHtml = `<div class="action-ctrl"><button class="action-btn" onclick="updateItemQuantity(${item.id}, 1)">+</button></div>`;
+                        actionHtml = `<div class="action-ctrl"><button class="action-btn" onclick="updateItemQuantity(${item.id}, 1)">+</button></div>`;
                     } else {
-                        actionControlsHtml = `
+                        actionHtml = `
                             <div class="action-ctrl">
                                 <button class="action-btn" onclick="updateItemQuantity(${item.id}, -1)">−</button>
                                 <span class="qty-label">${qty}</span>
@@ -443,8 +412,8 @@
                 card.innerHTML = `
                     <div class="photo-container">
                         <img src="${item.photo_url || 'https://via.placeholder.com/600x400'}" alt="${item.item_name}">
-                        <span class="status-dot ${dotClass}"></span>
-                        ${actionControlsHtml}
+                        <span class="status-dot ${item.is_active ? 'active' : 'inactive'}"></span>
+                        ${actionHtml}
                     </div>
                     <div class="item-info">
                         <div class="item-text">
@@ -490,9 +459,6 @@
             }
         }
 
-        // ==========================================
-        // Profile & Full Orders History
-        // ==========================================
         function openProfileSidebar() {
             document.getElementById('profileSidebar').classList.add('open');
             document.getElementById('sidebarOverlay').classList.add('active');
@@ -506,10 +472,7 @@
 
         async function saveNewUsername() {
             const newName = document.getElementById('profileUsernameInput').value.trim();
-            const msgEl = document.getElementById('usernameStatusMsg');
-
             if (!newName) return;
-
             const res = await fetch('/api/profile/update-username', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -517,17 +480,13 @@
             });
             const data = await res.json();
             if (data.success) {
-                msgEl.style.color = '#10b981';
-                msgEl.textContent = 'Username updated!';
                 document.getElementById('navUsernameDisplay').textContent = data.username;
-                setTimeout(() => { msgEl.textContent = ''; }, 2000);
             }
         }
 
         async function fetchOrderHistory() {
             const listEl = document.getElementById('ordersHistoryList');
-            listEl.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">Loading orders...</div>';
-
+            listEl.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">Loading...</div>';
             const res = await fetch('/api/profile/orders');
             const data = await res.json();
 
@@ -540,33 +499,21 @@
             data.orders.forEach(order => {
                 const card = document.createElement('div');
                 card.className = 'order-card';
-
-                let pillClass = `pill-${order.order_status}`;
-                const itemsHtml = order.items.map(item => `<div>• ${item}</div>`).join('');
-
-                // Display cancellation reason if order was cancelled
-                let reasonHtml = '';
-                if (order.order_status === 'cancelled') {
-                    reasonHtml = `<div class="cancel-reason-tag"><strong>Reason:</strong> ${order.cancellation_reason || 'Restaurant was unable to prepare this order.'}</div>`;
-                }
+                const itemsHtml = order.items.map(i => `<div>• ${i}</div>`).join('');
+                const reasonHtml = order.cancellation_reason ? `<div style="color:#fca5a5; font-size:0.8rem;">Reason: ${order.cancellation_reason}</div>` : '';
 
                 card.innerHTML = `
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <div>
-                            <strong>Order #${order.id}</strong>
+                            <strong>Token #${order.daily_order_number}</strong>
                             <div style="font-size:0.75rem; color:var(--text-muted);">${order.date} at ${order.time}</div>
                         </div>
-                        <span class="order-status-pill ${pillClass}">${order.order_status}</span>
+                        <span class="order-status-pill pill-${order.order_status}">${order.order_status}</span>
                     </div>
-
-                    <div style="font-size:0.85rem; color:#cbd5e1; border-top:1px dashed var(--card-border); padding-top:0.4rem;">
-                        ${itemsHtml}
-                    </div>
-
+                    <div style="font-size:0.85rem; color:#cbd5e1; border-top:1px dashed var(--card-border); padding-top:0.4rem;">${itemsHtml}</div>
                     ${reasonHtml}
-
                     <div style="display:flex; justify-content:space-between; font-weight:700; margin-top:0.3rem;">
-                        <span>Total</span>
+                        <span>Total (Payment: ${order.payment_status.toUpperCase()})</span>
                         <span style="color:#38bdf8;">₹${order.total_amount.toFixed(2)}</span>
                     </div>
                 `;
