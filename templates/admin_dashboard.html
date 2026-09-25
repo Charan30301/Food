@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hotel Admin Operations</title>
+    <title>Hotel Kitchen Operations</title>
     <style>
         :root {
             --bg: #0b1329;
@@ -27,6 +27,16 @@
         }
 
         .header-title { display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem; font-weight: 700; }
+        .header-actions { display: flex; align-items: center; gap: 1rem; }
+
+        /* Kitchen Status Toggle */
+        .kitchen-toggle-btn {
+            padding: 0.5rem 1.2rem; border-radius: 9999px; font-weight: 800; font-size: 0.85rem;
+            cursor: pointer; border: 2px solid transparent; transition: 0.2s;
+        }
+        .kitchen-open { background: rgba(16, 185, 129, 0.2); color: #10b981; border-color: #10b981; }
+        .kitchen-closed { background: rgba(239, 68, 68, 0.2); color: #ef4444; border-color: #ef4444; }
+
         .admin-profile-btn {
             background: var(--card-bg); border: 1px solid var(--card-border);
             padding: 0.5rem 1.2rem; border-radius: 9999px; color: #fff; cursor: pointer;
@@ -35,7 +45,7 @@
 
         .profile-dropdown-menu {
             position: absolute; top: 65px; right: 2rem; background: var(--card-bg);
-            border: 1px solid var(--card-border); border-radius: 12px; width: 220px;
+            border: 1px solid var(--card-border); border-radius: 12px; width: 230px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: none; flex-direction: column; z-index: 110;
         }
         .profile-dropdown-menu.show { display: flex; }
@@ -55,7 +65,7 @@
         .tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
         .count-badge { background: #0f172a; padding: 0.15rem 0.6rem; border-radius: 9999px; font-size: 0.8rem; }
 
-        /* Separate Sections */
+        /* Separate Boxes */
         .section-box {
             background: rgba(30, 41, 59, 0.4); border: 1px solid var(--card-border);
             border-radius: 14px; padding: 1.5rem; margin-bottom: 2rem;
@@ -72,7 +82,6 @@
             border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; position: relative;
         }
 
-        /* Top-Right Payment Status Dot Indicator */
         .payment-dot {
             width: 14px; height: 14px; border-radius: 50%; display: inline-block;
             box-shadow: 0 0 8px rgba(0,0,0,0.5);
@@ -109,12 +118,13 @@
         th { background: #162032; font-size: 0.85rem; text-transform: uppercase; color: var(--text-muted); }
         .dish-thumb { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; }
 
+        /* Modals */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7);
             display: none; align-items: center; justify-content: center; z-index: 1000;
         }
         .modal-overlay.open { display: flex; }
-        .modal-box { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; width: 100%; max-width: 480px; padding: 2rem; }
+        .modal-box { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; width: 100%; max-width: 520px; padding: 2rem; max-height: 85vh; overflow-y: auto; }
         .modal-box h3 { margin-bottom: 1rem; }
         .form-group { margin-bottom: 1rem; }
         .form-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; }
@@ -125,6 +135,15 @@
         .modal-buttons { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; }
         .btn-secondary { background: #334155; color: #fff; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; }
         .btn-primary { background: var(--primary); color: #fff; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; font-weight: 700; }
+
+        /* Photo Manager Grid */
+        .photos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 0.75rem; margin-top: 1rem; }
+        .photo-card { background: #0f172a; border-radius: 8px; overflow: hidden; position: relative; border: 1px solid var(--card-border); }
+        .photo-card img { width: 100%; height: 90px; object-fit: cover; }
+        .photo-delete-btn {
+            position: absolute; top: 4px; right: 4px; background: rgba(239,68,68,0.85); color: white;
+            border: none; width: 22px; height: 22px; border-radius: 50%; font-size: 0.8rem; cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -135,7 +154,10 @@
             <span>Hotel Kitchen Operations</span>
         </div>
 
-        <div>
+        <div class="header-actions">
+            <!-- Kitchen Master Toggle -->
+            <button class="kitchen-toggle-btn kitchen-open" id="kitchenToggleBtn" onclick="toggleKitchenStatus()">Kitchen: OPEN</button>
+
             <button class="admin-profile-btn" onclick="toggleDropdown()">
                 <span>⚙️ Options</span>
                 <span>▼</span>
@@ -143,6 +165,8 @@
             <div class="profile-dropdown-menu" id="profileDropdown">
                 <button class="dropdown-item" onclick="openPasswordModal()">🔑 Change Admin Password</button>
                 <button class="dropdown-item" onclick="switchTab('menuTab')">📋 Manage Menu List</button>
+                <button class="dropdown-item" onclick="openPhotosModal()">🖼️ Manage Uploaded Photos</button>
+                <button class="dropdown-item" onclick="syncMenuToUsers()">⚡ Sync Menu to All Users</button>
                 <button class="dropdown-item" onclick="logoutAdmin()" style="color: #ef4444;">🚪 Sign Out</button>
             </div>
         </div>
@@ -168,7 +192,7 @@
                         <span>⏳ New Unaccepted Requests</span>
                         <span class="count-badge" style="background:var(--amber); color:#000;" id="newOrdersBadge">0</span>
                     </div>
-                    <span style="font-size:0.85rem; color:var(--text-muted);">Accept within 60s or order auto-cancels</span>
+                    <span style="font-size:0.85rem; color:var(--text-muted);">Accept within 60s or auto-cancels</span>
                 </div>
                 <div class="orders-grid" id="newOrdersGrid">
                     <div style="color:var(--text-muted); padding:1rem;">No new incoming orders.</div>
@@ -182,7 +206,7 @@
                         <span>🍳 Active In-Progress Orders</span>
                         <span class="count-badge" style="background:var(--primary); color:#fff;" id="activeOrdersBadge">0</span>
                     </div>
-                    <span style="font-size:0.85rem; color:var(--text-muted);">🟢 Green dot = Paid | 🔴 Red dot = Payment Pending</span>
+                    <span style="font-size:0.85rem; color:var(--text-muted);">🟢 Green = Paid | 🔴 Red = Payment Pending</span>
                 </div>
                 <div class="orders-grid" id="activeOrdersGrid">
                     <div style="color:var(--text-muted); padding:1rem;">No active orders in kitchen.</div>
@@ -194,7 +218,10 @@
         <section id="menuTab" style="display:none;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
                 <h3>Live Restaurant Menu</h3>
-                <button class="btn-primary" onclick="openItemModal()">+ Add New Food Item</button>
+                <div style="display:flex; gap:0.75rem;">
+                    <button class="btn-secondary" onclick="syncMenuToUsers()">⚡ Sync to Users</button>
+                    <button class="btn-primary" onclick="openItemModal()">+ Add New Food Item</button>
+                </div>
             </div>
             <div class="menu-table-container">
                 <table>
@@ -275,6 +302,20 @@
         </div>
     </div>
 
+    <!-- Photos Manager Modal -->
+    <div class="modal-overlay" id="photosModal">
+        <div class="modal-box">
+            <h3>Static Uploaded Photos</h3>
+            <p style="font-size:0.8rem; color:var(--text-muted);">Manage or delete stored images inside /static/uploads/</p>
+            <div class="photos-grid" id="photosContainer">
+                <div style="color:var(--text-muted); padding:1rem;">Loading photos...</div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-secondary" onclick="closePhotosModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         function toggleDropdown() {
             document.getElementById("profileDropdown").classList.toggle("show");
@@ -296,13 +337,40 @@
             if (tabId === 'menuTab') loadAdminMenu();
         }
 
-        // ==========================================
-        // Orders Logic (Separate Boxes & Indicators)
-        // ==========================================
+        async function toggleKitchenStatus() {
+            const res = await fetch("/api/admin/kitchen-toggle", { method: "POST" });
+            const data = await res.json();
+            if (data.success) {
+                alert(`Kitchen status updated: ${data.kitchen_open ? 'OPEN' : 'CLOSED'}`);
+                updateKitchenUI(data.kitchen_open);
+            }
+        }
+
+        function updateKitchenUI(isOpen) {
+            const btn = document.getElementById("kitchenToggleBtn");
+            if (isOpen) {
+                btn.className = "kitchen-toggle-btn kitchen-open";
+                btn.textContent = "Kitchen: OPEN";
+            } else {
+                btn.className = "kitchen-toggle-btn kitchen-closed";
+                btn.textContent = "Kitchen: CLOSED";
+            }
+        }
+
+        async function syncMenuToUsers() {
+            const res = await fetch("/api/admin/menu/sync", { method: "POST" });
+            const data = await res.json();
+            if (data.success) {
+                alert("⚡ Menu sync command sent! All customer screens are updating automatically.");
+            }
+        }
+
         async function loadAdminOrders() {
             try {
                 const res = await fetch("/api/admin/orders");
                 const data = await res.json();
+
+                updateKitchenUI(data.kitchen_open);
 
                 document.getElementById("newOrdersBadge").textContent = data.new_count || 0;
                 document.getElementById("activeOrdersBadge").textContent = data.active_count || 0;
@@ -311,7 +379,6 @@
                 const newGrid = document.getElementById("newOrdersGrid");
                 const activeGrid = document.getElementById("activeOrdersGrid");
 
-                // 1. Render New Orders Box
                 if (!data.new_orders || data.new_orders.length === 0) {
                     newGrid.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">No new incoming orders.</div>';
                 } else {
@@ -340,7 +407,6 @@
                     });
                 }
 
-                // 2. Render Active Orders Box
                 if (!data.active_orders || data.active_orders.length === 0) {
                     activeGrid.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">No active orders in kitchen.</div>';
                 } else {
@@ -359,7 +425,7 @@
                                     <div class="order-user">${order.username}</div>
                                 </div>
                                 <div style="display:flex; align-items:center; gap:0.6rem;">
-                                    <span class="payment-dot ${dotClass}" title="${isPaid ? 'Payment Received' : 'Payment Pending'}"></span>
+                                    <span class="payment-dot ${dotClass}"></span>
                                     <span style="font-size:0.8rem; font-weight:700;">${isPaid ? 'PAID' : 'PENDING'}</span>
                                 </div>
                             </div>
@@ -380,26 +446,23 @@
         }
 
         async function updateOrderStatus(orderId, status, reason = "") {
-    try {
-        const res = await fetch("/api/admin/order/update-status", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ order_id: orderId, status: status, reason: reason })
-        });
-        const data = await res.json();
-
-        if (data.success) {
-            // Trigger explicit alert to Admin on status change
-            alert(`✅ Order #${orderId} status successfully updated to: ${status.toUpperCase()}`);
-            loadAdminOrders();
-        } else {
-            alert("❌ Failed updating status: " + (data.error || "Unknown server error"));
+            try {
+                const res = await fetch("/api/admin/order/update-status", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ order_id: orderId, status: status, reason: reason })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(`✅ Order #${orderId} updated to: ${status.toUpperCase()}`);
+                    loadAdminOrders();
+                } else {
+                    alert("❌ Failed updating status");
+                }
+            } catch (err) {
+                alert("Network error");
+            }
         }
-    } catch (err) {
-        console.error(err);
-        alert("❌ Network error updating order status.");
-    }
-}
 
         function cancelOrderPrompt(orderId) {
             if (!confirm("Are you sure you want to cancel this order?")) return;
@@ -467,6 +530,7 @@
             });
             const data = await res.json();
             if (data.success) {
+                alert("Dish saved & clients updated.");
                 closeItemModal();
                 loadAdminMenu();
             }
@@ -480,6 +544,51 @@
                 body: JSON.stringify({ id })
             });
             loadAdminMenu();
+        }
+
+        // --- Photo Storage Manager ---
+        function openPhotosModal() {
+            loadStaticPhotos();
+            document.getElementById("photosModal").classList.add("open");
+        }
+        function closePhotosModal() { document.getElementById("photosModal").classList.remove("open"); }
+
+        async function loadStaticPhotos() {
+            const box = document.getElementById("photosContainer");
+            box.innerHTML = '<div>Loading photos...</div>';
+            const res = await fetch("/api/admin/photos");
+            const data = await res.json();
+
+            if (!data.photos || data.photos.length === 0) {
+                box.innerHTML = '<div style="color:var(--text-muted); grid-column:1/-1;">No photos in static/uploads/</div>';
+                return;
+            }
+
+            box.innerHTML = "";
+            data.photos.forEach(p => {
+                const card = document.createElement("div");
+                card.className = "photo-card";
+                card.innerHTML = `
+                    <img src="${p.url}" />
+                    <button class="photo-delete-btn" onclick="deleteStaticPhoto('${p.filename}')">×</button>
+                `;
+                box.appendChild(card);
+            });
+        }
+
+        async function deleteStaticPhoto(fname) {
+            if (!confirm(`Delete image: ${fname}?`)) return;
+            const res = await fetch("/api/admin/photos/delete", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ filename: fname })
+            });
+            const data = await res.json();
+            if (data.success) {
+                loadStaticPhotos();
+            } else {
+                alert(data.error || "Failed to delete");
+            }
         }
 
         function openPasswordModal() { document.getElementById("passwordModal").classList.add("open"); }
@@ -506,7 +615,7 @@
         }
 
         loadAdminOrders();
-        setInterval(loadAdminOrders, 5000);
+        setInterval(loadAdminOrders, 4000);
     </script>
 </body>
 </html>

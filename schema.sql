@@ -84,3 +84,15 @@ CREATE TABLE IF NOT EXISTS admin_auth (
 INSERT INTO admin_auth (username, password_hash)
 VALUES ('admin', 'scrypt:32768:8:1$K5jL796Z5H7VwHwA$a48b30ce379b360566370bb03cb8eeae4a1be9989fe943be1772fe2440ea9d885a08fb6f595f039bb38ff8e5d0f1eb7c8a6669fcf78c3c1bcce2ad3203f707f1')
 ON CONFLICT (username) DO NOTHING;
+
+-- System settings table for Kitchen status and Menu sync version
+CREATE TABLE IF NOT EXISTS system_settings (
+    key VARCHAR(50) PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
+INSERT INTO system_settings (key, value)
+VALUES 
+    ('kitchen_open', 'true'),
+    ('menu_version', '1')
+ON CONFLICT (key) DO NOTHING;
