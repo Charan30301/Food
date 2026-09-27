@@ -1,4 +1,4 @@
-~/Food $ cat static/css/responsive-gold.css                                               /* =========================================================
+/* =========================================================
    GRAND PALACE
    LUXURY IVORY + CHAMPAGNE GOLD THEME
    Inspired by premium luxury branding
@@ -176,8 +176,10 @@ header {
     color:
         var(--gold-dark) !important;
 }
-                                                                                          /* =========================================================
-   KITCHEN CLOSED                                                                            ========================================================= */
+
+/* =========================================================
+   KITCHEN CLOSED
+   ========================================================= */
 
 .kitchen-banner {
     background:
@@ -185,18 +187,21 @@ header {
 
     color:
         #9c4039 !important;
-                                                                                              border-bottom:
+
+    border-bottom:
         1px solid #dfbdb5;
 }
 
 /* =========================================================
    CATEGORY NAVIGATION
    ========================================================= */
-                                                                                          .categories-container {
+
+.categories-container {
     scrollbar-width: none;
 }
 
-.categories-container::-webkit-scrollbar {                                                    display: none;
+.categories-container::-webkit-scrollbar {
+    display: none;
 }
 
 .cat-btn {
@@ -213,11 +218,14 @@ header {
         999px !important;
 
     transition:
-        all 0.25s ease;                                                                   }
-                                                                                          .cat-btn:hover {
+        all 0.25s ease;
+}
+
+.cat-btn:hover {
     background:
         var(--cream) !important;
-                                                                                              color:
+
+    color:
         var(--gold-dark) !important;
 
     border-color:
@@ -225,7 +233,8 @@ header {
 }
 
 .cat-btn.active {
-    background:                                                                                   linear-gradient(
+    background:
+        linear-gradient(
             135deg,
             #c5a765,
             #a88648
@@ -238,7 +247,8 @@ header {
         var(--gold) !important;
 
     box-shadow:
-        0 5px 14px rgba(145, 112, 54, 0.20);                                              }
+        0 5px 14px rgba(145, 112, 54, 0.20);
+}
 
 /* =========================================================
    MENU GRID
@@ -252,25 +262,33 @@ header {
    FOOD CARD
    ========================================================= */
 
-.item-card {                                                                                  background:
-        rgba(255, 255, 255, 0.94) !important;                                             
+.item-card {
+    background:
+        rgba(255, 255, 255, 0.94) !important;
+
     color:
-        var(--espresso) !important;                                                       
-    border:                                                                                       1px solid var(--gold-border) !important;
-                                                                                              border-radius:
+        var(--espresso) !important;
+
+    border:
+        1px solid var(--gold-border) !important;
+
+    border-radius:
         18px !important;
 
     overflow:
         hidden;
 
     box-shadow:
-        0 3px 12px rgba(70, 55, 30, 0.07),                                                        0 1px 2px rgba(70, 55, 30, 0.04);
+        0 3px 12px rgba(70, 55, 30, 0.07),
+        0 1px 2px rgba(70, 55, 30, 0.04);
 
     transition:
         transform 0.25s ease,
-        box-shadow 0.25s ease,                                                                    border-color 0.25s ease;
+        box-shadow 0.25s ease,
+        border-color 0.25s ease;
 }
-                                                                                          .item-card:hover {
+
+.item-card:hover {
     transform:
         translateY(-3px);
 
@@ -281,33 +299,53 @@ header {
         0 8px 22px rgba(70, 55, 30, 0.10),
         0 3px 10px rgba(184, 155, 94, 0.08);
 }
-                                                                                          /* =========================================================
+
+/* =========================================================
    FOOD IMAGE
    ========================================================= */
-                                                                                          .photo-container {
-    background:                                                                                   var(--cream) !important;
-}                                                                                         
-.photo-container img {                                                                        display:
-        block;                                                                            
-    width:                                                                                        100%;
+
+.photo-container {
+    background:
+        var(--cream) !important;
+}
+
+.photo-container img {
+    display:
+        block;
+
+    width:
+        100%;
 
     height:
-        100%;                                                                                                                                                                           object-fit:
+        100%;
+
+    object-fit:
         cover;
-}                                                                                                                                                                                   /* =========================================================                                 STATUS DOT
+}
+
+/* =========================================================
+   STATUS DOT
    ========================================================= */
-                                                                                          .status-dot {
-    border:                                                                                       2px solid #fffdf7 !important;
-                                                                                              box-shadow:
+
+.status-dot {
+    border:
+        2px solid #fffdf7 !important;
+
+    box-shadow:
         0 1px 4px rgba(0, 0, 0, 0.18);
-}                                                                                         
+}
+
 .status-dot.active {
-    background-color:                                                                             var(--green) !important;
-}                                                                                         
+    background-color:
+        var(--green) !important;
+}
+
 .status-dot.inactive {
     background-color:
-        var(--red) !important;                                                            }
-                                                                                          /* =========================================================
+        var(--red) !important;
+}
+
+/* =========================================================
    PLUS / MINUS CONTROL
    ========================================================= */
 
@@ -320,22 +358,26 @@ header {
 
     box-shadow:
         0 4px 12px rgba(60, 45, 20, 0.14);
-}                                                                                         
+}
+
 .action-btn {
     color:
         var(--gold-dark) !important;
 
     font-weight:
-        700;                                                                              }
+        700;
+}
 
-.action-btn:hover {                                                                           color:
+.action-btn:hover {
+    color:
         var(--gold) !important;
 }
 
 .qty-label {
     color:
         var(--espresso) !important;
-}                                                                                         
+}
+
 /* =========================================================
    FOOD INFORMATION
    ========================================================= */
@@ -351,7 +393,8 @@ header {
 }
 
 .item-text h3 {
-    color:                                                                                        var(--espresso) !important;
+    color:
+        var(--espresso) !important;
 
     font-weight:
         700;
@@ -503,34 +546,46 @@ header {
 
     border-left:
         1px solid var(--gold-border) !important;
-                                                                                              box-shadow:
+
+    box-shadow:
         -12px 0 35px rgba(40, 30, 15, 0.15);
 }
 
-.sidebar-header {                                                                             border-bottom:
+.sidebar-header {
+    border-bottom:
         1px solid var(--gold-border) !important;
 }
 
-.sidebar-header h3 {                                                                          color:
-        var(--gold-dark) !important;                                                      }
-
-.sidebar-close-btn {                                                                          color:
+.sidebar-header h3 {
+    color:
         var(--gold-dark) !important;
-}                                                                                         
-/* =========================================================                                 PROFILE / ORDER CARDS
+}
+
+.sidebar-close-btn {
+    color:
+        var(--gold-dark) !important;
+}
+
+/* =========================================================
+   PROFILE / ORDER CARDS
    ========================================================= */
-                                                                                          .profile-card,
+
+.profile-card,
 .order-card {
     background:
         #fffdf8 !important;
-                                                                                              color:
+
+    color:
         var(--espresso) !important;
-                                                                                              border:
+
+    border:
         1px solid var(--gold-border) !important;
 
     box-shadow:
         0 3px 12px rgba(70, 55, 30, 0.05);
-}                                                                                                                                                                                   /* =========================================================
+}
+
+/* =========================================================
    USERNAME
    ========================================================= */
 
@@ -815,7 +870,8 @@ header {
 /* =========================================================
    DESKTOP
    ========================================================= */
-                                                                                          @media (min-width: 1101px) {
+
+@media (min-width: 1101px) {
 
     .menu-list {
         display:
@@ -959,10 +1015,12 @@ header {
     width: 52px !important;
     height: 52px !important;
     min-width: 52px !important;
-    min-height: 52px !important;                                                              padding: 0 !important;
+    min-height: 52px !important;
+    padding: 0 !important;
     border-radius: 50% !important;
     display: flex !important;
-    align-items: center !important;                                                           justify-content: center !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 .top-bar .profile-btn #navUsernameDisplay {
@@ -977,11 +1035,15 @@ header {
     display: flex !important;
     align-items: center !important;
     width: 100% !important;
-    gap: 10px !important;                                                                     padding: 0 !important;
-}                                                                                         
+    gap: 10px !important;
+    padding: 0 !important;
+}
+
 .top-bar .search-container {
-    flex: 1 1 auto !important;                                                                width: auto !important;
-    max-width: none !important;                                                               min-width: 0 !important;
+    flex: 1 1 auto !important;
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
 }
 
 .top-bar .search-input {
@@ -999,7 +1061,8 @@ header {
 }
 
 .top-bar .profile-btn {
-    flex: 0 0 48px !important;                                                                width: 48px !important;
+    flex: 0 0 48px !important;
+    width: 48px !important;
     height: 48px !important;
     min-width: 48px !important;
     min-height: 48px !important;
@@ -1076,7 +1139,8 @@ header {
     width: 48px !important;
     height: 48px !important;
     min-width: 48px !important;
-    min-height: 48px !important;                                                              padding: 0 !important;
+    min-height: 48px !important;
+    padding: 0 !important;
     margin: 0 !important;
     border-radius: 50% !important;
 
@@ -1091,13 +1155,15 @@ header {
     border: 1px solid #927326 !important;
     color: #1c160b !important;
     box-shadow: 0 3px 10px rgba(80, 60, 25, 0.18) !important;
-}                                                                                         
+}
+
 .top-bar .profile-avatar {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
 
-    width: 100% !important;                                                                   height: 100% !important;
+    width: 100% !important;
+    height: 100% !important;
 
     font-size: 20px !important;
     font-weight: 800 !important;
@@ -1110,13 +1176,16 @@ header {
     top: 50% !important;
     transform: translateY(-50%) !important;
 
-    font-size: 22px !important;                                                               color: var(--gold-light) !important;
+    font-size: 22px !important;
+    color: var(--gold-light) !important;
     line-height: 1 !important;
 }
 
-.top-bar .profile-btn #navUsernameDisplay {                                                   display: none !important;
+.top-bar .profile-btn #navUsernameDisplay {
+    display: none !important;
 }
-                                                                                          @media (max-width: 600px) {
+
+@media (max-width: 600px) {
 
     .top-bar {
         gap: 10px !important;
@@ -1124,8 +1193,10 @@ header {
     }
 
     .top-bar .search-input {
-        height: 46px !important;                                                                  min-height: 46px !important;
-        font-size: 16px !important;                                                               padding-left: 46px !important;
+        height: 46px !important;
+        min-height: 46px !important;
+        font-size: 16px !important;
+        padding-left: 46px !important;
     }
 
     .top-bar .profile-btn {
@@ -1156,7 +1227,8 @@ header {
 
     display: flex !important;
     align-items: center !important;
-    justify-content: center !important;                                                   
+    justify-content: center !important;
+
     box-sizing: border-box !important;
 
     background: linear-gradient(135deg, #d8bd70, #b8953f) !important;
@@ -1217,12 +1289,14 @@ header {
     padding: 0 !important;
 
     display: flex !important;
-    align-items: center !important;                                                           justify-content: center !important;
+    align-items: center !important;
+    justify-content: center !important;
 
     border-radius: 50% !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
-                                                                                              background: linear-gradient(135deg, #d8bd70, #b8953f) !important;
+
+    background: linear-gradient(135deg, #d8bd70, #b8953f) !important;
     border: 1px solid #927326 !important;
     color: #1c160b !important;
 
@@ -1231,21 +1305,28 @@ header {
 
 .top-bar .profile-btn::before {
     content: attr(data-initial) !important;
-                                                                                              position: absolute !important;
+
+    position: absolute !important;
     left: 50% !important;
     top: 50% !important;
-                                                                                              transform: translate(-50%, -50%) !important;
+
+    transform: translate(-50%, -50%) !important;
 
     width: auto !important;
-    height: auto !important;                                                              
+    height: auto !important;
+
     margin: 0 !important;
-    padding: 0 !important;                                                                
+    padding: 0 !important;
+
     font-family: Arial, sans-serif !important;
-    font-size: 20px !important;                                                               font-weight: 800 !important;
+    font-size: 20px !important;
+    font-weight: 800 !important;
     line-height: 1 !important;
-                                                                                              color: #1c160b !important;
+
+    color: #1c160b !important;
     text-align: center !important;
-    white-space: nowrap !important;                                                       }
+    white-space: nowrap !important;
+}
 
 @media (max-width: 600px) {
     .top-bar .profile-btn {
@@ -1583,786 +1664,5 @@ header {
 
     #cartBar #cartTotalLabel {
         font-size: 0.68rem !important;
-    }
-}
-
-/* =========================================================
-   RESPONSIVE ORDER PROGRESS
-   Accepted → Preparing → Prepared → Delivered
-   ========================================================= */
-
-#orderProgressModal {
-    padding: 12px !important;
-    box-sizing: border-box !important;
-}
-
-#orderProgressModal .progress-box {
-    width: min(92vw, 520px) !important;
-    max-height: 94vh !important;
-    overflow-y: auto !important;
-    box-sizing: border-box !important;
-
-    border-radius: 24px !important;
-    padding: clamp(18px, 4vw, 30px) !important;
-}
-
-/* =========================================================
-   CIRCULAR PROGRESS
-   ========================================================= */
-
-#orderProgressModal .circular-progress-wrapper {
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-
-    width: 100% !important;
-
-    margin: 10px auto 20px !important;
-}
-
-#orderProgressModal .circular-progress {
-    --progress: 90deg;
-
-    width: clamp(170px, 48vw, 250px) !important;
-    height: clamp(170px, 48vw, 250px) !important;
-
-    border-radius: 50% !important;
-
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-
-    background:
-        conic-gradient(
-            from -90deg,
-            var(--gold) 0deg,
-            var(--gold) var(--progress),
-            rgba(184, 155, 94, 0.18) var(--progress),
-            rgba(184, 155, 94, 0.18) 360deg
-        ) !important;
-
-    position: relative !important;
-
-    transition: background 0.8s ease !important;
-
-    flex-shrink: 0 !important;
-}
-
-/* Inner circle */
-
-#orderProgressModal .circular-progress::before {
-    content: "" !important;
-
-    position: absolute !important;
-    inset: 10px !important;
-
-    border-radius: 50% !important;
-
-    background: var(--ivory-light) !important;
-}
-
-/* Inner content */
-
-#orderProgressModal .circular-progress-inner {
-    position: relative !important;
-    z-index: 2 !important;
-
-    width: calc(100% - 28px) !important;
-    height: calc(100% - 28px) !important;
-
-    border-radius: 50% !important;
-
-    display: flex !important;
-    flex-direction: column !important;
-
-    justify-content: center !important;
-    align-items: center !important;
-
-    text-align: center !important;
-
-    box-sizing: border-box !important;
-
-    padding: 15px !important;
-}
-
-/* Percentage */
-
-#orderProgressModal .progress-percentage {
-    font-size: clamp(28px, 8vw, 46px) !important;
-
-    font-weight: 800 !important;
-
-    line-height: 1 !important;
-
-    color: var(--gold-dark) !important;
-}
-
-/* Status */
-
-#orderProgressModal .progress-status {
-    margin-top: 8px !important;
-
-    font-size: clamp(15px, 4vw, 20px) !important;
-
-    font-weight: 800 !important;
-
-    color: var(--espresso) !important;
-
-    word-break: break-word !important;
-}
-
-/* Sub-status */
-
-#orderProgressModal .progress-substatus {
-    margin-top: 5px !important;
-
-    max-width: 170px !important;
-
-    font-size: clamp(11px, 3vw, 14px) !important;
-
-    line-height: 1.35 !important;
-
-    color: var(--brown-light) !important;
-}
-
-/* =========================================================
-   STATUS MESSAGE
-   ========================================================= */
-
-#orderProgressModal .order-progress-message {
-    text-align: center !important;
-
-    margin: 10px auto 24px !important;
-
-    max-width: 440px !important;
-}
-
-#orderProgressModal .order-progress-title {
-    font-size: clamp(19px, 5vw, 25px) !important;
-
-    font-weight: 800 !important;
-
-    color: var(--gold-dark) !important;
-}
-
-#orderProgressModal .order-progress-description {
-    margin-top: 7px !important;
-
-    font-size: clamp(13px, 3.5vw, 16px) !important;
-
-    line-height: 1.5 !important;
-
-    color: var(--brown-light) !important;
-}
-
-#orderProgressModal .order-progress-quote {
-    margin-top: 12px !important;
-
-    padding: 10px 14px !important;
-
-    border-left: 3px solid var(--gold) !important;
-
-    font-size: clamp(12px, 3.2vw, 14px) !important;
-
-    line-height: 1.45 !important;
-
-    font-style: italic !important;
-
-    color: var(--gold-dark) !important;
-
-    background: rgba(184, 155, 94, 0.06) !important;
-
-    border-radius: 0 8px 8px 0 !important;
-}
-
-/* =========================================================
-   FOUR STATUS STAGES
-   ========================================================= */
-
-#orderProgressModal .responsive-status-stages {
-    display: grid !important;
-
-    grid-template-columns:
-        repeat(4, minmax(0, 1fr)) !important;
-
-    gap: clamp(4px, 2vw, 12px) !important;
-
-    width: 100% !important;
-
-    margin: 15px auto 24px !important;
-}
-
-#orderProgressModal .status-stage {
-    min-width: 0 !important;
-
-    display: flex !important;
-
-    flex-direction: column !important;
-
-    align-items: center !important;
-
-    text-align: center !important;
-}
-
-#orderProgressModal .stage-circle {
-    width: clamp(30px, 9vw, 42px) !important;
-    height: clamp(30px, 9vw, 42px) !important;
-
-    border-radius: 50% !important;
-
-    display: flex !important;
-
-    justify-content: center !important;
-    align-items: center !important;
-
-    font-size: clamp(11px, 3vw, 15px) !important;
-
-    font-weight: 800 !important;
-
-    color: var(--brown-light) !important;
-
-    background: var(--cream) !important;
-
-    border: 1px solid var(--gold-border) !important;
-
-    transition:
-        background 0.35s ease,
-        color 0.35s ease,
-        border 0.35s ease,
-        transform 0.35s ease,
-        box-shadow 0.35s ease !important;
-}
-
-#orderProgressModal .status-stage span {
-    margin-top: 7px !important;
-
-    font-size: clamp(9px, 2.7vw, 13px) !important;
-
-    line-height: 1.2 !important;
-
-    color: var(--brown-light) !important;
-
-    word-break: break-word !important;
-}
-
-/* Completed */
-
-#orderProgressModal
-.status-stage.completed
-.stage-circle {
-    background: var(--gold) !important;
-
-    border-color: var(--gold) !important;
-
-    color: #ffffff !important;
-
-    box-shadow:
-        0 3px 10px rgba(184, 155, 94, 0.25) !important;
-}
-
-#orderProgressModal
-.status-stage.completed
-span {
-    color: var(--gold-dark) !important;
-}
-
-/* Current */
-
-#orderProgressModal
-.status-stage.current
-.stage-circle {
-    background: var(--ivory-light) !important;
-
-    border: 2px solid var(--gold) !important;
-
-    color: var(--gold-dark) !important;
-
-    transform: scale(1.08) !important;
-
-    box-shadow:
-        0 0 0 4px rgba(184, 155, 94, 0.14) !important;
-}
-
-#orderProgressModal
-.status-stage.current
-span {
-    color: var(--gold-dark) !important;
-
-    font-weight: 800 !important;
-}
-
-/* =========================================================
-   CLOSE BUTTON
-   ========================================================= */
-
-#orderProgressModal .progress-close-main {
-    width: 100% !important;
-
-    min-height: 46px !important;
-
-    border: 1px solid var(--gold-border) !important;
-
-    border-radius: 12px !important;
-
-    padding: 11px 16px !important;
-
-    font-size: 15px !important;
-
-    font-weight: 700 !important;
-
-    cursor: pointer !important;
-
-    background:
-        linear-gradient(
-            135deg,
-            #c2a45e,
-            #9e7d3e
-        ) !important;
-
-    color: #ffffff !important;
-}
-
-/* =========================================================
-   CUSTOMER STATUS NOTIFICATION
-   ========================================================= */
-
-.order-status-notification {
-    position: fixed !important;
-
-    left: 50% !important;
-
-    bottom:
-        max(20px, env(safe-area-inset-bottom)) !important;
-
-    transform:
-        translate(-50%, 140px) !important;
-
-    width: min(92vw, 440px) !important;
-
-    z-index: 99999 !important;
-
-    padding: 14px 16px !important;
-
-    border-radius: 16px !important;
-
-    background:
-        rgba(251, 249, 242, 0.98) !important;
-
-    border:
-        1px solid var(--gold-border) !important;
-
-    box-shadow:
-        0 15px 40px rgba(80, 60, 25, 0.20) !important;
-
-    opacity: 0 !important;
-
-    transition:
-        transform 0.35s ease,
-        opacity 0.35s ease !important;
-
-    box-sizing: border-box !important;
-}
-
-.order-status-notification.show {
-    transform:
-        translate(-50%, 0) !important;
-
-    opacity: 1 !important;
-}
-
-.order-status-notification-title {
-    color: var(--gold-dark) !important;
-
-    font-size: 15px !important;
-
-    font-weight: 800 !important;
-}
-
-.order-status-notification-message {
-    margin-top: 4px !important;
-
-    color: var(--espresso) !important;
-
-    font-size: 13px !important;
-
-    line-height: 1.45 !important;
-}
-
-/* =========================================================
-   VERY SMALL PHONES
-   ========================================================= */
-
-@media (max-width: 360px) {
-
-    #orderProgressModal {
-        padding: 8px !important;
-    }
-
-    #orderProgressModal .progress-box {
-        padding: 15px !important;
-
-        border-radius: 18px !important;
-    }
-
-    #orderProgressModal .circular-progress {
-        width: 155px !important;
-        height: 155px !important;
-    }
-
-    #orderProgressModal .circular-progress::before {
-        inset: 8px !important;
-    }
-
-    #orderProgressModal .circular-progress-inner {
-        width: calc(100% - 22px) !important;
-
-        height: calc(100% - 22px) !important;
-
-        padding: 8px !important;
-    }
-
-    #orderProgressModal .progress-substatus {
-        max-width: 135px !important;
-    }
-
-    #orderProgressModal .responsive-status-stages {
-        gap: 2px !important;
-    }
-
-    #orderProgressModal .status-stage span {
-        font-size: 9px !important;
-    }
-}
-
-/* =========================================================
-   TABLETS
-   ========================================================= */
-
-@media (min-width: 600px) {
-
-    #orderProgressModal .progress-box {
-        padding: 30px !important;
-    }
-}
-
-/* =========================================================
-   DESKTOP
-   ========================================================= */
-
-@media (min-width: 1024px) {
-
-    #orderProgressModal .progress-box {
-        width: 520px !important;
-    }
-}
-
-/* =========================================================
-   LANDSCAPE PHONES
-   ========================================================= */
-
-@media (max-height: 500px)
-       and (orientation: landscape) {
-
-    #orderProgressModal .progress-box {
-        max-height: 94vh !important;
-
-        padding: 14px 20px !important;
-    }
-
-    #orderProgressModal .circular-progress {
-        width: 130px !important;
-
-        height: 130px !important;
-    }
-
-    #orderProgressModal .order-progress-message {
-        margin-bottom: 10px !important;
-    }
-
-    #orderProgressModal .responsive-status-stages {
-        margin-bottom: 10px !important;
-    }
-}
-/* =========================================================
-   MOBILE ORDER STATUS DESIGN
-   ========================================================= */
-@media (max-width: 600px) {
-
-    /* -----------------------------------------
-       1. Floating Order Placed bar -> circle
-       ----------------------------------------- */
-    #orderPlacedBar {
-        position: fixed;
-        right: 16px;
-        bottom: calc(18px + env(safe-area-inset-bottom));
-        left: auto;
-
-        width: 68px;
-        height: 68px;
-        min-width: 68px;
-
-        padding: 0;
-        border-radius: 50%;
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        z-index: 9998;
-
-        cursor: pointer;
-    }
-
-    /* Hide the long text inside the circular button */
-    #orderPlacedBar .order-bar-content {
-        width: 100%;
-        height: 100%;
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    #orderPlacedBar .order-bar-title,
-    #orderPlacedBar .order-bar-status,
-    #orderPlacedBar .order-bar-token {
-        display: none;
-    }
-
-    /* Circular order icon */
-    #orderPlacedBar::before {
-        content: "✓";
-        width: 42px;
-        height: 42px;
-
-        border: 2px solid rgba(255,255,255,0.9);
-        border-radius: 50%;
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        font-size: 25px;
-        font-weight: 700;
-    }
-
-
-    /* -----------------------------------------
-       2. Mobile modal
-       ----------------------------------------- */
-    #orderProgressModal {
-        padding: 12px;
-        align-items: center;
-    }
-
-    #orderProgressModal .progress-close {
-        width: 38px;
-        height: 38px;
-        border-radius: 50%;
-        border: 1px solid #d9cba7;
-        background: #fffaf0;
-        font-size: 22px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 8px auto 0;
-    }
-}
-
-
-    /* -----------------------------------------
-       3. Hide circular progress on mobile
-       ----------------------------------------- */
-    #orderProgressModal .circular-progress-wrapper {
-        display: none;
-    }
-
-
-    /* -----------------------------------------
-       4. Mobile order message
-       ----------------------------------------- */
-    #orderProgressModal .order-progress-message {
-        margin-top: 18px;
-        margin-bottom: 20px;
-    }
-
-    #orderProgressModal #orderProgressTitle {
-        font-size: 22px;
-    }
-
-    #orderProgressModal #orderProgressDescription {
-        font-size: 15px;
-        line-height: 1.45;
-    }
-
-    #orderProgressModal #orderProgressQuote {
-        font-size: 14px;
-        margin-top: 12px;
-    }
-
-
-    /* -----------------------------------------
-       5. LINEAR PROGRESS TRACKER
-       ----------------------------------------- */
-    #orderProgressModal .responsive-status-stages {
-        position: relative;
-
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-
-        width: 100%;
-        margin: 24px 0 8px;
-
-        gap: 0;
-    }
-
-
-    /* Horizontal connecting line */
-    #orderProgressModal .responsive-status-stages::before {
-        content: "";
-
-        position: absolute;
-
-        left: 12.5%;
-        right: 12.5%;
-        top: 20px;
-
-        height: 3px;
-
-        background: #e8dfca;
-
-        z-index: 0;
-    }
-
-
-    /* Individual stage */
-    #orderProgressModal .status-stage {
-        position: relative;
-
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-
-        min-width: 0;
-
-        z-index: 1;
-    }
-
-
-    /* Stage circle */
-    #orderProgressModal .status-stage .stage-icon,
-    #orderProgressModal .status-stage > div:first-child {
-        width: 40px;
-        height: 40px;
-
-        border-radius: 50%;
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        background: #f3eddd;
-
-        border: 2px solid #d9cba7;
-
-        font-size: 15px;
-        font-weight: 600;
-
-        box-sizing: border-box;
-    }
-
-
-    /* Stage label */
-    #orderProgressModal .status-stage .stage-label,
-    #orderProgressModal .status-stage > div:last-child {
-        margin-top: 8px;
-
-        font-size: 12px;
-        line-height: 1.2;
-
-        text-align: center;
-
-        white-space: nowrap;
-    }
-
-
-    /* Completed */
-    #orderProgressModal .status-stage.completed
-    .stage-icon,
-    #orderProgressModal .status-stage.completed > div:first-child {
-        background: #b8964c;
-        border-color: #b8964c;
-        color: white;
-    }
-
-
-    /* Current */
-    #orderProgressModal .status-stage.current
-    .stage-icon,
-    #orderProgressModal .status-stage.current > div:first-child {
-        background: #fffaf0;
-        border: 3px solid #b8964c;
-        color: #8d7037;
-
-        box-shadow: 0 0 0 5px rgba(184,150,76,0.15);
-    }
-
-    #orderProgressModal .status-stage.current
-    .stage-label,
-    #orderProgressModal .status-stage.current > div:last-child {
-        color: #8d7037;
-        font-weight: 700;
-    }
-
-
-    /* -----------------------------------------
-       6. Close button
-       ----------------------------------------- */
-    #orderProgressModal .progress-close-main {
-        width: 100%;
-        margin-top: 22px;
-    }
-}
-
-
-/* =========================================================
-   VERY SMALL PHONES
-   ========================================================= */
-@media (max-width: 380px) {
-
-    #orderPlacedBar {
-        width: 60px;
-        height: 60px;
-        right: 12px;
-        bottom: calc(14px + env(safe-area-inset-bottom));
-    }
-
-    #orderPlacedBar::before {
-        width: 36px;
-        height: 36px;
-        font-size: 21px;
-    }
-
-    #orderProgressModal .progress-box {
-        padding: 18px 10px;
-        border-radius: 24px;
-    }
-
-    #orderProgressModal .status-stage .stage-icon,
-    #orderProgressModal .status-stage > div:first-child {
-        width: 34px;
-        height: 34px;
-        font-size: 13px;
-    }
-
-    #orderProgressModal .status-stage .stage-label,
-    #orderProgressModal .status-stage > div:last-child {
-        font-size: 10px;
-    }
-
-    #orderProgressModal .responsive-status-stages::before {
-        top: 17px;
-        left: 12%;
-        right: 12%;
     }
 }
