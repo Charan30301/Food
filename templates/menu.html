@@ -1,7 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
+~/Food $ cat templates/menu.html
+<!DOCTYPE html>                                                                           <html lang="en">
+<head>                                                                                        <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Grand Palace Hotel - Menu</title>
     <style>
@@ -29,8 +28,7 @@
         .top-bar { display: flex; align-items: center; gap: 1rem; max-width: 1400px; margin: 0 auto; }
         .search-container { flex: 1; position: relative; }
         .search-input {
-            width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem;
-            background: var(--card-bg); border: 1px solid var(--card-border);
+            width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem;                                        background: var(--card-bg); border: 1px solid var(--card-border);
             border-radius: 9999px; color: #fff; font-size: 0.95rem; outline: none;
         }
         .search-icon { position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
@@ -39,59 +37,46 @@
             display: flex; align-items: center; gap: 0.5rem; background: var(--card-bg);
             border: 1px solid var(--card-border); padding: 0.5rem 1rem; border-radius: 9999px;
             color: var(--text-main); font-size: 0.9rem; cursor: pointer; transition: 0.2s;
-        }
-        .profile-btn:hover { border-color: var(--primary); background: #253348; }
+        }                                                                                         .profile-btn:hover { border-color: var(--primary); background: #253348; }
 
         .kitchen-banner {
             display: none; background: #ef4444; color: white; text-align: center;
             padding: 0.65rem; font-weight: 700; font-size: 0.9rem;
-        }
-        .kitchen-banner.show { display: block; }
+        }                                                                                         .kitchen-banner.show { display: block; }
 
         .categories-container {
             max-width: 1400px; margin: 1.25rem auto 0.5rem; padding: 0 1.5rem;
-            display: flex; gap: 0.75rem; overflow-x: auto;
-        }
+            display: flex; gap: 0.75rem; overflow-x: auto;                                        }
 
         .cat-btn {
-            background: var(--card-bg); color: var(--text-muted); border: 1px solid var(--card-border);
-            padding: 0.6rem 1.4rem; border-radius: 9999px; font-size: 0.9rem; font-weight: 600;
-            cursor: pointer; text-transform: capitalize; white-space: nowrap;
+            background: var(--card-bg); color: var(--text-muted); border: 1px solid var(--card-border);                                                                                         padding: 0.6rem 1.4rem; border-radius: 9999px; font-size: 0.9rem; font-weight: 600;                                                                                                 cursor: pointer; text-transform: capitalize; white-space: nowrap;
         }
         .cat-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
-        .menu-list {
-            max-width: 1400px; margin: 1.5rem auto; padding: 0 1.5rem;
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem;
-        }
+        .menu-list {                                                                                  max-width: 1400px; margin: 1.5rem auto; padding: 0 1.5rem;
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem;                   }
 
-        @media (max-width: 768px) {
-            .menu-list { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: 0 0.75rem; }
+        @media (max-width: 768px) {                                                                   .menu-list { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: 0 0.75rem; }
             .photo-container { height: 140px !important; }
         }
-
-        .item-card {
+                                                                                                  .item-card {
     box-shadow:
-        0 8px 24px rgba(212, 175, 55, 0.28),
-        0 2px 8px rgba(212, 175, 55, 0.18);
+        0 8px 24px rgba(212, 175, 55, 0.28),                                                      0 2px 8px rgba(212, 175, 55, 0.18);
 
             background: var(--card-bg); border: 1px solid var(--card-border);
             border-radius: 14px; overflow: hidden; display: flex; flex-direction: column;
             justify-content: space-between;
-        }
-        .photo-container { position: relative; width: 100%; height: 180px; background: #000; }
+        }                                                                                         .photo-container { position: relative; width: 100%; height: 180px; background: #000; }
         .photo-container img { width: 100%; height: 100%; object-fit: cover; }
 
         .status-dot {
             position: absolute; top: 10px; left: 10px; width: 12px; height: 12px;
-            border-radius: 50%; border: 2px solid #fff; z-index: 2;
-        }
+            border-radius: 50%; border: 2px solid #fff; z-index: 2;                               }
         .status-dot.active { background-color: var(--success); }
         .status-dot.inactive { background-color: var(--danger); }
 
         .action-ctrl {
-            position: absolute; bottom: 10px; right: 10px; background: #ffffff;
-            border-radius: 9999px; display: flex; align-items: center; z-index: 2;
+            position: absolute; bottom: 10px; right: 10px; background: #ffffff;                       border-radius: 9999px; display: flex; align-items: center; z-index: 2;
         }
         .action-btn { background: none; border: none; padding: 0.45rem 0.75rem; font-size: 1rem; cursor: pointer; color: #0f172a; font-weight: bold; }
         .qty-label { font-size: 0.9rem; min-width: 20px; text-align: center; color: #0f172a; font-weight: bold; }
@@ -99,21 +84,15 @@
         .item-info { padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: flex-end; }
         .item-text h3 { font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .item-category { font-size: 0.8rem; color: var(--text-muted); text-transform: capitalize; }
-        .item-price { font-size: 1.15rem; font-weight: 700; color: #38bdf8; }
-
+        .item-price { font-size: 1.15rem; font-weight: 700; color: #38bdf8; }             
         /* Floating Bars */
         .floating-action-bar {
-            position: fixed; bottom: 20px; right: 20px; padding: 0.85rem 1.25rem;
-            border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: none;
-            align-items: center; gap: 1.25rem; z-index: 900; cursor: pointer; text-decoration: none;
-        }
+            position: fixed; bottom: 20px; right: 20px; padding: 0.85rem 1.25rem;                     border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: none;
+            align-items: center; gap: 1.25rem; z-index: 900; cursor: pointer; text-decoration: none;                                                                                        }
         .floating-action-bar.visible { display: flex; }
-        .cart-bar { background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; }
-        .order-placed-bar { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
-
-        .badge { font-size: 1.1rem; font-weight: 800; background: rgba(255,255,255,0.2); padding: 0.35rem 0.75rem; border-radius: 8px; }
-
-        /* Step Progress Modal */
+        .cart-bar { background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; }         .order-placed-bar { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
+                                                                                                  .badge { font-size: 1.1rem; font-weight: 800; background: rgba(255,255,255,0.2); padding: 0.35rem 0.75rem; border-radius: 8px; }
+                                                                                                  /* Step Progress Modal */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
@@ -202,33 +181,135 @@
 
     <!-- 4-Stage Progress Tracker Modal -->
     <div class="modal-overlay" id="orderProgressModal">
-        <div class="progress-box">
-            <h3>Token #<span id="modalOrderId">0</span> Status</h3>
-            <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.3rem;">Payment Verified • Preparing</p>
+    <div class="progress-box">
 
-            <div class="stepper-row">
-                <div class="step-col">
-                    <div class="step-dot" id="dotAccepted"></div>
-                    <span class="step-name">Accepted</span>
-                </div>
-                <div class="step-col">
-                    <div class="step-dot" id="dotPreparing"></div>
-                    <span class="step-name">Preparing</span>
-                </div>
-                <div class="step-col">
-                    <div class="step-dot" id="dotPrepared"></div>
-                    <span class="step-name">Prepared</span>
-                </div>
-                <div class="step-col">
-                    <div class="step-dot" id="dotDelivered"></div>
-                    <span class="step-name">Delivered</span>
+        <div class="progress-modal-header">
+            <div>
+                <span class="progress-small-title">ORDER STATUS</span>
+                <h3>
+                    Token #<span id="modalOrderId">0</span>
+                </h3>
+            </div>
+
+            <button
+                class="progress-close-btn"
+                type="button"
+                onclick="closeOrderProgressModal()"
+                aria-label="Close order status"
+            >
+                ×
+            </button>
+        </div>
+
+        <div class="circular-progress-wrapper">
+
+            <div
+                class="circular-progress"
+                id="circularProgress"
+                style="--progress: 25deg;"
+            >
+                <div class="circular-progress-inner">
+                    <div
+                        class="progress-percentage"
+                        id="progressPercentage"
+                    >
+                        25%
+                    </div>
+
+                    <div
+                        class="progress-status"
+                        id="progressStatus"
+                    >
+                        Accepted
+                    </div>
+
+                    <div
+                        class="progress-substatus"
+                        id="progressSubstatus"
+                    >
+                        Kitchen accepted your order
+                    </div>
                 </div>
             </div>
 
-            <button class="save-username-btn" onclick="closeOrderProgressModal()" style="width:100%;">Close Status</button>
+        </div>
+
+        <div class="order-progress-message">
+            <div
+                class="order-progress-title"
+                id="orderProgressTitle"
+            >
+                Order Accepted
+            </div>
+
+            <div
+                class="order-progress-description"
+                id="orderProgressDescription"
+            >                                                                                             Your order has been accepted by the kitchen.
+            </div>                                                                        
+            <div
+                class="order-progress-quote"
+                id="orderProgressQuote"
+            >
+                “Great food is worth waiting for.”
+            </div>
+        </div>
+                                                                                                  <div class="responsive-status-stages">
+
+            <div class="status-stage" id="stageAccepted">
+                <div class="stage-circle">✓</div>
+                <span>Accepted</span>
+            </div>
+
+            <div class="status-stage" id="stagePreparing">                                                <div class="stage-circle">2</div>
+                <span>Preparing</span>
+            </div>
+
+            <div class="status-stage" id="stagePrepared">                                                 <div class="stage-circle">3</div>
+                <span>Prepared</span>
+            </div>
+
+            <div class="status-stage" id="stageDelivered">
+                <div class="stage-circle">4</div>
+                <span>Delivered</span>
+            </div>
+
+        </div>
+
+
+
+    <!-- ORDER STATUS NOTIFICATION -->
+<div
+    class="order-status-notification"
+    id="orderStatusToast"
+    role="status"                                                                             aria-live="polite"
+>                                                                                             <div class="order-status-notification-icon" id="toastIcon">
+        🔔
+    </div>
+                                                                                              <div class="order-status-notification-content">
+        <div
+            class="order-status-notification-title"
+            id="toastTitle"
+        >
+            Order Update
+        </div>
+
+        <div                                                                                          class="order-status-notification-message"
+            id="toastMessage"
+        >
+            Your order status has been updated.
         </div>
     </div>
 
+    <button                                                                                       type="button"
+        class="order-status-notification-close"
+        onclick="hideOrderToast()"
+        aria-label="Close notification"
+    >
+        ×                                                                                     </button>
+</div>
+</div> <!-- .progress-box -->
+</div> <!-- #orderProgressModal -->                                                       
     <!-- Profile Drawer & Orders History -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeProfileSidebar()"></div>
     <aside class="profile-sidebar" id="profileSidebar">
@@ -236,25 +317,19 @@
             <h3>My Profile</h3>
             <button class="sidebar-close-btn" onclick="closeProfileSidebar()">&times;</button>
         </div>
-        <div class="sidebar-body">
-            <div class="profile-card">
+        <div class="sidebar-body">                                                                    <div class="profile-card">
                 <label style="font-size:0.8rem; color:var(--text-muted);">Verified Gmail</label>
-                <div style="font-size:0.9rem; color:#38bdf8; margin-bottom:0.75rem;">{{ email }}</div>
-
+                <div style="font-size:0.9rem; color:#38bdf8; margin-bottom:0.75rem;">{{ email }}</div>                                                                              
                 <label style="font-size:0.8rem; color:var(--text-muted);">Display Name</label>
-                <div class="username-input-row">
-                    <input type="text" id="profileUsernameInput" class="username-input" value="{{ username }}">
+                <div class="username-input-row">                                                              <input type="text" id="profileUsernameInput" class="username-input" value="{{ username }}">
                     <button class="save-username-btn" onclick="saveNewUsername()">Save</button>
                 </div>
                 <div id="usernameStatusMsg" style="font-size:0.8rem; margin-top:0.4rem;"></div>
-            </div>
-
+            </div>                                                                        
             <div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-                    <h4>All Orders History</h4>
-                    <button onclick="fetchOrderHistory()" style="background:none; border:none; color:var(--primary); font-size:0.85rem; cursor:pointer;">Refresh</button>
-                </div>
-                <div class="orders-list" id="ordersHistoryList"></div>
+                    <h4>All Orders History</h4>                                                               <button onclick="fetchOrderHistory()" style="background:none; border:none; color:var(--primary); font-size:0.85rem; cursor:pointer;">Refresh</button>
+                </div>                                                                                    <div class="orders-list" id="ordersHistoryList"></div>
             </div>
 
             <a href="/logout" style="margin-top:auto; padding:0.8rem; background:rgba(239, 68, 68, 0.15); color:#ef4444; text-align:center; border-radius:8px; text-decoration:none; font-weight:600;">Log Out</a>
@@ -263,12 +338,216 @@
 
     <script>
         let menuItems = [];
-        let cartData = {};
-        let currentCategory = 'all';
+        let cartData = {};                                                                        let currentCategory = 'all';
         let searchQuery = '';
         let activeOrder = null;
-        let lastReportedStatus = null;
-        let localMenuVersion = null;
+        let lastReportedStatus = null;                                                            let localMenuVersion = null;
+                                                                                          
+        const ORDER_PROGRESS = {                                                          
+    accepted: {                                                                                   percent: 25,
+        degrees: 90,                                                                              status: "Accepted",
+        substatus: "Kitchen accepted your order.",                                                title: "Order Accepted",
+        description: "Your order has been accepted by the kitchen.",
+        quote: "“Great food is worth waiting for.”",                                              icon: "✅"                                                                            },                                                                                    
+    preparing: {                                                                                  percent: 50,                                                                              degrees: 180,                                                                             status: "Preparing",                                                                      substatus: "Our kitchen is preparing your food.",
+        title: "Your order is being prepared",
+        description: "Your order is now being prepared. 👨‍🍳",                                    quote: "“Something delicious is on the way.”",
+        icon: "👨‍🍳"                                                                          },
+                                                                                              prepared: {
+        percent: 75,
+        degrees: 270,                                                                             status: "Ready",
+        substatus: "Your food is ready for pickup.",
+        title: "Your order is ready!",                                                            description: "Your order is ready, please come pick up your order. 🎉",
+        quote: "“Good food is ready to make your day better.”",                                   icon: "🎉"
+    },
+                                                                                              delivered: {                                                                                  percent: 100,                                                                             degrees: 360,                                                                             status: "Delivered",
+        substatus: "Order completed successfully.",
+        title: "Order Delivered",
+        description: "Your order has been delivered. Enjoy your meal! ❤️",
+        quote: "“Enjoy every bite!”",
+        icon: "❤️"
+    }
+
+};
+
+
+function updateOrderProgress(status) {
+
+    const progress = ORDER_PROGRESS[status];                                              
+    if (!progress) return;
+
+    const circle =                                                                                document.getElementById("circularProgress");
+
+    const percentage =                                                                            document.getElementById("progressPercentage");
+
+    const statusText =                                                                            document.getElementById("progressStatus");
+
+    const substatus =
+        document.getElementById("progressSubstatus");
+
+    const title =
+        document.getElementById("orderProgressTitle");
+                                                                                              const description =
+        document.getElementById("orderProgressDescription");
+
+    const quote =
+        document.getElementById("orderProgressQuote");
+
+
+    if (circle) {
+        circle.style.setProperty(
+            "--progress",
+            `${progress.degrees}deg`
+        );
+    }
+
+    if (percentage) {
+        percentage.textContent =
+            `${progress.percent}%`;                                                           }
+
+    if (statusText) {
+        statusText.textContent =
+            progress.status;
+    }
+
+    if (substatus) {
+        substatus.textContent =
+            progress.substatus;
+    }
+
+    if (title) {
+        title.textContent =
+            progress.title;
+    }
+
+    if (description) {
+        description.textContent =
+            progress.description;
+    }
+
+    if (quote) {
+        quote.textContent =
+            progress.quote;
+    }
+}
+
+        let toastTimeout = null;
+
+
+function showOrderNotification(status, orderNumber) {
+
+    const progress = ORDER_PROGRESS[status];
+
+    if (!progress) return;
+
+
+    const toast =
+        document.getElementById("orderStatusToast");
+
+    const toastIcon =
+        document.getElementById("toastIcon");                                             
+    const toastTitle =
+        document.getElementById("toastTitle");
+
+    const toastMessage =
+        document.getElementById("toastMessage");
+
+
+    if (!toast) return;
+
+
+    if (toastIcon) {
+        toastIcon.textContent = progress.icon;
+    }
+
+    if (toastTitle) {                                                                     
+        if (status === "preparing") {
+            toastTitle.textContent =
+                `Order #${orderNumber} is being prepared`;
+        }
+
+        else if (status === "prepared") {                                                             toastTitle.textContent =
+                `Order #${orderNumber} is ready`;
+        }
+
+        else if (status === "delivered") {
+            toastTitle.textContent =
+                `Order #${orderNumber} delivered`;
+        }
+
+        else {
+            toastTitle.textContent =
+                `Order #${orderNumber} update`;
+        }
+    }                                                                                     
+    if (toastMessage) {
+
+        if (status === "preparing") {
+            toastMessage.textContent =                                                                    "Your order is now being prepared.";
+        }
+                                                                                                  else if (status === "prepared") {
+            toastMessage.textContent =
+                "Your order is ready, please come pick up your order.";
+        }
+
+        else if (status === "delivered") {
+            toastMessage.textContent =
+                "Your order has been delivered. Enjoy your meal!";
+        }                                                                                 
+        else {                                                                                        toastMessage.textContent =
+                progress.description;
+        }
+    }
+
+
+    toast.classList.remove("show");
+
+    // Force animation restart
+    void toast.offsetWidth;
+
+    toast.classList.add("show");
+
+
+    clearTimeout(toastTimeout);
+
+    toastTimeout = setTimeout(() => {
+        hideOrderToast();
+    }, 6000);
+
+
+    /*
+     * Browser notification:                                                                   * Only use it when permission has already been granted.
+     * This avoids unexpectedly asking the customer for permission.
+     */
+
+    if (
+        "Notification" in window &&                                                               Notification.permission === "granted"
+    ) {
+                                                                                                  try {
+                                                                                                      new Notification(
+                toastTitle
+                    ? toastTitle.textContent
+                    : "Order Update",
+                {                                                                                             body:
+                        toastMessage                                                                                  ? toastMessage.textContent
+                            : progress.description,
+                                                                                                              icon: "/static/favicon.ico"
+                }
+            );                                                                            
+        } catch (notificationError) {                                                     
+            console.log(
+                "Browser notification unavailable:",                                                      notificationError
+            );
+        }
+    }
+}                                                                                         
+
+function hideOrderToast() {                                                               
+    const toast =
+        document.getElementById("orderStatusToast");
+
+    if (toast) {
+        toast.classList.remove("show");                                                       }                                                                                     }
 
         async function checkOrderStatus() {
             try {
@@ -293,60 +572,112 @@
                     localMenuVersion = data.menu_version;
                 }
 
-                // 1. Terminal Alerts (Cancellation or Delivery)
-                if (data.alert) {
-                    if (data.status === 'cancelled') {
-                        alert(`⚠️ ORDER CANCELLED BY KITCHEN\n\nYour order was cancelled by the kitchen.\n\nReason: ${data.reason}`);
+                // 1. Terminal Alerts (Cancellation or Delivery)                                          // 1. Terminal Alerts
+if (data.status === 'cancelled') {
+    alert(
+        `⚠️ ORDER CANCELLED BY KITCHEN\n\n` +
+        `Your order was cancelled by the kitchen.\n\n` +
+        `Reason: ${data.reason || 'No reason provided'}`                                      );
 
-                        try {
-                            await fetch('/api/order/ack-alert', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    order_id: data.order_id
-                                })
-                            });
-                        } catch (ackError) {
-                            console.error("Could not acknowledge cancellation alert:", ackError);
-                        }
-                    } else if (data.status === 'delivered') {
-                        alert(`🎉 Your Order #${data.order_id} has been delivered! Enjoy your meal.`);
-                        try {
-                            await fetch('/api/order/ack-alert', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    order_id: data.order_id
-                                })
-                            });
-                        } catch (ackError) {
-                            console.error("Could not acknowledge delivery alert:", ackError);
-                        }
-                    }
-                    activeOrder = null;
-                    lastReportedStatus = null;
-                    orderPlacedBar.classList.remove('visible');
-                    closeOrderProgressModal();
-                    loadMenuAndCart();
-                    return;
-                }
+    try {
+        await fetch('/api/order/ack-alert', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                order_id: data.order_id                                                               })
+        });
+    } catch (ackError) {
+        console.error(                                                                                "Could not acknowledge cancellation alert:",
+            ackError
+        );
+    }                                                                                     
+    activeOrder = null;
+    lastReportedStatus = null;                                                            
+    orderPlacedBar.classList.remove('visible');
+                                                                                              closeOrderProgressModal();
+
+    await loadMenuAndCart();                                                              
+    return;
+}                                                                                         
+if (data.status === 'delivered') {
+   if (
+    lastReportedStatus &&
+    lastReportedStatus !== data.status &&
+    ["preparing", "prepared"].includes(data.status)
+) {
+    showOrderNotification(
+        data.status,
+        data.daily_order_number
+    );
+}
+
+    activeOrder = data;
+
+    orderPlacedBar.classList.add('visible');
+    cartBar.classList.remove('visible');
+
+    document.getElementById('activeTokenId').textContent =
+        data.daily_order_number;
+
+    updateStepperDots('delivered');
+
+    // Acknowledge delivery alert
+    try {
+        await fetch('/api/order/ack-alert', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                order_id: data.order_id
+            })
+        });
+    } catch (ackError) {
+        console.error(
+            "Could not acknowledge delivery alert:",
+            ackError
+        );
+    }
+
+    lastReportedStatus = 'delivered';
+
+    return;
+}
+
+
 
                 // 2. Active Orders Logic: STRICT BUTTON TRANSITION RULE
                 if (data.has_active_order) {
                     activeOrder = data;
 
                     // Trigger alert if status transitioned
-                    if (lastReportedStatus && lastReportedStatus !== data.status) {
-                        alert(`🔔 Kitchen Update: Token #${data.daily_order_number} is now ${data.status.toUpperCase()}!`);
-                    }
-                    lastReportedStatus = data.status;
+                    if (
+    lastReportedStatus &&
+    lastReportedStatus !== data.status
+) {
+
+    showOrderNotification(
+        data.status,
+        data.daily_order_number
+    );
+}
+
+lastReportedStatus = data.status;
 
                     if (data.payment_status === 'paid') {
                         // PAYMENT DONE -> Hide cart button, show green "Order Placed" button
                         cartBar.classList.remove('visible');
                         orderPlacedBar.classList.add('visible');
                         document.getElementById('activeTokenId').textContent = data.daily_order_number;
-                        document.getElementById('orderStatusText').textContent = `Kitchen Status: ${data.status.toUpperCase()}`;
+                        const progressInfo = ORDER_PROGRESS[data.status];
+
+document.getElementById('orderStatusText').textContent =
+    progressInfo
+        ? progressInfo.status
+        : data.status.toUpperCase();
+
                         updateStepperDots(data.status);
                     } else {
                         // PAYMENT NOT DONE -> KEEP CART BUTTON VISIBLE!
@@ -378,6 +709,7 @@
             if (!activeOrder) return;
             document.getElementById('modalOrderId').textContent = activeOrder.daily_order_number;
             updateStepperDots(activeOrder.status);
+            updateOrderProgress(activeOrder.status);
             document.getElementById('orderProgressModal').classList.add('open');
         }
 
@@ -386,24 +718,44 @@
         }
 
         function updateStepperDots(status) {
-            const stages = ['accepted', 'preparing', 'prepared', 'delivered'];
-            const currentIndex = stages.indexOf(status);
 
-            const dots = [
-                document.getElementById('dotAccepted'),
-                document.getElementById('dotPreparing'),
-                document.getElementById('dotPrepared'),
-                document.getElementById('dotDelivered')
-            ];
+    const stages = [
+        "accepted",
+        "preparing",
+        "prepared",
+        "delivered"
+    ];
 
-            dots.forEach((dot, idx) => {
-                if (idx <= currentIndex) {
-                    dot.classList.add('green');
-                } else {
-                    dot.classList.remove('green');
-                }
-            });
+    const stageIndex = stages.indexOf(status);
+
+    const stageElements = [
+        document.getElementById("stageAccepted"),
+        document.getElementById("stagePreparing"),
+        document.getElementById("stagePrepared"),
+        document.getElementById("stageDelivered")
+    ];
+
+    stageElements.forEach((stage, index) => {
+
+        if (!stage) return;
+
+        stage.classList.remove(
+            "active",
+            "completed",
+            "current"
+        );
+
+        if (index < stageIndex) {
+            stage.classList.add("completed");
         }
+
+        if (index === stageIndex) {
+            stage.classList.add("current");
+        }
+    });
+
+    updateOrderProgress(status);
+}
 
         async function init() {
             await loadMenuAndCart();
@@ -420,10 +772,8 @@
                 const data = await res.json();
                 menuItems = data.items || [];
                 cartData = data.cart || {};
-                localMenuVersion = data.menu_version;
-                cartCodeCached = data.cart_code || '';
-                cartTotalCached = data.total_price || 0.0;
-                updateCartUI(cartCodeCached, cartTotalCached);
+                localMenuVersion = data.menu_version;                                                     cartCodeCached = data.cart_code || '';
+                cartTotalCached = data.total_price || 0.0;                                                updateCartUI(cartCodeCached, cartTotalCached);
                 renderMenu();
             } catch (err) {
                 console.error("Failed loading menu:", err);
@@ -431,20 +781,17 @@
         }
 
         function filterCategory(category, buttonEl) {
-            currentCategory = category;
-            document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
+            currentCategory = category;                                                               document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
             buttonEl.classList.add('active');
             renderMenu();
         }
 
         document.getElementById('searchInput').addEventListener('input', (e) => {
-            searchQuery = e.target.value.toLowerCase().trim();
-            renderMenu();
+            searchQuery = e.target.value.toLowerCase().trim();                                        renderMenu();
         });
 
         function renderMenu() {
-            const container = document.getElementById('menuContainer');
-            container.innerHTML = '';
+            const container = document.getElementById('menuContainer');                               container.innerHTML = '';
 
             const filtered = menuItems.filter(item => {
                 const matchesCat = currentCategory === 'all' || item.category.toLowerCase() === currentCategory.toLowerCase();
@@ -459,18 +806,13 @@
                 card.addEventListener('click', function(e) {
                     if (e.target.closest('.action-ctrl')) return;
                     if (window.innerWidth <= 768) {
-                        openMobileItemDetails(item);
-                    }
-                });
-
+                        openMobileItemDetails(item);                                                          }                                                                                     });                                                                       
                 let actionHtml = '';
                 if (item.is_active) {
-                    if (qty === 0) {
-                        actionHtml = `<div class="action-ctrl"><button class="action-btn" onclick="updateItemQuantity(${item.id}, 1)">+</button></div>`;
+                    if (qty === 0) {                                                                              actionHtml = `<div class="action-ctrl"><button class="action-btn" onclick="updateItemQuantity(${item.id}, 1)">+</button></div>`;
                     } else {
                         actionHtml = `
-                            <div class="action-ctrl">
-                                <button class="action-btn" onclick="updateItemQuantity(${item.id}, -1)">−</button>
+                            <div class="action-ctrl">                                                                     <button class="action-btn" onclick="updateItemQuantity(${item.id}, -1)">−</button>
                                 <span class="qty-label">${qty}</span>
                                 <button class="action-btn" onclick="updateItemQuantity(${item.id}, 1)">+</button>
                             </div>
@@ -483,13 +825,11 @@
                         <img src="${item.photo_url || 'https://via.placeholder.com/600x400'}" alt="${item.item_name}">
                         <span class="status-dot ${item.is_active ? 'active' : 'inactive'}"></span>
                         ${actionHtml}
-                    </div>
-                    <div class="item-info">
+                    </div>                                                                                    <div class="item-info">
                         <div class="item-text">
                             <h3>${item.item_name}</h3>
                             <div class="item-category">${item.category}</div>
-                        </div>
-                        <div class="item-price">₹${Number(item.price).toFixed(2)}</div>
+                        </div>                                                                                    <div class="item-price">₹${Number(item.price).toFixed(2)}</div>
                     </div>
                 `;
                 container.appendChild(card);
@@ -498,86 +838,53 @@
 
         async function updateItemQuantity(itemId, delta) {
             try {
-                const res = await fetch('/api/cart/update', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ itemId, delta })
+                const res = await fetch('/api/cart/update', {                                                 method: 'POST',                                                                           headers: { 'Content-Type': 'application/json' },                                          body: JSON.stringify({ itemId, delta })
                 });
-                const data = await res.json();
-
-                if (res.ok && data.success) {
-                    cartData = data.cart;
-                    cartCodeCached = data.cart_code;
-                    cartTotalCached = data.total_price;
+                const data = await res.json();                                            
+                if (res.ok && data.success) {                                                                 cartData = data.cart;
+                    cartCodeCached = data.cart_code;                                                          cartTotalCached = data.total_price;
                     updateCartUI(data.cart_code, data.total_price);
                     renderMenu();
                 } else {
                     alert("Cart Update Error: " + (data.error || "Server rejected update"));
                 }
-            } catch (err) {
-                console.error("Cart update request failed:", err);
+            } catch (err) {                                                                               console.error("Cart update request failed:", err);
             }
         }
 
-        function updateCartUI(cartCode, totalPrice) {
-            const cartBar = document.getElementById('cartBar');
+        function updateCartUI(cartCode, totalPrice) {                                                 const cartBar = document.getElementById('cartBar');
             const orderPlacedBar = document.getElementById('orderPlacedBar');
-
-            // Paid order -> cart must stay hidden
+                                                                                                      // Paid order -> cart must stay hidden
             if (orderPlacedBar.classList.contains('visible')) {
                 cartBar.classList.remove('visible');
                 return;
             }
 
-            // Show cart ONLY when at least one item has quantity > 0
-            const hasItems = Object.values(cartData || {}).some(qty => Number(qty) > 0);
+            // Show cart ONLY when at least one item has quantity > 0                                 const hasItems = Object.values(cartData || {}).some(qty => Number(qty) > 0);
 
             if (hasItems) {
-                cartBar.classList.add('visible');
-
-                document.getElementById('cartCodeLabel').textContent = cartCode || '';
+                cartBar.classList.add('visible');                                                                                                                                                   document.getElementById('cartCodeLabel').textContent = cartCode || '';
                 document.getElementById('cartTotalLabel').textContent =
                     `₹${Number(totalPrice || 0).toFixed(2)}`;
-            } else {
-                cartBar.classList.remove('visible');
-
-                document.getElementById('cartCodeLabel').textContent = '';
-                document.getElementById('cartTotalLabel').textContent = '₹0.00';
-            }
-        }
-
-        function openProfileSidebar() {
-            document.getElementById('profileSidebar').classList.add('open');
-            document.getElementById('sidebarOverlay').classList.add('active');
-            fetchOrderHistory();
-        }
-
-        function closeProfileSidebar() {
-            document.getElementById('profileSidebar').classList.remove('open');
-            document.getElementById('sidebarOverlay').classList.remove('active');
-        }
-
-        async function saveNewUsername() {
-            const newName = document.getElementById('profileUsernameInput').value.trim();
-            if (!newName) return;
+            } else {                                                                                      cartBar.classList.remove('visible');
+                                                                                                          document.getElementById('cartCodeLabel').textContent = '';
+                document.getElementById('cartTotalLabel').textContent = '₹0.00';                      }
+        }                                                                                 
+        function openProfileSidebar() {                                                               document.getElementById('profileSidebar').classList.add('open');
+            document.getElementById('sidebarOverlay').classList.add('active');                        fetchOrderHistory();                                                                  }
+                                                                                                  function closeProfileSidebar() {                                                              document.getElementById('profileSidebar').classList.remove('open');                       document.getElementById('sidebarOverlay').classList.remove('active');                 }
+                                                                                                  async function saveNewUsername() {                                                            const newName = document.getElementById('profileUsernameInput').value.trim();             if (!newName) return;
             const res = await fetch('/api/profile/update-username', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: newName })
-            });
-            const data = await res.json();
-            if (data.success) {
+                method: 'POST',                                                                           headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: newName })                                           });
+            const data = await res.json();                                                            if (data.success) {
                 document.getElementById('navUsernameDisplay').textContent = data.username;
-            }
-        }
+            }                                                                                     }
 
-        async function fetchOrderHistory() {
-            const listEl = document.getElementById('ordersHistoryList');
+        async function fetchOrderHistory() {                                                          const listEl = document.getElementById('ordersHistoryList');
             listEl.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">Loading...</div>';
-            const res = await fetch('/api/profile/orders');
-            const data = await res.json();
-
-            if (!data.orders || data.orders.length === 0) {
+            const res = await fetch('/api/profile/orders');                                           const data = await res.json();
+                                                                                                      if (!data.orders || data.orders.length === 0) {
                 listEl.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">No past orders.</div>';
                 return;
             }
@@ -602,8 +909,7 @@
                     <div style="display:flex; justify-content:space-between; font-weight:700; margin-top:0.3rem;">
                         <span>Total (${order.payment_status.toUpperCase()})</span>
                         <span style="color:#38bdf8;">₹${order.total_amount.toFixed(2)}</span>
-                    </div>
-                `;
+                    </div>                                                                                `;
                 listEl.appendChild(card);
             });
         }
@@ -619,8 +925,7 @@
         <img id="mobileDetailsImage" src="" alt="">
 
         <div class="mobile-details-content">
-            <h2 id="mobileDetailsName"></h2>
-            <div id="mobileDetailsCategory"></div>
+            <h2 id="mobileDetailsName"></h2>                                                          <div id="mobileDetailsCategory"></div>
             <div id="mobileDetailsPrice"></div>
             <div id="mobileDetailsStatus"></div>
         </div>
@@ -640,8 +945,7 @@
         z-index: 99999;
         background: rgba(0,0,0,0.55);
         align-items: flex-end;
-        justify-content: center;
-    }
+        justify-content: center;                                                              }
 
     .mobile-item-details.open {
         display: flex;
@@ -656,15 +960,13 @@
         border-radius: 24px 24px 0 0;
         border-top: 2px solid #b8953f;
         box-shadow: 0 -10px 35px rgba(0,0,0,0.25);
-    }
-
+    }                                                                                     
     .mobile-item-details-box img {
         display: block;
         width: 100%;
         height: 240px;
         object-fit: cover;
-    }
-
+    }                                                                                     
     .mobile-details-close {
         position: absolute;
         top: 12px;
@@ -677,16 +979,13 @@
         border: none;
         border-radius: 50%;
 
-        background: rgba(255,253,247,0.95);
-        color: #927326;
+        background: rgba(255,253,247,0.95);                                                       color: #927326;
 
         font-size: 28px;
         line-height: 35px;
-        font-weight: 700;
-    }
+        font-weight: 700;                                                                     }
 
-    .mobile-details-content {
-        padding: 20px;
+    .mobile-details-content {                                                                     padding: 20px;
     }
 
     .mobile-details-content h2 {
@@ -694,10 +993,8 @@
         color: #29251d;
         font-size: 1.45rem;
     }
-
-    #mobileDetailsCategory {
-        color: #756f63;
-        font-size: 0.9rem;
+                                                                                              #mobileDetailsCategory {
+        color: #756f63;                                                                           font-size: 0.9rem;
         text-transform: capitalize;
         margin-bottom: 12px;
     }
@@ -728,8 +1025,7 @@ function openMobileItemDetails(item) {
 
     document.getElementById('mobileDetailsName').textContent =
         item.item_name || '';
-
-    document.getElementById('mobileDetailsCategory').textContent =
+                                                                                              document.getElementById('mobileDetailsCategory').textContent =
         item.category || '';
 
     document.getElementById('mobileDetailsPrice').textContent =
