@@ -145,6 +145,587 @@
             border: none; width: 22px; height: 22px; border-radius: 50%; font-size: 0.8rem; cursor: pointer;
         }
     </style>
+
+<style id="premium-admin-theme">
+
+/* =========================================================
+   PREMIUM GOLD ADMIN THEME
+   ========================================================= */
+
+:root {
+    --bg: #f8f5ec !important;
+    --card-bg: #fffdf7 !important;
+    --card-border: #ded3b8 !important;
+    --text-main: #302a20 !important;
+    --text-muted: #766d5d !important;
+    --primary: #b8953f !important;
+    --primary-dark: #927326 !important;
+    --success: #18a878 !important;
+    --danger: #d94b4b !important;
+    --amber: #c49a3a !important;
+}
+
+* {
+    box-sizing: border-box !important;
+}
+
+html {
+    background: #f8f5ec !important;
+}
+
+body {
+    background:
+        linear-gradient(
+            180deg,
+            #fffdf8 0%,
+            #f8f5ec 55%,
+            #f4efe2 100%
+        ) !important;
+
+    color: #302a20 !important;
+    min-height: 100vh !important;
+    padding-bottom: 4rem !important;
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+header {
+    background: rgba(255, 253, 247, 0.96) !important;
+    border-bottom: 1px solid #ded3b8 !important;
+    padding: 0.85rem 1.5rem !important;
+
+    box-shadow:
+        0 3px 14px rgba(100, 75, 25, 0.08) !important;
+
+    backdrop-filter: blur(12px);
+}
+
+.header-title {
+    color: #302a20 !important;
+    font-size: 1.18rem !important;
+    font-weight: 800 !important;
+}
+
+.header-title span:first-child {
+    background: linear-gradient(135deg, #d8bd70, #b8953f);
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(100,75,25,0.18);
+}
+
+/* =========================================================
+   HEADER BUTTONS
+   ========================================================= */
+
+.header-actions {
+    gap: 0.65rem !important;
+}
+
+.kitchen-toggle-btn {
+    padding: 0.6rem 1rem !important;
+    border-radius: 999px !important;
+    font-weight: 800 !important;
+    border: 1px solid !important;
+    box-shadow: 0 3px 9px rgba(80,60,25,0.10);
+}
+
+.kitchen-open {
+    background: #e8f7ef !important;
+    color: #13845e !important;
+    border-color: #9bd7ba !important;
+}
+
+.kitchen-closed {
+    background: #fff0ee !important;
+    color: #c53d3d !important;
+    border-color: #e7aaa5 !important;
+}
+
+.admin-profile-btn {
+    background: linear-gradient(135deg, #d8bd70, #b8953f) !important;
+    color: #30240f !important;
+    border: 1px solid #927326 !important;
+    padding: 0.62rem 1rem !important;
+    border-radius: 999px !important;
+    box-shadow: 0 4px 12px rgba(100,75,25,0.16) !important;
+}
+
+/* =========================================================
+   DROPDOWN
+   ========================================================= */
+
+.profile-dropdown-menu {
+    top: 70px !important;
+    right: 1.5rem !important;
+
+    background: #fffdf7 !important;
+    border: 1px solid #ded3b8 !important;
+    border-radius: 16px !important;
+
+    box-shadow:
+        0 15px 35px rgba(70,55,25,0.16) !important;
+
+    overflow: hidden !important;
+}
+
+.dropdown-item {
+    color: #40382c !important;
+    padding: 0.9rem 1.1rem !important;
+}
+
+.dropdown-item:hover {
+    background: #f5efdf !important;
+    color: #927326 !important;
+}
+
+/* =========================================================
+   MAIN CONTAINER
+   ========================================================= */
+
+.container {
+    max-width: 1450px !important;
+    margin: 1.5rem auto !important;
+    padding: 0 1.25rem !important;
+}
+
+/* =========================================================
+   TABS
+   ========================================================= */
+
+.tab-controls {
+    display: flex !important;
+    gap: 0.7rem !important;
+    margin-bottom: 1.4rem !important;
+}
+
+.tab-btn {
+    background: #fffdf7 !important;
+    border: 1px solid #ded3b8 !important;
+    color: #766d5d !important;
+
+    padding: 0.72rem 1.25rem !important;
+    border-radius: 999px !important;
+
+    box-shadow: 0 3px 10px rgba(90,70,30,0.06) !important;
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, #d8bd70, #b8953f) !important;
+    color: #fffdf7 !important;
+    border-color: #927326 !important;
+    box-shadow: 0 5px 13px rgba(120,90,30,0.18) !important;
+}
+
+.count-badge {
+    background: rgba(255,255,255,0.55) !important;
+    color: #5c481d !important;
+}
+
+/* =========================================================
+   SECTION BOXES
+   ========================================================= */
+
+.section-box {
+    background: rgba(255,253,247,0.92) !important;
+    border: 1px solid #ded3b8 !important;
+    border-radius: 18px !important;
+    padding: 1.25rem !important;
+
+    box-shadow:
+        0 5px 18px rgba(90,70,30,0.07) !important;
+}
+
+.section-header {
+    border-bottom: 1px solid #e7dfcd !important;
+}
+
+.section-title {
+    color: #40382c !important;
+}
+
+/* Override old colored left borders */
+#ordersTab .section-box {
+    border-left: 4px solid #b8953f !important;
+}
+
+/* =========================================================
+   ORDER GRID
+   ========================================================= */
+
+.orders-grid {
+    grid-template-columns:
+        repeat(auto-fill, minmax(300px, 1fr)) !important;
+    gap: 1rem !important;
+}
+
+/* =========================================================
+   ORDER CARDS
+   ========================================================= */
+
+.order-card {
+    background: #fffdf7 !important;
+    border: 1px solid #ded3b8 !important;
+    border-radius: 16px !important;
+    padding: 1rem !important;
+
+    box-shadow:
+        0 5px 15px rgba(90,70,30,0.07) !important;
+
+    transition: transform 0.18s ease,
+                box-shadow 0.18s ease !important;
+}
+
+.order-card:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        0 9px 22px rgba(90,70,30,0.12) !important;
+}
+
+.order-user {
+    color: #302a20 !important;
+}
+
+.order-time {
+    color: #8a806e !important;
+}
+
+/* =========================================================
+   TOKEN
+   ========================================================= */
+
+.token-tag {
+    background: linear-gradient(135deg, #d8bd70, #b8953f) !important;
+    color: #fffdf7 !important;
+    border-radius: 999px !important;
+    padding: 0.3rem 0.7rem !important;
+    box-shadow: 0 3px 8px rgba(100,75,25,0.14);
+}
+
+/* =========================================================
+   ORDER ITEMS
+   ========================================================= */
+
+.order-items-box {
+    background: #f7f2e7 !important;
+    border: 1px solid #e6dcc7 !important;
+    color: #4d4538 !important;
+    border-radius: 12px !important;
+}
+
+.order-item-line {
+    border-bottom: 1px solid #e8dfcf;
+    padding-bottom: 0.25rem;
+}
+
+.order-item-line:last-child {
+    border-bottom: none;
+}
+
+.order-total-line {
+    color: #927326 !important;
+}
+
+/* =========================================================
+   ACTION BUTTONS
+   ========================================================= */
+
+.btn-action {
+    border-radius: 999px !important;
+    min-height: 38px !important;
+}
+
+.btn-accept {
+    background: linear-gradient(135deg,#d8bd70,#b8953f) !important;
+    color: #fffdf7 !important;
+}
+
+.btn-cancel {
+    background: #fff1ef !important;
+    color: #c53d3d !important;
+    border: 1px solid #e3aaa4 !important;
+}
+
+.btn-prep {
+    background: #f2dfad !important;
+    color: #70551c !important;
+}
+
+.btn-ready {
+    background: #e2f1f5 !important;
+    color: #226879 !important;
+}
+
+.btn-deliver {
+    background: #e5f6ed !important;
+    color: #137951 !important;
+}
+
+.btn-action.active {
+    outline: 2px solid #927326 !important;
+}
+
+/* =========================================================
+   MENU HEADER BUTTONS
+   ========================================================= */
+
+#menuTab h3 {
+    color: #302a20 !important;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg,#d8bd70,#b8953f) !important;
+    color: #fffdf7 !important;
+    border: 1px solid #927326 !important;
+    border-radius: 999px !important;
+    box-shadow: 0 4px 11px rgba(100,75,25,0.14);
+}
+
+.btn-primary:hover {
+    filter: brightness(1.04);
+}
+
+.btn-secondary {
+    background: #fffdf7 !important;
+    color: #665b48 !important;
+    border: 1px solid #d7cbb0 !important;
+    border-radius: 999px !important;
+}
+
+.btn-secondary:hover {
+    background: #f5efdf !important;
+}
+
+/* =========================================================
+   MENU TABLE
+   ========================================================= */
+
+.menu-table-container {
+    background: #fffdf7 !important;
+    border: 1px solid #ded3b8 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 5px 18px rgba(90,70,30,0.07) !important;
+}
+
+table {
+    color: #40382c !important;
+}
+
+th {
+    background: #f2ead9 !important;
+    color: #766d5d !important;
+    border-bottom: 1px solid #ded3b8 !important;
+}
+
+th,
+td {
+    border-bottom: 1px solid #e8dfcf !important;
+}
+
+tr:hover td {
+    background: #fcf8ef !important;
+}
+
+.dish-thumb {
+    border-radius: 10px !important;
+    border: 1px solid #ded3b8;
+}
+
+/* =========================================================
+   MODALS
+   ========================================================= */
+
+.modal-overlay {
+    background: rgba(55,43,20,0.48) !important;
+    backdrop-filter: blur(4px);
+}
+
+.modal-box {
+    background: #fffdf7 !important;
+    border: 1px solid #ded3b8 !important;
+    border-radius: 20px !important;
+
+    box-shadow:
+        0 20px 55px rgba(55,43,20,0.20) !important;
+}
+
+.modal-box h3 {
+    color: #40382c !important;
+}
+
+.form-group label {
+    color: #766d5d !important;
+}
+
+.form-group input,
+.form-group select {
+    background: #fffaf0 !important;
+    color: #302a20 !important;
+    border: 1px solid #d9ccb0 !important;
+    border-radius: 11px !important;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #b8953f !important;
+    box-shadow: 0 0 0 3px rgba(184,149,63,0.13) !important;
+}
+
+/* =========================================================
+   PHOTO MANAGER
+   ========================================================= */
+
+.photo-card {
+    background: #fffdf7 !important;
+    border: 1px solid #ded3b8 !important;
+    border-radius: 12px !important;
+}
+
+.photo-delete-btn {
+    background: #c94c46 !important;
+}
+
+/* =========================================================
+   MOBILE ADMIN
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+    header {
+        padding: 0.75rem 0.85rem !important;
+    }
+
+    .header-title {
+        font-size: 0.95rem !important;
+    }
+
+    .header-title span:first-child {
+        width: 36px;
+        height: 36px;
+    }
+
+    .header-actions {
+        gap: 0.35rem !important;
+    }
+
+    .kitchen-toggle-btn {
+        font-size: 0.7rem !important;
+        padding: 0.48rem 0.65rem !important;
+    }
+
+    .admin-profile-btn {
+        width: 42px !important;
+        height: 42px !important;
+        padding: 0 !important;
+        justify-content: center !important;
+        font-size: 0 !important;
+    }
+
+    .admin-profile-btn span:first-child {
+        font-size: 0 !important;
+    }
+
+    .admin-profile-btn span:first-child::before {
+        content: "⚙️";
+        font-size: 1rem;
+    }
+
+    .admin-profile-btn span:last-child {
+        display: none !important;
+    }
+
+    .profile-dropdown-menu {
+        right: 0.75rem !important;
+        top: 62px !important;
+        width: min(280px, calc(100vw - 1.5rem)) !important;
+    }
+
+    .container {
+        margin: 1rem auto !important;
+        padding: 0 0.7rem !important;
+    }
+
+    .tab-controls {
+        overflow-x: auto !important;
+        padding-bottom: 3px;
+    }
+
+    .tab-btn {
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+        padding: 0.65rem 1rem !important;
+    }
+
+    .section-box {
+        padding: 0.85rem !important;
+        border-radius: 15px !important;
+    }
+
+    .section-header {
+        align-items: flex-start !important;
+        gap: 0.5rem !important;
+    }
+
+    .section-title {
+        font-size: 0.95rem !important;
+    }
+
+    .orders-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .order-card {
+        border-radius: 15px !important;
+    }
+
+    #menuTab > div:first-child {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.75rem !important;
+    }
+
+    #menuTab > div:first-child > div {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+    }
+
+    #menuTab > div:first-child button {
+        width: 100% !important;
+        padding: 0.65rem 0.5rem !important;
+    }
+
+    .menu-table-container {
+        overflow-x: auto !important;
+    }
+
+    table {
+        min-width: 720px !important;
+    }
+
+    .modal-box {
+        width: calc(100% - 1.25rem) !important;
+        padding: 1.25rem !important;
+        border-radius: 17px !important;
+        max-height: 90vh !important;
+    }
+
+    .modal-buttons {
+        flex-wrap: wrap !important;
+    }
+
+    .modal-buttons button {
+        flex: 1 !important;
+        min-width: 110px !important;
+    }
+}
+
+</style>
+
 </head>
 <body>
 

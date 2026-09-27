@@ -338,7 +338,7 @@ def confirm_test_payment():
         with conn.cursor() as cur:
             cur.execute("""
                 UPDATE orders
-                SET payment_status = 'paid', payment_id = %s, customer_alert = FALSE, updated_at = NOW()
+                SET payment_status = 'paid', payment_id = %s, customer_alert = TRUE, updated_at = NOW()
                 WHERE id = %s;
             """, (f"pay_test_{os.urandom(4).hex()}", order_id))
 
@@ -347,30 +347,6 @@ def confirm_test_payment():
             conn.commit()
 
     return jsonify({"success": True})
-
-@app.route("/api/order/ack-alert", methods=["POST"])
-def acknowledge_order_alert():
-    data = request.get_json() or {}
-    order_id = data.get("order_id")
-    user_email = session.get("user_email", TEST_USER_EMAIL)
-
-    if not order_id:
-        return jsonify({"success": False, "error": "Missing order_id"}), 400
-
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("""
-                UPDATE orders
-                SET customer_alert = FALSE,
-                    updated_at = NOW()
-                WHERE id = %s
-                  AND user_email = %s;
-            """, (order_id, user_email))
-
-            conn.commit()
-
-    return jsonify({"success": True})
-
 
 @app.route("/api/order/active", methods=["GET"])
 def check_active_order():
@@ -390,11 +366,8 @@ def check_active_order():
             alert_order = cur.fetchone()
 
             if alert_order:
-                # IMPORTANT:
-                # Do NOT clear customer_alert here.
-                # Multiple customer tabs may poll this endpoint.
-                # The customer page will explicitly acknowledge the alert
-                # through /api/order/ack-alert after displaying it.
+                cur.execute("UPDATE orders SET customer_alert = FALSE WHERE id = %s;", (alert_order["id"],))
+                conn.commit()
                 return jsonify({
                     "has_active_order": False,
                     "alert": True,
@@ -592,7 +565,7 @@ def admin_update_order_status():
 
     data = request.get_json() or {}
     order_id = data.get("order_id")
-    new_status = str(data.get("status", "")).strip().lower()
+    new_status = data.get("status")
     reason = data.get("reason", "").strip()
 
     with get_db() as conn:
@@ -601,13 +574,10 @@ def admin_update_order_status():
                 UPDATE orders 
                 SET order_status = %s, 
                     cancellation_reason = CASE WHEN %s = 'cancelled' THEN %s ELSE cancellation_reason END,
-                    customer_alert = CASE
-                        WHEN %s IN ('cancelled', 'delivered') THEN TRUE
-                        ELSE FALSE
-                    END,
+                    customer_alert = TRUE,
                     updated_at = NOW()
                 WHERE id = %s;
-            """, (new_status, new_status, reason, new_status, order_id))
+            """, (new_status, new_status, reason, order_id))
             conn.commit()
 
     return jsonify({"success": True})

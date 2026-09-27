@@ -795,6 +795,7 @@ textarea:focus {
                 currentActiveOrder = data;
                 orderState = "accepted_unpaid";
 
+                stopOrderTimers();
                 setPayNowUI();
 
                 return;

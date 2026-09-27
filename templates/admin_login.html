@@ -24,6 +24,138 @@
         .btn-login:hover { background: #0369a1; }
         .error-msg { color: #ef4444; font-size: 0.85rem; margin-top: 1rem; }
     </style>
+
+<style id="premium-admin-login-theme">
+
+:root {
+    --gold: #b8953f;
+    --gold-light: #d8bd70;
+    --gold-dark: #927326;
+    --cream: #f8f5ec;
+    --card: #fffdf7;
+    --border: #ded3b8;
+    --text: #302a20;
+    --muted: #766d5d;
+}
+
+html,
+body {
+    background:
+        radial-gradient(
+            circle at top,
+            #fffdf8 0%,
+            #f8f5ec 55%,
+            #f1ead9 100%
+        ) !important;
+
+    color: var(--text) !important;
+}
+
+body {
+    padding: 1rem !important;
+}
+
+.login-card {
+    background: rgba(255,253,247,0.97) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 22px !important;
+
+    padding: 2.25rem !important;
+
+    box-shadow:
+        0 20px 55px rgba(80,60,25,0.14),
+        0 3px 10px rgba(80,60,25,0.06) !important;
+
+    position: relative;
+    overflow: hidden;
+}
+
+.login-card::before {
+    content: "";
+    display: block;
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 1.1rem;
+
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--gold-light),
+            var(--gold)
+        );
+
+    border: 1px solid var(--gold-dark);
+
+    box-shadow:
+        0 6px 16px rgba(100,75,25,0.18);
+}
+
+.login-card h2 {
+    color: var(--text) !important;
+    font-size: 1.45rem !important;
+    font-weight: 800 !important;
+}
+
+.login-card p {
+    color: var(--muted) !important;
+    line-height: 1.5 !important;
+}
+
+input[type="password"] {
+    background: #fffaf0 !important;
+    color: var(--text) !important;
+    border: 1px solid #d9ccb0 !important;
+    border-radius: 12px !important;
+    padding: 0.9rem !important;
+}
+
+input[type="password"]:focus {
+    border-color: var(--gold) !important;
+    box-shadow: 0 0 0 3px rgba(184,149,63,0.14) !important;
+}
+
+.btn-login {
+    background:
+        linear-gradient(
+            135deg,
+            var(--gold-light),
+            var(--gold)
+        ) !important;
+
+    color: #fffdf7 !important;
+    border: 1px solid var(--gold-dark) !important;
+    border-radius: 999px !important;
+
+    padding: 0.9rem !important;
+
+    box-shadow:
+        0 6px 16px rgba(100,75,25,0.18) !important;
+}
+
+.btn-login:hover {
+    background:
+        linear-gradient(
+            135deg,
+            #dfc77f,
+            #a98532
+        ) !important;
+}
+
+.error-msg {
+    color: #c53d3d !important;
+}
+
+@media (max-width: 480px) {
+    .login-card {
+        padding: 1.6rem !important;
+        border-radius: 19px !important;
+    }
+}
+
+</style>
+
 </head>
 <body>
     <div class="login-card">

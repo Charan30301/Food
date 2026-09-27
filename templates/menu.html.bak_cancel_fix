@@ -71,10 +71,6 @@
         }
 
         .item-card {
-    box-shadow:
-        0 8px 24px rgba(212, 175, 55, 0.28),
-        0 2px 8px rgba(212, 175, 55, 0.18);
-
             background: var(--card-bg); border: 1px solid var(--card-border);
             border-radius: 14px; overflow: hidden; display: flex; flex-direction: column;
             justify-content: space-between;
@@ -296,32 +292,9 @@
                 // 1. Terminal Alerts (Cancellation or Delivery)
                 if (data.alert) {
                     if (data.status === 'cancelled') {
-                        alert(`⚠️ ORDER CANCELLED BY KITCHEN\n\nYour order was cancelled by the kitchen.\n\nReason: ${data.reason}`);
-
-                        try {
-                            await fetch('/api/order/ack-alert', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    order_id: data.order_id
-                                })
-                            });
-                        } catch (ackError) {
-                            console.error("Could not acknowledge cancellation alert:", ackError);
-                        }
+                        alert(`⚠️ Order Notice:\n${data.reason}`);
                     } else if (data.status === 'delivered') {
                         alert(`🎉 Your Order #${data.order_id} has been delivered! Enjoy your meal.`);
-                        try {
-                            await fetch('/api/order/ack-alert', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    order_id: data.order_id
-                                })
-                            });
-                        } catch (ackError) {
-                            console.error("Could not acknowledge delivery alert:", ackError);
-                        }
                     }
                     activeOrder = null;
                     lastReportedStatus = null;

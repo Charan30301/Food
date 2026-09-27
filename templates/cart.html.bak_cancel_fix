@@ -528,77 +528,11 @@ textarea:focus {
     let pollInterval = null;
     let secondsLeft = 60;
     let orderState = "cart"; // "cart" | "awaiting_acceptance" | "accepted_unpaid"
-    let cancellationHandled = false;
-
-    async function handleKitchenCancellation(data) {
-        if (cancellationHandled) return;
-        cancellationHandled = true;
-
-        console.log("KITCHEN CANCELLATION RECEIVED:", data);
-
-        // STOP EVERYTHING IMMEDIATELY
-        clearInterval(timerInterval);
-        clearInterval(pollInterval);
-
-        timerInterval = null;
-        pollInterval = null;
-
-        secondsLeft = 0;
-        orderState = "cart";
-        currentActiveOrder = null;
-        submittedOrderId = null;
-
-        // Hide waiting timer
-        const timerBox = document.getElementById('timerBox');
-        if (timerBox) {
-            timerBox.classList.remove('timer-visible');
-            timerBox.style.display = 'none';
-        }
-
-        // Reset main button
-        const btn = document.getElementById('mainActionButton');
-        if (btn) {
-            btn.disabled = false;
-            btn.className = "action-btn";
-            btn.textContent = "Place Order & Await Acceptance";
-        }
-
-        // Show cancellation notification
-        const reason = data.reason || "The kitchen cancelled your order.";
-
-        alert(
-            "ORDER CANCELLED BY KITCHEN\n\n" +
-            "Your order was cancelled by the kitchen.\n\n" +
-            "Reason: " + reason
-        );
-
-        // Acknowledge the server alert
-        try {
-            await fetch('/api/order/ack-alert', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    order_id: data.order_id
-                })
-            });
-        } catch (e) {
-            console.error("Cancellation acknowledgement failed:", e);
-        }
-
-        // Return customer to menu
-        window.location.replace("/menu");
-    }
 
     async function loadCartData() {
         // 1. Check existing order state on server first
         const statusRes = await fetch('/api/order/active');
         const statusData = await statusRes.json();
-
-        // Kitchen cancelled the order
-        if (statusData.alert && statusData.status === 'cancelled') {
-            await handleKitchenCancellation(statusData);
-            return;
-        }
 
         // Case A: Order already submitted, awaiting kitchen acceptance within 60s
         if (statusData.has_active_order && statusData.status === 'placed') {
@@ -771,37 +705,22 @@ textarea:focus {
             const res = await fetch('/api/order/active');
             const data = await res.json();
 
-            console.log("ORDER STATUS POLL:", data);
-
-            // =====================================================
-            // KITCHEN CANCELLED THE ORDER
-            // =====================================================
-            if (data.alert && data.status === 'cancelled') {
-                await handleKitchenCancellation(data);
-                return;
-            }
-
-            // =====================================================
-            // KITCHEN ACCEPTED THE ORDER
-            // =====================================================
+            // Kitchen accepted the order
             if (
                 data.has_active_order &&
-                String(data.order_id) === String(submittedOrderId) &&
-                data.status !== 'placed' &&
-                data.status !== 'cancelled'
+                data.order_id === submittedOrderId &&
+                data.status !== 'placed'
             ) {
-                console.log("KITCHEN ACCEPTED ORDER - STOPPING TIMER:", data);
-
                 currentActiveOrder = data;
                 orderState = "accepted_unpaid";
 
+                // IMPORTANT:
+                // This hides the timer and stops the countdown.
                 setPayNowUI();
-
-                return;
             }
 
         } catch (e) {
-            console.error("Order status polling error:", e);
+            console.error(e);
         }
     }
 

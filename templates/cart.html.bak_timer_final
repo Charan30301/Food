@@ -786,17 +786,14 @@ textarea:focus {
             // =====================================================
             if (
                 data.has_active_order &&
-                String(data.order_id) === String(submittedOrderId) &&
-                data.status !== 'placed' &&
-                data.status !== 'cancelled'
+                data.order_id === submittedOrderId &&
+                data.status !== 'placed'
             ) {
-                console.log("KITCHEN ACCEPTED ORDER - STOPPING TIMER:", data);
-
                 currentActiveOrder = data;
                 orderState = "accepted_unpaid";
 
+                // Stop timer and polling immediately
                 setPayNowUI();
-
                 return;
             }
 

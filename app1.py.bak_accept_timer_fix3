@@ -338,7 +338,7 @@ def confirm_test_payment():
         with conn.cursor() as cur:
             cur.execute("""
                 UPDATE orders
-                SET payment_status = 'paid', payment_id = %s, customer_alert = FALSE, updated_at = NOW()
+                SET payment_status = 'paid', payment_id = %s, customer_alert = TRUE, updated_at = NOW()
                 WHERE id = %s;
             """, (f"pay_test_{os.urandom(4).hex()}", order_id))
 
@@ -592,7 +592,7 @@ def admin_update_order_status():
 
     data = request.get_json() or {}
     order_id = data.get("order_id")
-    new_status = str(data.get("status", "")).strip().lower()
+    new_status = data.get("status")
     reason = data.get("reason", "").strip()
 
     with get_db() as conn:
@@ -601,13 +601,10 @@ def admin_update_order_status():
                 UPDATE orders 
                 SET order_status = %s, 
                     cancellation_reason = CASE WHEN %s = 'cancelled' THEN %s ELSE cancellation_reason END,
-                    customer_alert = CASE
-                        WHEN %s IN ('cancelled', 'delivered') THEN TRUE
-                        ELSE FALSE
-                    END,
+                    customer_alert = TRUE,
                     updated_at = NOW()
                 WHERE id = %s;
-            """, (new_status, new_status, reason, new_status, order_id))
+            """, (new_status, new_status, reason, order_id))
             conn.commit()
 
     return jsonify({"success": True})
