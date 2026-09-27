@@ -1,12 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Grand Palace Hotel - Menu</title>
-
     <style>
         :root {
             --bg: #0b1329;
@@ -20,1275 +17,251 @@
             --amber: #f59e0b;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg);
-            color: var(--text-main);
-            min-height: 100vh;
-            padding-bottom: 120px;
-            overflow-x: hidden;
-        }
-
-        /* =========================================================
-           HEADER
-        ========================================================= */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background-color: var(--bg); color: var(--text-main); min-height: 100vh; padding-bottom: 120px; overflow-x: hidden; }
 
         header {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: rgba(11, 19, 41, 0.95);
-            backdrop-filter: blur(8px);
-            border-bottom: 1px solid var(--card-border);
-            padding: 1rem 1.5rem;
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(11, 19, 41, 0.95); backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--card-border); padding: 1rem 1.5rem;
         }
 
-        .top-bar {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .search-container {
-            flex: 1;
-            position: relative;
-        }
-
+        .top-bar { display: flex; align-items: center; gap: 1rem; max-width: 1400px; margin: 0 auto; }
+        .search-container { flex: 1; position: relative; }
         .search-input {
-            width: 100%;
-            padding: 0.75rem 1rem 0.75rem 2.5rem;
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 9999px;
-            color: #fff;
-            font-size: 0.95rem;
-            outline: none;
+            width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem;
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 9999px; color: #fff; font-size: 0.95rem; outline: none;
         }
-
-        .search-icon {
-            position: absolute;
-            left: 0.9rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-        }
+        .search-icon { position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
 
         .profile-btn {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            padding: 0.5rem 1rem;
-            border-radius: 9999px;
-            color: var(--text-main);
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: 0.2s;
+            display: flex; align-items: center; gap: 0.5rem; background: var(--card-bg);
+            border: 1px solid var(--card-border); padding: 0.5rem 1rem; border-radius: 9999px;
+            color: var(--text-main); font-size: 0.9rem; cursor: pointer; transition: 0.2s;
         }
-
-        .profile-btn:hover {
-            border-color: var(--primary);
-            background: #253348;
-        }
-
-        /* =========================================================
-           KITCHEN BANNER
-        ========================================================= */
+        .profile-btn:hover { border-color: var(--primary); background: #253348; }
 
         .kitchen-banner {
-            display: none;
-            background: #ef4444;
-            color: white;
-            text-align: center;
-            padding: 0.65rem;
-            font-weight: 700;
-            font-size: 0.9rem;
+            display: none; background: #ef4444; color: white; text-align: center;
+            padding: 0.65rem; font-weight: 700; font-size: 0.9rem;
         }
-
-        .kitchen-banner.show {
-            display: block;
-        }
-
-        /* =========================================================
-           CATEGORIES
-        ========================================================= */
+        .kitchen-banner.show { display: block; }
 
         .categories-container {
-            max-width: 1400px;
-            margin: 1.25rem auto 0.5rem;
-            padding: 0 1.5rem;
-            display: flex;
-            gap: 0.75rem;
-            overflow-x: auto;
+            max-width: 1400px; margin: 1.25rem auto 0.5rem; padding: 0 1.5rem;
+            display: flex; gap: 0.75rem; overflow-x: auto;
         }
 
         .cat-btn {
-            background: var(--card-bg);
-            color: var(--text-muted);
-            border: 1px solid var(--card-border);
-            padding: 0.6rem 1.4rem;
-            border-radius: 9999px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            text-transform: capitalize;
-            white-space: nowrap;
+            background: var(--card-bg); color: var(--text-muted); border: 1px solid var(--card-border);
+            padding: 0.6rem 1.4rem; border-radius: 9999px; font-size: 0.9rem; font-weight: 600;
+            cursor: pointer; text-transform: capitalize; white-space: nowrap;
         }
-
-        .cat-btn.active {
-            background: var(--primary);
-            color: #fff;
-            border-color: var(--primary);
-        }
-
-        /* =========================================================
-           MENU GRID
-        ========================================================= */
+        .cat-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
         .menu-list {
-            max-width: 1400px;
-            margin: 1.5rem auto;
-            padding: 0 1.5rem;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1.25rem;
-        }
-
-        .item-card {
-            box-shadow:
-                0 8px 24px rgba(212, 175, 55, 0.28),
-                0 2px 8px rgba(212, 175, 55, 0.18);
-
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 14px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .photo-container {
-            position: relative;
-            width: 100%;
-            height: 180px;
-            background: #000;
-        }
-
-        .photo-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        /* =========================================================
-           ITEM STATUS
-        ========================================================= */
-
-        .status-dot {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            border: 2px solid #fff;
-            z-index: 2;
-        }
-
-        .status-dot.active {
-            background-color: var(--success);
-        }
-
-        .status-dot.inactive {
-            background-color: var(--danger);
-        }
-
-        /* =========================================================
-           QUANTITY CONTROLS
-        ========================================================= */
-
-        .action-ctrl {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            background: #ffffff;
-            border-radius: 9999px;
-            display: flex;
-            align-items: center;
-            z-index: 2;
-        }
-
-        .action-btn {
-            background: none;
-            border: none;
-            padding: 0.45rem 0.75rem;
-            font-size: 1rem;
-            cursor: pointer;
-            color: #0f172a;
-            font-weight: bold;
-        }
-
-        .qty-label {
-            font-size: 0.9rem;
-            min-width: 20px;
-            text-align: center;
-            color: #0f172a;
-            font-weight: bold;
-        }
-
-        /* =========================================================
-           ITEM INFORMATION
-        ========================================================= */
-
-        .item-info {
-            padding: 0.85rem 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-        }
-
-        .item-text h3 {
-            font-size: 1.05rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .item-category {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            text-transform: capitalize;
-        }
-
-        .item-price {
-            font-size: 1.15rem;
-            font-weight: 700;
-            color: #38bdf8;
-        }
-
-        /* =========================================================
-           FLOATING ACTION BARS
-        ========================================================= */
-
-        .floating-action-bar {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 0.85rem 1.25rem;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-            display: none;
-            align-items: center;
-            gap: 1.25rem;
-            z-index: 900;
-            cursor: pointer;
-            text-decoration: none;
-        }
-
-        .floating-action-bar.visible {
-            display: flex;
-        }
-
-        .cart-bar {
-            background: linear-gradient(135deg, #0284c7, #0369a1);
-            color: #fff;
-        }
-
-        .order-placed-bar {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: #fff;
-        }
-
-        .badge {
-            font-size: 1.1rem;
-            font-weight: 800;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 0.35rem 0.75rem;
-            border-radius: 8px;
-        }
-
-        /* =========================================================
-           ORDER PROGRESS MODAL
-        ========================================================= */
-
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(4px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1500;
-        }
-
-        .modal-overlay.open {
-            display: flex;
-        }
-
-        .progress-box {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 16px;
-            padding: 2rem;
-            width: 92%;
-            max-width: 550px;
-            text-align: center;
-        }
-
-        .progress-modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .progress-small-title {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            font-weight: 700;
-            letter-spacing: 0.08em;
-        }
-
-        .progress-close-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 1.8rem;
-            cursor: pointer;
-        }
-
-        /* =========================================================
-           CIRCULAR PROGRESS
-        ========================================================= */
-
-        .circular-progress-wrapper {
-            display: flex;
-            justify-content: center;
-            margin: 1.5rem 0;
-        }
-
-        .circular-progress {
-            --progress: 25deg;
-
-            width: 180px;
-            height: 180px;
-            border-radius: 50%;
-
-            background:
-                conic-gradient(
-                    var(--success) var(--progress),
-                    #334155 var(--progress)
-                );
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .circular-progress-inner {
-            width: 140px;
-            height: 140px;
-            border-radius: 50%;
-            background: var(--card-bg);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-        }
-
-        .progress-percentage {
-            font-size: 1.8rem;
-            font-weight: 800;
-        }
-
-        .progress-status {
-            font-size: 1rem;
-            font-weight: 700;
-        }
-
-        .progress-substatus {
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            margin-top: 0.3rem;
-        }
-
-        /* =========================================================
-           ORDER PROGRESS MESSAGE
-        ========================================================= */
-
-        .order-progress-message {
-            margin-top: 1rem;
-        }
-
-        .order-progress-title {
-            font-size: 1.25rem;
-            font-weight: 800;
-        }
-
-        .order-progress-description {
-            color: var(--text-muted);
-            margin-top: 0.4rem;
-        }
-
-        .order-progress-quote {
-            margin-top: 0.8rem;
-            font-style: italic;
-            color: #cbd5e1;
-        }
-
-        /* =========================================================
-           STATUS STAGES
-        ========================================================= */
-
-        .responsive-status-stages {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 2rem;
-            gap: 0.5rem;
-        }
-
-        .status-stage {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.4rem;
-            flex: 1;
-            color: var(--text-muted);
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .stage-circle {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: #334155;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-        }
-
-        .status-stage.completed .stage-circle,
-        .status-stage.current .stage-circle {
-            background: var(--success);
-            color: #fff;
-        }
-
-        .status-stage.current {
-            color: #fff;
-        }
-
-        /* =========================================================
-           ORDER STATUS NOTIFICATION
-        ========================================================= */
-
-        .order-status-notification {
-            display: none;
-            margin-top: 1.5rem;
-            padding: 1rem;
-            border-radius: 12px;
-            background: #0f172a;
-            border: 1px solid var(--card-border);
-            text-align: left;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .order-status-notification.show {
-            display: flex;
-        }
-
-        .order-status-notification-icon {
-            font-size: 1.5rem;
-        }
-
-        .order-status-notification-content {
-            flex: 1;
-        }
-
-        .order-status-notification-title {
-            font-weight: 700;
-        }
-
-        .order-status-notification-message {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-top: 0.2rem;
-        }
-
-        .order-status-notification-close {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 1.4rem;
-            cursor: pointer;
-        }
-
-        /* =========================================================
-           PROFILE SIDEBAR
-        ========================================================= */
-
-        .sidebar-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(3px);
-            z-index: 1100;
-            opacity: 0;
-            pointer-events: none;
-            transition: 0.3s;
-        }
-
-        .sidebar-overlay.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .profile-sidebar {
-            position: fixed;
-            top: 0;
-            right: -450px;
-            width: 100%;
-            max-width: 420px;
-            height: 100%;
-            background: #0f172a;
-            border-left: 1px solid var(--card-border);
-            box-shadow: -10px 0 25px rgba(0, 0, 0, 0.7);
-            z-index: 1200;
-            display: flex;
-            flex-direction: column;
-            transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .profile-sidebar.open {
-            right: 0;
-        }
-
-        .sidebar-header {
-            padding: 1.25rem 1.5rem;
-            border-bottom: 1px solid var(--card-border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .sidebar-close-btn {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            color: var(--text-muted);
-            cursor: pointer;
-        }
-
-        .sidebar-body {
-            flex: 1;
-            overflow-y: auto;
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .profile-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 12px;
-            padding: 1.25rem;
-        }
-
-        .username-input-row {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-        }
-
-        .username-input {
-            flex: 1;
-            padding: 0.65rem 0.85rem;
-            background: #0b1329;
-            border: 1px solid var(--card-border);
-            border-radius: 8px;
-            color: #fff;
-            outline: none;
-        }
-
-        .save-username-btn {
-            background: var(--primary);
-            color: #fff;
-            border: none;
-            padding: 0.65rem 1rem;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        /* =========================================================
-           ORDER HISTORY
-        ========================================================= */
-
-        .orders-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.85rem;
-        }
-
-        .order-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 10px;
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .order-status-pill {
-            padding: 0.2rem 0.6rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-
-        .pill-placed {
-            background: rgba(245, 158, 11, 0.2);
-            color: #f59e0b;
-        }
-
-        .pill-accepted {
-            background: rgba(2, 132, 199, 0.2);
-            color: #38bdf8;
-        }
-
-        .pill-preparing {
-            background: rgba(234, 88, 12, 0.2);
-            color: #fb923c;
-        }
-
-        .pill-prepared {
-            background: rgba(16, 185, 129, 0.2);
-            color: #34d399;
-        }
-
-        .pill-delivered {
-            background: rgba(16, 185, 129, 0.4);
-            color: #10b981;
-        }
-
-        .pill-cancelled {
-            background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
-        }
-
-        /* =========================================================
-           MOBILE MENU
-        ========================================================= */
-
-        .mobile-item-details {
-            display: none;
+            max-width: 1400px; margin: 1.5rem auto; padding: 0 1.5rem;
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem;
         }
 
         @media (max-width: 768px) {
-
-            .menu-list {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 0.75rem;
-                padding: 0 0.75rem;
-            }
-
-            .photo-container {
-                height: 140px !important;
-            }
-
-            .mobile-item-details {
-                position: fixed;
-                inset: 0;
-                z-index: 99999;
-                background: rgba(0, 0, 0, 0.55);
-                align-items: flex-end;
-                justify-content: center;
-            }
-
-            .mobile-item-details.open {
-                display: flex;
-            }
-
-            .mobile-item-details-box {
-                position: relative;
-                width: 100%;
-                max-height: 88vh;
-                overflow: hidden;
-                background: #fffdf7;
-                border-radius: 24px 24px 0 0;
-                border-top: 2px solid #b8953f;
-                box-shadow: 0 -10px 35px rgba(0, 0, 0, 0.25);
-            }
-
-            .mobile-item-details-box img {
-                display: block;
-                width: 100%;
-                height: 240px;
-                object-fit: cover;
-            }
-
-            .mobile-details-close {
-                position: absolute;
-                top: 12px;
-                right: 12px;
-                z-index: 2;
-                width: 38px;
-                height: 38px;
-                border: none;
-                border-radius: 50%;
-                background: rgba(255, 253, 247, 0.95);
-                color: #927326;
-                font-size: 28px;
-                line-height: 35px;
-                font-weight: 700;
-                cursor: pointer;
-            }
-
-            .mobile-details-content {
-                padding: 20px;
-            }
-
-            .mobile-details-content h2 {
-                margin: 0 0 6px;
-                color: #29251d;
-                font-size: 1.45rem;
-            }
-
-            #mobileDetailsCategory {
-                color: #756f63;
-                font-size: 0.9rem;
-                text-transform: capitalize;
-                margin-bottom: 12px;
-            }
-
-            #mobileDetailsPrice {
-                color: #927326;
-                font-size: 1.35rem;
-                font-weight: 800;
-                margin-bottom: 10px;
-            }
-
-            #mobileDetailsStatus {
-                color: #756f63;
-                font-size: 0.9rem;
-            }
+            .menu-list { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: 0 0.75rem; }
+            .photo-container { height: 140px !important; }
         }
+
+        .item-card {
+    box-shadow:
+        0 8px 24px rgba(212, 175, 55, 0.28),
+        0 2px 8px rgba(212, 175, 55, 0.18);
+
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 14px; overflow: hidden; display: flex; flex-direction: column;
+            justify-content: space-between;
+        }
+        .photo-container { position: relative; width: 100%; height: 180px; background: #000; }
+        .photo-container img { width: 100%; height: 100%; object-fit: cover; }
+
+        .status-dot {
+            position: absolute; top: 10px; left: 10px; width: 12px; height: 12px;
+            border-radius: 50%; border: 2px solid #fff; z-index: 2;
+        }
+        .status-dot.active { background-color: var(--success); }
+        .status-dot.inactive { background-color: var(--danger); }
+
+        .action-ctrl {
+            position: absolute; bottom: 10px; right: 10px; background: #ffffff;
+            border-radius: 9999px; display: flex; align-items: center; z-index: 2;
+        }
+        .action-btn { background: none; border: none; padding: 0.45rem 0.75rem; font-size: 1rem; cursor: pointer; color: #0f172a; font-weight: bold; }
+        .qty-label { font-size: 0.9rem; min-width: 20px; text-align: center; color: #0f172a; font-weight: bold; }
+
+        .item-info { padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: flex-end; }
+        .item-text h3 { font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-category { font-size: 0.8rem; color: var(--text-muted); text-transform: capitalize; }
+        .item-price { font-size: 1.15rem; font-weight: 700; color: #38bdf8; }
+
+        /* Floating Bars */
+        .floating-action-bar {
+            position: fixed; bottom: 20px; right: 20px; padding: 0.85rem 1.25rem;
+            border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: none;
+            align-items: center; gap: 1.25rem; z-index: 900; cursor: pointer; text-decoration: none;
+        }
+        .floating-action-bar.visible { display: flex; }
+        .cart-bar { background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; }
+        .order-placed-bar { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
+
+        .badge { font-size: 1.1rem; font-weight: 800; background: rgba(255,255,255,0.2); padding: 0.35rem 0.75rem; border-radius: 8px; }
+
+        /* Step Progress Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center; z-index: 1500;
+        }
+        .modal-overlay.open { display: flex; }
+        .progress-box {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: 16px; padding: 2rem; width: 92%; max-width: 550px; text-align: center;
+        }
+
+        .stepper-row { display: flex; justify-content: space-between; align-items: center; margin: 2rem 0; position: relative; }
+        .stepper-row::before { content: ''; position: absolute; top: 12px; left: 10%; right: 10%; height: 3px; background: #334155; z-index: 1; }
+        .step-col { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; flex: 1; }
+        .step-dot { width: 24px; height: 24px; border-radius: 50%; background: #334155; border: 3px solid #0f172a; transition: 0.3s; }
+        .step-dot.green { background: var(--success); box-shadow: 0 0 10px rgba(16, 185, 129, 0.6); }
+        .step-name { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+
+        /* Slide-out Sidebar */
+        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); z-index: 1100; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .sidebar-overlay.active { opacity: 1; pointer-events: auto; }
+        .profile-sidebar { position: fixed; top: 0; right: -450px; width: 100%; max-width: 420px; height: 100%; background: #0f172a; border-left: 1px solid var(--card-border); box-shadow: -10px 0 25px rgba(0, 0, 0, 0.7); z-index: 1200; display: flex; flex-direction: column; transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+        .profile-sidebar.open { right: 0; }
+        .sidebar-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; }
+        .sidebar-close-btn { background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; }
+        .sidebar-body { flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
+
+        .profile-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 1.25rem; }
+        .username-input-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+        .username-input { flex: 1; padding: 0.65rem 0.85rem; background: #0b1329; border: 1px solid var(--card-border); border-radius: 8px; color: #fff; outline: none; }
+        .save-username-btn { background: var(--primary); color: #fff; border: none; padding: 0.65rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; }
+
+        .orders-list { display: flex; flex-direction: column; gap: 0.85rem; }
+        .order-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+        .order-status-pill { padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+        .pill-placed { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .pill-accepted { background: rgba(2, 132, 199, 0.2); color: #38bdf8; }
+        .pill-preparing { background: rgba(234, 88, 12, 0.2); color: #fb923c; }
+        .pill-prepared { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .pill-delivered { background: rgba(16, 185, 129, 0.4); color: #10b981; }
+        .pill-cancelled { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
     </style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/responsive-gold.css') }}">
 
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='css/responsive-gold.css') }}">
 </head>
-
 <body>
 
-    <!-- =========================================================
-         KITCHEN CLOSED BANNER
-    ========================================================= -->
-
-    <div class="kitchen-banner" id="kitchenClosedBanner">
-        ⚠️ The Kitchen is currently CLOSED. Preorders are temporarily paused.
-    </div>
-
-    <!-- =========================================================
-         HEADER
-    ========================================================= -->
+    <div class="kitchen-banner" id="kitchenClosedBanner">⚠️ The Kitchen is currently CLOSED. Preorders are temporarily paused.</div>
 
     <header>
         <div class="top-bar">
-
             <div class="search-container">
                 <span class="search-icon">🔍</span>
-
-                <input
-                    type="text"
-                    id="searchInput"
-                    class="search-input"
-                    placeholder="Search dishes or items..."
-                >
+                <input type="text" id="searchInput" class="search-input" placeholder="Search dishes or items...">
             </div>
-
-            <div
-                class="profile-btn"
-                onclick="openProfileSidebar()"
-                title="{{ email }}"
-                data-initial="{{ username[0]|upper if username else 'A' }}"
-            ></div>
-
+            <div class="profile-btn" onclick="openProfileSidebar()" title="{{ email }}" data-initial="{{ username[0]|upper if username else 'A' }}"></div>
         </div>
     </header>
 
-    <!-- =========================================================
-         CATEGORY FILTERS
-    ========================================================= -->
-
     <div class="categories-container">
-
-        <button
-            class="cat-btn active"
-            onclick="filterCategory('all', this)"
-        >
-            All
-        </button>
-
-        <button
-            class="cat-btn"
-            onclick="filterCategory('tiffins', this)"
-        >
-            Tiffins
-        </button>
-
-        <button
-            class="cat-btn"
-            onclick="filterCategory('fast food', this)"
-        >
-            Fast Food
-        </button>
-
-        <button
-            class="cat-btn"
-            onclick="filterCategory('meals', this)"
-        >
-            Meals
-        </button>
-
+        <button class="cat-btn active" onclick="filterCategory('all', this)">All</button>
+        <button class="cat-btn" onclick="filterCategory('tiffins', this)">Tiffins</button>
+        <button class="cat-btn" onclick="filterCategory('fast food', this)">Fast Food</button>
+        <button class="cat-btn" onclick="filterCategory('meals', this)">Meals</button>
     </div>
 
-    <!-- =========================================================
-         MENU
-    ========================================================= -->
+    <main class="menu-list" id="menuContainer"></main>
 
-    <main
-        class="menu-list"
-        id="menuContainer"
-    ></main>
-
-    <!-- =========================================================
-         CART BAR
-    ========================================================= -->
-
-    <a
-        href="/cart"
-        class="floating-action-bar cart-bar"
-        id="cartBar"
-    >
+    <!-- State 1: Active Cart Button (ALWAYS visible until payment is PAID) -->
+    <a href="/cart" class="floating-action-bar cart-bar" id="cartBar">
         <div>
-            <h4
-                style="font-size:0.95rem;"
-                id="cartBarTitle"
-            >
-                View Cart
-            </h4>
-
-            <div
-                style="font-size:0.75rem; color:#bae6fd;"
-                id="cartCodeLabel"
-            ></div>
+            <h4 style="font-size:0.95rem;" id="cartBarTitle">View Cart</h4>
+            <div style="font-size:0.75rem; color:#bae6fd;" id="cartCodeLabel"></div>
         </div>
-
-        <div
-            class="badge"
-            id="cartTotalLabel"
-        >
-            ₹0.00
-        </div>
+        <div class="badge" id="cartTotalLabel">₹0.00</div>
     </a>
 
-    <!-- =========================================================
-         ORDER PLACED BAR
-    ========================================================= -->
-
-    <div
-        class="floating-action-bar order-placed-bar"
-        id="orderPlacedBar"
-        onclick="openOrderProgressModal()"
-    >
+    <!-- State 2: Order Placed -->
+    <div class="floating-action-bar order-placed-bar" id="orderPlacedBar" onclick="openOrderProgressModal()">
         <div class="order-placed-content">
             <h4>Order Placed!</h4>
-
-            <div id="orderStatusText">
-                Kitchen is preparing your food
-            </div>
+            <div id="orderStatusText">Kitchen is preparing your food</div>
         </div>
-
-        <div class="badge">
-            Token #<span id="activeTokenId">0</span>
-        </div>
+        <div class="badge">Token #<span id="activeTokenId">0</span></div>
     </div>
 
-    <!-- =========================================================
-         ORDER PROGRESS MODAL
-    ========================================================= -->
-
-    <div
-        class="modal-overlay"
-        id="orderProgressModal"
-    >
-
+    <!-- 4-Stage Progress Tracker Modal -->
+    <div class="modal-overlay" id="orderProgressModal">
         <div class="progress-box">
+            <h3>Token #<span id="modalOrderId">0</span> Status</h3>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.3rem;">Payment Verified • Preparing</p>
 
-            <div class="progress-modal-header">
-
-                <div>
-                    <span class="progress-small-title">
-                        ORDER STATUS
-                    </span>
-
-                    <h3>
-                        Token #<span id="modalOrderId">0</span>
-                    </h3>
+            <div class="stepper-row">
+                <div class="step-col">
+                    <div class="step-dot" id="dotAccepted"></div>
+                    <span class="step-name">Accepted</span>
                 </div>
-
-                <button
-                    class="progress-close-btn"
-                    type="button"
-                    onclick="closeOrderProgressModal()"
-                    aria-label="Close order status"
-                >
-                    ×
-                </button>
-
+                <div class="step-col">
+                    <div class="step-dot" id="dotPreparing"></div>
+                    <span class="step-name">Preparing</span>
+                </div>
+                <div class="step-col">
+                    <div class="step-dot" id="dotPrepared"></div>
+                    <span class="step-name">Prepared</span>
+                </div>
+                <div class="step-col">
+                    <div class="step-dot" id="dotDelivered"></div>
+                    <span class="step-name">Delivered</span>
+                </div>
             </div>
 
-            <!-- Circular Progress -->
-
-            <div class="circular-progress-wrapper">
-
-                <div
-                    class="circular-progress"
-                    id="circularProgress"
-                    style="--progress: 90deg;"
-                >
-
-                    <div class="circular-progress-inner">
-
-                        <div
-                            class="progress-percentage"
-                            id="progressPercentage"
-                        >
-                            25%
-                        </div>
-
-                        <div
-                            class="progress-status"
-                            id="progressStatus"
-                        >
-                            Accepted
-                        </div>
-
-                        <div
-                            class="progress-substatus"
-                            id="progressSubstatus"
-                        >
-                            Kitchen accepted your order.
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <!-- Progress Message -->
-
-            <div class="order-progress-message">
-
-                <div
-                    class="order-progress-title"
-                    id="orderProgressTitle"
-                >
-                    Order Accepted
-                </div>
-
-                <div
-                    class="order-progress-description"
-                    id="orderProgressDescription"
-                >
-                    Your order has been accepted by the kitchen.
-                </div>
-
-                <div
-                    class="order-progress-quote"
-                    id="orderProgressQuote"
-                >
-                    “Great food is worth waiting for.”
-                </div>
-
-            </div>
-
-            <!-- Status Stages -->
-
-            <div class="responsive-status-stages">
-
-                <div
-                    class="status-stage"
-                    id="stageAccepted"
-                >
-                    <div class="stage-circle">✓</div>
-                    <span>Accepted</span>
-                </div>
-
-                <div
-                    class="status-stage"
-                    id="stagePreparing"
-                >
-                    <div class="stage-circle">2</div>
-                    <span>Preparing</span>
-                </div>
-
-                <div
-                    class="status-stage"
-                    id="stagePrepared"
-                >
-                    <div class="stage-circle">3</div>
-                    <span>Prepared</span>
-                </div>
-
-                <div
-                    class="status-stage"
-                    id="stageDelivered"
-                >
-                    <div class="stage-circle">4</div>
-                    <span>Delivered</span>
-                </div>
-
-            </div>
-
-            <!-- Order Status Notification -->
-
-            <div
-                class="order-status-notification"
-                id="orderStatusToast"
-                role="status"
-                aria-live="polite"
-            >
-
-                <div
-                    class="order-status-notification-icon"
-                    id="toastIcon"
-                >
-                    🔔
-                </div>
-
-                <div class="order-status-notification-content">
-
-                    <div
-                        class="order-status-notification-title"
-                        id="toastTitle"
-                    >
-                        Order Update
-                    </div>
-
-                    <div
-                        class="order-status-notification-message"
-                        id="toastMessage"
-                    >
-                        Your order status has been updated.
-                    </div>
-
-                </div>
-
-                <button
-                    type="button"
-                    class="order-status-notification-close"
-                    onclick="hideOrderToast()"
-                    aria-label="Close notification"
-                >
-                    ×
-                </button>
-
-            </div>
-
+            <button class="save-username-btn" onclick="closeOrderProgressModal()" style="width:100%;">Close Status</button>
         </div>
     </div>
 
-    <!-- =========================================================
-         PROFILE SIDEBAR
-    ========================================================= -->
-
-    <div
-        class="sidebar-overlay"
-        id="sidebarOverlay"
-        onclick="closeProfileSidebar()"
-    ></div>
-
-    <aside
-        class="profile-sidebar"
-        id="profileSidebar"
-    >
-
+    <!-- Profile Drawer & Orders History -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeProfileSidebar()"></div>
+    <aside class="profile-sidebar" id="profileSidebar">
         <div class="sidebar-header">
-
             <h3>My Profile</h3>
-
-            <button
-                class="sidebar-close-btn"
-                onclick="closeProfileSidebar()"
-            >
-                &times;
-            </button>
-
+            <button class="sidebar-close-btn" onclick="closeProfileSidebar()">&times;</button>
         </div>
-
         <div class="sidebar-body">
-
-            <!-- Profile Information -->
-
             <div class="profile-card">
+                <label style="font-size:0.8rem; color:var(--text-muted);">Verified Gmail</label>
+                <div style="font-size:0.9rem; color:#38bdf8; margin-bottom:0.75rem;">{{ email }}</div>
 
-                <label
-                    style="font-size:0.8rem; color:var(--text-muted);"
-                >
-                    Verified Gmail
-                </label>
-
-                <div
-                    style="font-size:0.9rem; color:#38bdf8; margin-bottom:0.75rem;"
-                >
-                    {{ email }}
-                </div>
-
-                <label
-                    style="font-size:0.8rem; color:var(--text-muted);"
-                >
-                    Display Name
-                </label>
-
+                <label style="font-size:0.8rem; color:var(--text-muted);">Display Name</label>
                 <div class="username-input-row">
-
-                    <input
-                        type="text"
-                        id="profileUsernameInput"
-                        class="username-input"
-                        value="{{ username }}"
-                    >
-
-                    <button
-                        class="save-username-btn"
-                        onclick="saveNewUsername()"
-                    >
-                        Save
-                    </button>
-
+                    <input type="text" id="profileUsernameInput" class="username-input" value="{{ username }}">
+                    <button class="save-username-btn" onclick="saveNewUsername()">Save</button>
                 </div>
-
-                <div
-                    id="usernameStatusMsg"
-                    style="font-size:0.8rem; margin-top:0.4rem;"
-                ></div>
-
+                <div id="usernameStatusMsg" style="font-size:0.8rem; margin-top:0.4rem;"></div>
             </div>
-
-            <!-- Order History -->
 
             <div>
-
-                <div
-                    style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;"
-                >
-
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
                     <h4>All Orders History</h4>
-
-                    <button
-                        onclick="fetchOrderHistory()"
-                        style="background:none; border:none; color:var(--primary); font-size:0.85rem; cursor:pointer;"
-                    >
-                        Refresh
-                    </button>
-
+                    <button onclick="fetchOrderHistory()" style="background:none; border:none; color:var(--primary); font-size:0.85rem; cursor:pointer;">Refresh</button>
                 </div>
-
-                <div
-                    class="orders-list"
-                    id="ordersHistoryList"
-                ></div>
-
+                <div class="orders-list" id="ordersHistoryList"></div>
             </div>
 
-            <!-- Logout -->
-
-            <a
-                href="/logout"
-                style="margin-top:auto; padding:0.8rem; background:rgba(239, 68, 68, 0.15); color:#ef4444; text-align:center; border-radius:8px; text-decoration:none; font-weight:600;"
-            >
-                Log Out
-            </a>
-
+            <a href="/logout" style="margin-top:auto; padding:0.8rem; background:rgba(239, 68, 68, 0.15); color:#ef4444; text-align:center; border-radius:8px; text-decoration:none; font-weight:600;">Log Out</a>
         </div>
-
     </aside>
 
-    <!-- =========================================================
-         MOBILE FOOD ITEM DETAILS
-    ========================================================= -->
-
-    <div
-        id="mobileItemDetails"
-        class="mobile-item-details"
-    >
-
-        <div class="mobile-item-details-box">
-
-            <button
-                class="mobile-details-close"
-                onclick="closeMobileItemDetails()"
-            >
-                ×
-            </button>
-
-            <img
-                id="mobileDetailsImage"
-                src=""
-                alt=""
-            >
-
-            <div class="mobile-details-content">
-
-                <h2 id="mobileDetailsName"></h2>
-
-                <div id="mobileDetailsCategory"></div>
-
-                <div id="mobileDetailsPrice"></div>
-
-                <div id="mobileDetailsStatus"></div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <!-- =========================================================
-         JAVASCRIPT
-    ========================================================= -->
-
     <script>
-
-        /* =========================================================
-           GLOBAL VARIABLES
-        ========================================================= */
-
         let menuItems = [];
         let cartData = {};
         let currentCategory = 'all';
@@ -1297,1477 +270,491 @@
         let lastReportedStatus = null;
         let localMenuVersion = null;
 
-        let cartCodeCached = "";
-        let cartTotalCached = 0.0;
-        let toastTimeout = null;
-
-
-        /* =========================================================
-           ORDER PROGRESS CONFIGURATION
-        ========================================================= */
-
-        const ORDER_PROGRESS = {
-
-            accepted: {
-                percent: 25,
-                degrees: 90,
-                status: "Accepted",
-                substatus: "Kitchen accepted your order.",
-                title: "Order Accepted",
-                description: "Your order has been accepted by the kitchen.",
-                quote: "“Great food is worth waiting for.”",
-                icon: "✅"
-            },
-
-            preparing: {
-                percent: 50,
-                degrees: 180,
-                status: "Preparing",
-                substatus: "Our kitchen is preparing your food.",
-                title: "Your order is being prepared",
-                description: "Your order is now being prepared. 👨‍🍳",
-                quote: "“Something delicious is on the way.”",
-                icon: "👨‍🍳"
-            },
-
-            prepared: {
-                percent: 75,
-                degrees: 270,
-                status: "Ready",
-                substatus: "Your food is ready for pickup.",
-                title: "Your order is ready!",
-                description: "Your order is ready, please come pick up your order. 🎉",
-                quote: "“Good food is ready to make your day better.”",
-                icon: "🎉"
-            },
-
-            delivered: {
-                percent: 100,
-                degrees: 360,
-                status: "Delivered",
-                substatus: "Order completed successfully.",
-                title: "Order Delivered",
-                description: "Your order has been delivered. Enjoy your meal! ❤️",
-                quote: "“Enjoy every bite!”",
-                icon: "❤️"
-            }
-
-        };
-
-
-        /* =========================================================
-           UPDATE ORDER PROGRESS
-        ========================================================= */
-
-        function updateOrderProgress(status) {
-
-            const progress = ORDER_PROGRESS[status];
-
-            if (!progress) return;
-
-            const circle =
-                document.getElementById("circularProgress");
-
-            const percentage =
-                document.getElementById("progressPercentage");
-
-            const statusText =
-                document.getElementById("progressStatus");
-
-            const substatus =
-                document.getElementById("progressSubstatus");
-
-            const title =
-                document.getElementById("orderProgressTitle");
-
-            const description =
-                document.getElementById("orderProgressDescription");
-
-            const quote =
-                document.getElementById("orderProgressQuote");
-
-
-            if (circle) {
-                circle.style.setProperty(
-                    "--progress",
-                    `${progress.degrees}deg`
-                );
-            }
-
-            if (percentage) {
-                percentage.textContent =
-                    `${progress.percent}%`;
-            }
-
-            if (statusText) {
-                statusText.textContent =
-                    progress.status;
-            }
-
-            if (substatus) {
-                substatus.textContent =
-                    progress.substatus;
-            }
-
-            if (title) {
-                title.textContent =
-                    progress.title;
-            }
-
-            if (description) {
-                description.textContent =
-                    progress.description;
-            }
-
-            if (quote) {
-                quote.textContent =
-                    progress.quote;
-            }
-        }
-
-
-        /* =========================================================
-           ORDER STATUS NOTIFICATION
-        ========================================================= */
-
-        function showOrderNotification(status, orderNumber) {
-
-            const progress = ORDER_PROGRESS[status];
-
-            if (!progress) return;
-
-            const toast =
-                document.getElementById("orderStatusToast");
-
-            const toastIcon =
-                document.getElementById("toastIcon");
-
-            const toastTitle =
-                document.getElementById("toastTitle");
-
-            const toastMessage =
-                document.getElementById("toastMessage");
-
-            if (!toast) return;
-
-
-            if (toastIcon) {
-                toastIcon.textContent =
-                    progress.icon;
-            }
-
-
-            if (toastTitle) {
-
-                if (status === "preparing") {
-
-                    toastTitle.textContent =
-                        `Order #${orderNumber} is being prepared`;
-
-                } else if (status === "prepared") {
-
-                    toastTitle.textContent =
-                        `Order #${orderNumber} is ready`;
-
-                } else if (status === "delivered") {
-
-                    toastTitle.textContent =
-                        `Order #${orderNumber} delivered`;
-
-                } else {
-
-                    toastTitle.textContent =
-                        `Order #${orderNumber} update`;
-                }
-            }
-
-
-            if (toastMessage) {
-
-                if (status === "preparing") {
-
-                    toastMessage.textContent =
-                        "Your order is now being prepared.";
-
-                } else if (status === "prepared") {
-
-                    toastMessage.textContent =
-                        "Your order is ready, please come pick up your order.";
-
-                } else if (status === "delivered") {
-
-                    toastMessage.textContent =
-                        "Your order has been delivered. Enjoy your meal!";
-
-                } else {
-
-                    toastMessage.textContent =
-                        progress.description;
-                }
-            }
-
-
-            toast.classList.remove("show");
-
-            void toast.offsetWidth;
-
-            toast.classList.add("show");
-
-            clearTimeout(toastTimeout);
-
-            toastTimeout = setTimeout(() => {
-                hideOrderToast();
-            }, 6000);
-
-
-            /*
-             * Browser notification:
-             * Only use it when permission has already been granted.
-             */
-
-            if (
-                "Notification" in window &&
-                Notification.permission === "granted"
-            ) {
-
-                try {
-
-                    new Notification(
-                        toastTitle
-                            ? toastTitle.textContent
-                            : "Order Update",
-                        {
-                            body:
-                                toastMessage
-                                    ? toastMessage.textContent
-                                    : progress.description,
-
-                            icon: "/static/favicon.ico"
-                        }
-                    );
-
-                } catch (notificationError) {
-
-                    console.log(
-                        "Browser notification unavailable:",
-                        notificationError
-                    );
-                }
-            }
-        }
-
-
-        function hideOrderToast() {
-
-            const toast =
-                document.getElementById("orderStatusToast");
-
-            if (toast) {
-                toast.classList.remove("show");
-            }
-        }
-
-
-        /* =========================================================
-           CHECK ORDER STATUS
-        ========================================================= */
-
         async function checkOrderStatus() {
-
             try {
+                const res = await fetch('/api/order/active');
+                const data = await res.json();
+                const orderPlacedBar = document.getElementById('orderPlacedBar');
+                const cartBar = document.getElementById('cartBar');
 
-                const res =
-                    await fetch('/api/order/active');
-
-                const data =
-                    await res.json();
-
-                const orderPlacedBar =
-                    document.getElementById('orderPlacedBar');
-
-                const cartBar =
-                    document.getElementById('cartBar');
-
-
-                /* Kitchen status */
-
-                const closedBanner =
-                    document.getElementById('kitchenClosedBanner');
-
+                // Kitchen toggle banner
+                const closedBanner = document.getElementById('kitchenClosedBanner');
                 if (!data.kitchen_open) {
-
                     closedBanner.classList.add('show');
-
                 } else {
-
                     closedBanner.classList.remove('show');
                 }
 
-
-                /* Menu version sync */
-
-                if (
-                    localMenuVersion !== null &&
-                    data.menu_version &&
-                    data.menu_version !== localMenuVersion
-                ) {
-
-                    localMenuVersion =
-                        data.menu_version;
-
+                // Automatic live menu reload on sync
+                if (localMenuVersion !== null && data.menu_version && data.menu_version !== localMenuVersion) {
+                    localMenuVersion = data.menu_version;
                     loadMenuAndCart();
-
-                } else if (
-                    localMenuVersion === null &&
-                    data.menu_version
-                ) {
-
-                    localMenuVersion =
-                        data.menu_version;
+                } else if (localMenuVersion === null && data.menu_version) {
+                    localMenuVersion = data.menu_version;
                 }
 
+                // 1. Terminal Alerts (Cancellation or Delivery)
+                if (data.alert) {
+                    if (data.status === 'cancelled') {
+                        alert(`⚠️ ORDER CANCELLED BY KITCHEN\n\nYour order was cancelled by the kitchen.\n\nReason: ${data.reason}`);
 
-                /* =================================================
-                   CANCELLED ORDER
-                ================================================= */
-
-                if (data.status === 'cancelled') {
-
-                    alert(
-                        `⚠️ ORDER CANCELLED BY KITCHEN\n\n` +
-                        `Your order was cancelled by the kitchen.\n\n` +
-                        `Reason: ${data.reason || 'No reason provided'}`
-                    );
-
-                    try {
-
-                        await fetch(
-                            '/api/order/ack-alert',
-                            {
+                        try {
+                            await fetch('/api/order/ack-alert', {
                                 method: 'POST',
-
-                                headers: {
-                                    'Content-Type':
-                                        'application/json'
-                                },
-
+                                headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
-                                    order_id:
-                                        data.order_id
+                                    order_id: data.order_id
                                 })
-                            }
-                        );
-
-                    } catch (ackError) {
-
-                        console.error(
-                            "Could not acknowledge cancellation alert:",
-                            ackError
-                        );
-                    }
-
-
-                    activeOrder = null;
-                    lastReportedStatus = null;
-
-                    orderPlacedBar.classList.remove('visible');
-
-                    closeOrderProgressModal();
-
-                    await loadMenuAndCart();
-
-                    return;
-                }
-
-
-                /* =================================================
-                   DELIVERED ORDER
-                ================================================= */
-
-                if (data.status === 'delivered') {
-
-                    if (
-                        lastReportedStatus &&
-                        lastReportedStatus !== data.status
-                    ) {
-
-                        showOrderNotification(
-                            data.status,
-                            data.daily_order_number
-                        );
-                    }
-
-
-                    activeOrder = data;
-
-                    orderPlacedBar.classList.add('visible');
-                    cartBar.classList.remove('visible');
-
-                    document.getElementById(
-                        'activeTokenId'
-                    ).textContent =
-                        data.daily_order_number;
-
-                    updateStepperDots('delivered');
-
-
-                    try {
-
-                        await fetch(
-                            '/api/order/ack-alert',
-                            {
+                            });
+                        } catch (ackError) {
+                            console.error("Could not acknowledge cancellation alert:", ackError);
+                        }
+                    } else if (data.status === 'delivered') {
+                        alert(`🎉 Your Order #${data.order_id} has been delivered! Enjoy your meal.`);
+                        try {
+                            await fetch('/api/order/ack-alert', {
                                 method: 'POST',
-
-                                headers: {
-                                    'Content-Type':
-                                        'application/json'
-                                },
-
+                                headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
-                                    order_id:
-                                        data.order_id
+                                    order_id: data.order_id
                                 })
-                            }
-                        );
-
-                    } catch (ackError) {
-
-                        console.error(
-                            "Could not acknowledge delivery alert:",
-                            ackError
-                        );
-                    }
-
-
-                    lastReportedStatus =
-                        'delivered';
-
-                    return;
-                }
-
-
-                /* =================================================
-                   ACTIVE ORDER
-                ================================================= */
-
-                if (data.has_active_order) {
-
-                    activeOrder = data;
-
-
-                    /* Status transition notification */
-
-                    if (
-                        lastReportedStatus &&
-                        lastReportedStatus !== data.status
-                    ) {
-
-                        showOrderNotification(
-                            data.status,
-                            data.daily_order_number
-                        );
-                    }
-
-                    lastReportedStatus =
-                        data.status;
-
-
-                    /* Payment completed */
-
-                    if (data.payment_status === 'paid') {
-
-                        cartBar.classList.remove('visible');
-
-                        orderPlacedBar.classList.add('visible');
-
-                        document.getElementById(
-                            'activeTokenId'
-                        ).textContent =
-                            data.daily_order_number;
-
-
-                        const progressInfo =
-                            ORDER_PROGRESS[data.status];
-
-                        document.getElementById(
-                            'orderStatusText'
-                        ).textContent =
-                            progressInfo
-                                ? progressInfo.status
-                                : data.status.toUpperCase();
-
-
-                        updateStepperDots(
-                            data.status
-                        );
-
-
-                    } else {
-
-                        /* Payment not completed */
-
-                        orderPlacedBar.classList.remove('visible');
-
-                        cartBar.classList.add('visible');
-
-
-                        if (data.status === 'placed') {
-
-                            const secs =
-                                data.seconds_left !== undefined
-                                    ? data.seconds_left
-                                    : 60;
-
-                            document.getElementById(
-                                'cartBarTitle'
-                            ).textContent =
-                                `Awaiting Kitchen (${secs}s)`;
-
-                        } else {
-
-                            document.getElementById(
-                                'cartBarTitle'
-                            ).textContent =
-                                "Pay Now (Accepted)";
+                            });
+                        } catch (ackError) {
+                            console.error("Could not acknowledge delivery alert:", ackError);
                         }
                     }
-
-
-                } else {
-
-                    /* =================================================
-                       NO ACTIVE ORDER
-                    ================================================= */
-
-                    orderPlacedBar.classList.remove('visible');
-
                     activeOrder = null;
-
                     lastReportedStatus = null;
-
-                    document.getElementById(
-                        'cartBarTitle'
-                    ).textContent =
-                        "View Cart";
-
-                    updateCartUI(
-                        cartCodeCached,
-                        cartTotalCached
-                    );
+                    orderPlacedBar.classList.remove('visible');
+                    closeOrderProgressModal();
+                    loadMenuAndCart();
+                    return;
                 }
 
-            } catch (err) {
+                // 2. Active Orders Logic: STRICT BUTTON TRANSITION RULE
+                if (data.has_active_order) {
+                    activeOrder = data;
 
-                console.error(
-                    "Status check error:",
-                    err
-                );
+                    // Trigger alert if status transitioned
+                    if (lastReportedStatus && lastReportedStatus !== data.status) {
+                        alert(`🔔 Kitchen Update: Token #${data.daily_order_number} is now ${data.status.toUpperCase()}!`);
+                    }
+                    lastReportedStatus = data.status;
+
+                    if (data.payment_status === 'paid') {
+                        // PAYMENT DONE -> Hide cart button, show green "Order Placed" button
+                        cartBar.classList.remove('visible');
+                        orderPlacedBar.classList.add('visible');
+                        document.getElementById('activeTokenId').textContent = data.daily_order_number;
+                        document.getElementById('orderStatusText').textContent = `Kitchen Status: ${data.status.toUpperCase()}`;
+                        updateStepperDots(data.status);
+                    } else {
+                        // PAYMENT NOT DONE -> KEEP CART BUTTON VISIBLE!
+                        orderPlacedBar.classList.remove('visible');
+                        cartBar.classList.add('visible');
+
+                        if (data.status === 'placed') {
+                            const secs = data.seconds_left !== undefined ? data.seconds_left : 60;
+                            document.getElementById('cartBarTitle').textContent = `Awaiting Kitchen (${secs}s)`;
+                        } else {
+                            // Accepted by kitchen but user closed gateway -> show payment pending prompt
+                            document.getElementById('cartBarTitle').textContent = "Pay Now (Accepted)";
+                        }
+                    }
+                } else {
+                    // No running active order
+                    orderPlacedBar.classList.remove('visible');
+                    activeOrder = null;
+                    lastReportedStatus = null;
+                    document.getElementById('cartBarTitle').textContent = "View Cart";
+                    updateCartUI(cartCodeCached, cartTotalCached);
+                }
+            } catch (err) {
+                console.error("Status check error:", err);
             }
         }
-
-
-        /* =========================================================
-           ORDER MODAL
-        ========================================================= */
 
         function openOrderProgressModal() {
-
             if (!activeOrder) return;
-
-            document.getElementById(
-                'modalOrderId'
-            ).textContent =
-                activeOrder.daily_order_number;
-
-            updateStepperDots(
-                activeOrder.status
-            );
-
-            updateOrderProgress(
-                activeOrder.status
-            );
-
-            document.getElementById(
-                'orderProgressModal'
-            ).classList.add('open');
+            document.getElementById('modalOrderId').textContent = activeOrder.daily_order_number;
+            updateStepperDots(activeOrder.status);
+            document.getElementById('orderProgressModal').classList.add('open');
         }
-
 
         function closeOrderProgressModal() {
-
-            document.getElementById(
-                'orderProgressModal'
-            ).classList.remove('open');
+            document.getElementById('orderProgressModal').classList.remove('open');
         }
-
-
-        /* =========================================================
-           STEPPER
-        ========================================================= */
 
         function updateStepperDots(status) {
+            const stages = ['accepted', 'preparing', 'prepared', 'delivered'];
+            const currentIndex = stages.indexOf(status);
 
-            const stages = [
-                "accepted",
-                "preparing",
-                "prepared",
-                "delivered"
+            const dots = [
+                document.getElementById('dotAccepted'),
+                document.getElementById('dotPreparing'),
+                document.getElementById('dotPrepared'),
+                document.getElementById('dotDelivered')
             ];
 
-            const stageIndex =
-                stages.indexOf(status);
-
-            const stageElements = [
-                document.getElementById("stageAccepted"),
-                document.getElementById("stagePreparing"),
-                document.getElementById("stagePrepared"),
-                document.getElementById("stageDelivered")
-            ];
-
-
-            stageElements.forEach(
-                (stage, index) => {
-
-                    if (!stage) return;
-
-                    stage.classList.remove(
-                        "active",
-                        "completed",
-                        "current"
-                    );
-
-
-                    if (index < stageIndex) {
-
-                        stage.classList.add(
-                            "completed"
-                        );
-                    }
-
-
-                    if (index === stageIndex) {
-
-                        stage.classList.add(
-                            "current"
-                        );
-                    }
+            dots.forEach((dot, idx) => {
+                if (idx <= currentIndex) {
+                    dot.classList.add('green');
+                } else {
+                    dot.classList.remove('green');
                 }
-            );
-
-
-            updateOrderProgress(status);
+            });
         }
 
+        async function init() {
+            await loadMenuAndCart();
+            await checkOrderStatus();
+            setInterval(checkOrderStatus, 2000);
+        }
 
-        /* =========================================================
-           LOAD MENU + CART
-        ========================================================= */
+        let cartCodeCached = "";
+        let cartTotalCached = 0.0;
 
         async function loadMenuAndCart() {
-
             try {
-
-                const res =
-                    await fetch('/api/menu');
-
-                const data =
-                    await res.json();
-
-                menuItems =
-                    data.items || [];
-
-                cartData =
-                    data.cart || {};
-
-                localMenuVersion =
-                    data.menu_version;
-
-                cartCodeCached =
-                    data.cart_code || '';
-
-                cartTotalCached =
-                    data.total_price || 0.0;
-
-
-                updateCartUI(
-                    cartCodeCached,
-                    cartTotalCached
-                );
-
+                const res = await fetch('/api/menu');
+                const data = await res.json();
+                menuItems = data.items || [];
+                cartData = data.cart || {};
+                localMenuVersion = data.menu_version;
+                cartCodeCached = data.cart_code || '';
+                cartTotalCached = data.total_price || 0.0;
+                updateCartUI(cartCodeCached, cartTotalCached);
                 renderMenu();
-
             } catch (err) {
-
-                console.error(
-                    "Failed loading menu:",
-                    err
-                );
+                console.error("Failed loading menu:", err);
             }
         }
 
-
-        /* =========================================================
-           CATEGORY FILTER
-        ========================================================= */
-
-        function filterCategory(
-            category,
-            buttonEl
-        ) {
-
-            currentCategory =
-                category;
-
-            document
-                .querySelectorAll('.cat-btn')
-                .forEach(btn => {
-
-                    btn.classList.remove(
-                        'active'
-                    );
-                });
-
-            buttonEl.classList.add(
-                'active'
-            );
-
+        function filterCategory(category, buttonEl) {
+            currentCategory = category;
+            document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
+            buttonEl.classList.add('active');
             renderMenu();
         }
 
-
-        /* =========================================================
-           SEARCH
-        ========================================================= */
-
-        document
-            .getElementById('searchInput')
-            .addEventListener(
-                'input',
-                (e) => {
-
-                    searchQuery =
-                        e.target.value
-                            .toLowerCase()
-                            .trim();
-
-                    renderMenu();
-                }
-            );
-
-
-        /* =========================================================
-           RENDER MENU
-        ========================================================= */
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            searchQuery = e.target.value.toLowerCase().trim();
+            renderMenu();
+        });
 
         function renderMenu() {
-
-            const container =
-                document.getElementById(
-                    'menuContainer'
-                );
-
+            const container = document.getElementById('menuContainer');
             container.innerHTML = '';
 
-
-            const filtered =
-                menuItems.filter(item => {
-
-                    const matchesCat =
-                        currentCategory === 'all' ||
-                        item.category
-                            .toLowerCase() ===
-                        currentCategory.toLowerCase();
-
-
-                    const matchesSearch =
-                        item.item_name
-                            .toLowerCase()
-                            .includes(searchQuery);
-
-
-                    return (
-                        matchesCat &&
-                        matchesSearch
-                    );
-                });
-
+            const filtered = menuItems.filter(item => {
+                const matchesCat = currentCategory === 'all' || item.category.toLowerCase() === currentCategory.toLowerCase();
+                const matchesSearch = item.item_name.toLowerCase().includes(searchQuery);
+                return matchesCat && matchesSearch;
+            });
 
             filtered.forEach(item => {
-
-                const qty =
-                    cartData[item.id] !== undefined
-                        ? cartData[item.id]
-                        : (
-                            cartData[
-                                String(item.id)
-                            ] || 0
-                        );
-
-
-                const card =
-                    document.createElement(
-                        'div'
-                    );
-
-                card.className =
-                    'item-card';
-
-
-                card.addEventListener(
-                    'click',
-                    function (e) {
-
-                        if (
-                            e.target.closest(
-                                '.action-ctrl'
-                            )
-                        ) {
-                            return;
-                        }
-
-
-                        if (
-                            window.innerWidth <=
-                            768
-                        ) {
-
-                            openMobileItemDetails(
-                                item
-                            );
-                        }
+                const qty = cartData[item.id] !== undefined ? cartData[item.id] : (cartData[String(item.id)] || 0);
+                const card = document.createElement('div');
+                card.className = 'item-card';
+                card.addEventListener('click', function(e) {
+                    if (e.target.closest('.action-ctrl')) return;
+                    if (window.innerWidth <= 768) {
+                        openMobileItemDetails(item);
                     }
-                );
-
+                });
 
                 let actionHtml = '';
-
-
                 if (item.is_active) {
-
                     if (qty === 0) {
-
-                        actionHtml = `
-                            <div class="action-ctrl">
-                                <button
-                                    class="action-btn"
-                                    onclick="updateItemQuantity(${item.id}, 1)"
-                                >
-                                    +
-                                </button>
-                            </div>
-                        `;
-
+                        actionHtml = `<div class="action-ctrl"><button class="action-btn" onclick="updateItemQuantity(${item.id}, 1)">+</button></div>`;
                     } else {
-
                         actionHtml = `
                             <div class="action-ctrl">
-
-                                <button
-                                    class="action-btn"
-                                    onclick="updateItemQuantity(${item.id}, -1)"
-                                >
-                                    −
-                                </button>
-
-                                <span class="qty-label">
-                                    ${qty}
-                                </span>
-
-                                <button
-                                    class="action-btn"
-                                    onclick="updateItemQuantity(${item.id}, 1)"
-                                >
-                                    +
-                                </button>
-
+                                <button class="action-btn" onclick="updateItemQuantity(${item.id}, -1)">−</button>
+                                <span class="qty-label">${qty}</span>
+                                <button class="action-btn" onclick="updateItemQuantity(${item.id}, 1)">+</button>
                             </div>
                         `;
                     }
                 }
 
-
                 card.innerHTML = `
-
                     <div class="photo-container">
-
-                        <img
-                            src="${item.photo_url || 'https://via.placeholder.com/600x400'}"
-                            alt="${item.item_name}"
-                        >
-
-                        <span
-                            class="status-dot ${
-                                item.is_active
-                                    ? 'active'
-                                    : 'inactive'
-                            }"
-                        ></span>
-
+                        <img src="${item.photo_url || 'https://via.placeholder.com/600x400'}" alt="${item.item_name}">
+                        <span class="status-dot ${item.is_active ? 'active' : 'inactive'}"></span>
                         ${actionHtml}
-
                     </div>
-
                     <div class="item-info">
-
                         <div class="item-text">
-
-                            <h3>
-                                ${item.item_name}
-                            </h3>
-
-                            <div class="item-category">
-                                ${item.category}
-                            </div>
-
+                            <h3>${item.item_name}</h3>
+                            <div class="item-category">${item.category}</div>
                         </div>
-
-                        <div class="item-price">
-                            ₹${Number(item.price).toFixed(2)}
-                        </div>
-
+                        <div class="item-price">₹${Number(item.price).toFixed(2)}</div>
                     </div>
                 `;
-
-
                 container.appendChild(card);
             });
         }
 
-
-        /* =========================================================
-           UPDATE CART QUANTITY
-        ========================================================= */
-
-        async function updateItemQuantity(
-            itemId,
-            delta
-        ) {
-
+        async function updateItemQuantity(itemId, delta) {
             try {
+                const res = await fetch('/api/cart/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ itemId, delta })
+                });
+                const data = await res.json();
 
-                const res =
-                    await fetch(
-                        '/api/cart/update',
-                        {
-                            method: 'POST',
-
-                            headers: {
-                                'Content-Type':
-                                    'application/json'
-                            },
-
-                            body: JSON.stringify({
-                                itemId,
-                                delta
-                            })
-                        }
-                    );
-
-
-                const data =
-                    await res.json();
-
-
-                if (
-                    res.ok &&
-                    data.success
-                ) {
-
-                    cartData =
-                        data.cart;
-
-                    cartCodeCached =
-                        data.cart_code;
-
-                    cartTotalCached =
-                        data.total_price;
-
-
-                    updateCartUI(
-                        data.cart_code,
-                        data.total_price
-                    );
-
+                if (res.ok && data.success) {
+                    cartData = data.cart;
+                    cartCodeCached = data.cart_code;
+                    cartTotalCached = data.total_price;
+                    updateCartUI(data.cart_code, data.total_price);
                     renderMenu();
-
                 } else {
-
-                    alert(
-                        "Cart Update Error: " +
-                        (
-                            data.error ||
-                            "Server rejected update"
-                        )
-                    );
+                    alert("Cart Update Error: " + (data.error || "Server rejected update"));
                 }
-
             } catch (err) {
-
-                console.error(
-                    "Cart update request failed:",
-                    err
-                );
+                console.error("Cart update request failed:", err);
             }
         }
 
+        function updateCartUI(cartCode, totalPrice) {
+            const cartBar = document.getElementById('cartBar');
+            const orderPlacedBar = document.getElementById('orderPlacedBar');
 
-        /* =========================================================
-           CART UI
-        ========================================================= */
-
-        function updateCartUI(
-            cartCode,
-            totalPrice
-        ) {
-
-            const cartBar =
-                document.getElementById(
-                    'cartBar'
-                );
-
-            const orderPlacedBar =
-                document.getElementById(
-                    'orderPlacedBar'
-                );
-
-
-            /* Paid order */
-
-            if (
-                orderPlacedBar.classList
-                    .contains('visible')
-            ) {
-
-                cartBar.classList.remove(
-                    'visible'
-                );
-
+            // Paid order -> cart must stay hidden
+            if (orderPlacedBar.classList.contains('visible')) {
+                cartBar.classList.remove('visible');
                 return;
             }
 
-
-            /* Check cart */
-
-            const hasItems =
-                Object.values(
-                    cartData || {}
-                ).some(
-                    qty => Number(qty) > 0
-                );
-
+            // Show cart ONLY when at least one item has quantity > 0
+            const hasItems = Object.values(cartData || {}).some(qty => Number(qty) > 0);
 
             if (hasItems) {
+                cartBar.classList.add('visible');
 
-                cartBar.classList.add(
-                    'visible'
-                );
-
-                document.getElementById(
-                    'cartCodeLabel'
-                ).textContent =
-                    cartCode || '';
-
-                document.getElementById(
-                    'cartTotalLabel'
-                ).textContent =
-                    `₹${Number(
-                        totalPrice || 0
-                    ).toFixed(2)}`;
-
+                document.getElementById('cartCodeLabel').textContent = cartCode || '';
+                document.getElementById('cartTotalLabel').textContent =
+                    `₹${Number(totalPrice || 0).toFixed(2)}`;
             } else {
+                cartBar.classList.remove('visible');
 
-                cartBar.classList.remove(
-                    'visible'
-                );
-
-                document.getElementById(
-                    'cartCodeLabel'
-                ).textContent = '';
-
-                document.getElementById(
-                    'cartTotalLabel'
-                ).textContent =
-                    '₹0.00';
+                document.getElementById('cartCodeLabel').textContent = '';
+                document.getElementById('cartTotalLabel').textContent = '₹0.00';
             }
         }
 
-
-        /* =========================================================
-           PROFILE SIDEBAR
-        ========================================================= */
-
         function openProfileSidebar() {
-
-            document.getElementById(
-                'profileSidebar'
-            ).classList.add('open');
-
-            document.getElementById(
-                'sidebarOverlay'
-            ).classList.add('active');
-
+            document.getElementById('profileSidebar').classList.add('open');
+            document.getElementById('sidebarOverlay').classList.add('active');
             fetchOrderHistory();
         }
 
-
         function closeProfileSidebar() {
-
-            document.getElementById(
-                'profileSidebar'
-            ).classList.remove('open');
-
-            document.getElementById(
-                'sidebarOverlay'
-            ).classList.remove('active');
+            document.getElementById('profileSidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('active');
         }
-
-
-        /* =========================================================
-           SAVE USERNAME
-        ========================================================= */
 
         async function saveNewUsername() {
-
-            const newName =
-                document.getElementById(
-                    'profileUsernameInput'
-                ).value.trim();
-
-
+            const newName = document.getElementById('profileUsernameInput').value.trim();
             if (!newName) return;
-
-
-            try {
-
-                const res =
-                    await fetch(
-                        '/api/profile/update-username',
-                        {
-                            method: 'POST',
-
-                            headers: {
-                                'Content-Type':
-                                    'application/json'
-                            },
-
-                            body: JSON.stringify({
-                                username: newName
-                            })
-                        }
-                    );
-
-
-                const data =
-                    await res.json();
-
-
-                if (data.success) {
-
-                    const profileInput =
-                        document.getElementById(
-                            'profileUsernameInput'
-                        );
-
-                    if (profileInput) {
-                        profileInput.value =
-                            data.username;
-                    }
-
-
-                    const statusMsg =
-                        document.getElementById(
-                            'usernameStatusMsg'
-                        );
-
-                    if (statusMsg) {
-
-                        statusMsg.textContent =
-                            "Username updated successfully.";
-
-                        statusMsg.style.color =
-                            "#10b981";
-                    }
-                }
-
-            } catch (error) {
-
-                console.error(
-                    "Username update failed:",
-                    error
-                );
+            const res = await fetch('/api/profile/update-username', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: newName })
+            });
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('navUsernameDisplay').textContent = data.username;
             }
         }
-
-
-        /* =========================================================
-           ORDER HISTORY
-        ========================================================= */
 
         async function fetchOrderHistory() {
+            const listEl = document.getElementById('ordersHistoryList');
+            listEl.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">Loading...</div>';
+            const res = await fetch('/api/profile/orders');
+            const data = await res.json();
 
-            const listEl =
-                document.getElementById(
-                    'ordersHistoryList'
-                );
-
-
-            listEl.innerHTML =
-                '<div style="color:var(--text-muted); padding:1rem;">Loading...</div>';
-
-
-            try {
-
-                const res =
-                    await fetch(
-                        '/api/profile/orders'
-                    );
-
-                const data =
-                    await res.json();
-
-
-                if (
-                    !data.orders ||
-                    data.orders.length === 0
-                ) {
-
-                    listEl.innerHTML =
-                        '<div style="color:var(--text-muted); padding:1rem;">No past orders.</div>';
-
-                    return;
-                }
-
-
-                listEl.innerHTML = '';
-
-
-                data.orders.forEach(order => {
-
-                    const card =
-                        document.createElement(
-                            'div'
-                        );
-
-                    card.className =
-                        'order-card';
-
-
-                    const itemsHtml =
-                        order.items
-                            .map(
-                                i =>
-                                    `<div>• ${i}</div>`
-                            )
-                            .join('');
-
-
-                    const reasonHtml =
-                        order.cancellation_reason
-                            ? `
-                                <div
-                                    style="color:#fca5a5; font-size:0.8rem;"
-                                >
-                                    Reason:
-                                    ${order.cancellation_reason}
-                                </div>
-                            `
-                            : '';
-
-
-                    card.innerHTML = `
-
-                        <div
-                            style="display:flex; justify-content:space-between; align-items:center;"
-                        >
-
-                            <div>
-
-                                <strong>
-                                    Token #${order.daily_order_number}
-                                </strong>
-
-                                <div
-                                    style="font-size:0.75rem; color:var(--text-muted);"
-                                >
-                                    ${order.date}
-                                    at
-                                    ${order.time}
-                                </div>
-
-                            </div>
-
-                            <span
-                                class="order-status-pill pill-${order.order_status}"
-                            >
-                                ${order.order_status}
-                            </span>
-
-                        </div>
-
-                        <div
-                            style="font-size:0.85rem; color:#cbd5e1; border-top:1px dashed var(--card-border); padding-top:0.4rem;"
-                        >
-                            ${itemsHtml}
-                        </div>
-
-                        ${reasonHtml}
-
-                        <div
-                            style="display:flex; justify-content:space-between; font-weight:700; margin-top:0.3rem;"
-                        >
-
-                            <span>
-                                Total
-                                (${order.payment_status.toUpperCase()})
-                            </span>
-
-                            <span
-                                style="color:#38bdf8;"
-                            >
-                                ₹${Number(
-                                    order.total_amount
-                                ).toFixed(2)}
-                            </span>
-
-                        </div>
-                    `;
-
-
-                    listEl.appendChild(card);
-                });
-
-            } catch (error) {
-
-                console.error(
-                    "Failed loading order history:",
-                    error
-                );
-
-                listEl.innerHTML =
-                    '<div style="color:#ef4444; padding:1rem;">Failed to load order history.</div>';
-            }
-        }
-
-
-        /* =========================================================
-           MOBILE ITEM DETAILS
-        ========================================================= */
-
-        function openMobileItemDetails(item) {
-
-            if (
-                window.innerWidth > 768
-            ) {
+            if (!data.orders || data.orders.length === 0) {
+                listEl.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">No past orders.</div>';
                 return;
             }
 
+            listEl.innerHTML = '';
+            data.orders.forEach(order => {
+                const card = document.createElement('div');
+                card.className = 'order-card';
+                const itemsHtml = order.items.map(i => `<div>• ${i}</div>`).join('');
+                const reasonHtml = order.cancellation_reason ? `<div style="color:#fca5a5; font-size:0.8rem;">Reason: ${order.cancellation_reason}</div>` : '';
 
-            document.getElementById(
-                'mobileDetailsImage'
-            ).src =
-                item.photo_url ||
-                'https://via.placeholder.com/600x400';
-
-
-            document.getElementById(
-                'mobileDetailsImage'
-            ).alt =
-                item.item_name ||
-                'Food item';
-
-
-            document.getElementById(
-                'mobileDetailsName'
-            ).textContent =
-                item.item_name || '';
-
-
-            document.getElementById(
-                'mobileDetailsCategory'
-            ).textContent =
-                item.category || '';
-
-
-            document.getElementById(
-                'mobileDetailsPrice'
-            ).textContent =
-                '₹' +
-                Number(
-                    item.price || 0
-                ).toFixed(2);
-
-
-            document.getElementById(
-                'mobileDetailsStatus'
-            ).textContent =
-                item.is_active
-                    ? 'Available'
-                    : 'Currently unavailable';
-
-
-            document.getElementById(
-                'mobileItemDetails'
-            ).classList.add('open');
-
-
-            document.body.style.overflow =
-                'hidden';
+                card.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <strong>Token #${order.daily_order_number}</strong>
+                            <div style="font-size:0.75rem; color:var(--text-muted);">${order.date} at ${order.time}</div>
+                        </div>
+                        <span class="order-status-pill pill-${order.order_status}">${order.order_status}</span>
+                    </div>
+                    <div style="font-size:0.85rem; color:#cbd5e1; border-top:1px dashed var(--card-border); padding-top:0.4rem;">${itemsHtml}</div>
+                    ${reasonHtml}
+                    <div style="display:flex; justify-content:space-between; font-weight:700; margin-top:0.3rem;">
+                        <span>Total (${order.payment_status.toUpperCase()})</span>
+                        <span style="color:#38bdf8;">₹${order.total_amount.toFixed(2)}</span>
+                    </div>
+                `;
+                listEl.appendChild(card);
+            });
         }
-
-
-        function closeMobileItemDetails() {
-
-            document.getElementById(
-                'mobileItemDetails'
-            ).classList.remove('open');
-
-            document.body.style.overflow =
-                '';
-        }
-
-
-        /* Close mobile details by clicking backdrop */
-
-        document
-            .getElementById('mobileItemDetails')
-            .addEventListener(
-                'click',
-                function (e) {
-
-                    if (
-                        e.target === this
-                    ) {
-
-                        closeMobileItemDetails();
-                    }
-                }
-            );
-
-
-        /* =========================================================
-           INITIALIZATION
-        ========================================================= */
-
-        async function init() {
-
-            await loadMenuAndCart();
-
-            await checkOrderStatus();
-
-            /*
-             * Check order status every 2 seconds.
-             */
-
-            setInterval(
-                checkOrderStatus,
-                2000
-            );
-        }
-
 
         init();
-
     </script>
+
+<!-- MOBILE FOOD ITEM DETAILS -->
+<div id="mobileItemDetails" class="mobile-item-details">
+    <div class="mobile-item-details-box">
+        <button class="mobile-details-close" onclick="closeMobileItemDetails()">×</button>
+
+        <img id="mobileDetailsImage" src="" alt="">
+
+        <div class="mobile-details-content">
+            <h2 id="mobileDetailsName"></h2>
+            <div id="mobileDetailsCategory"></div>
+            <div id="mobileDetailsPrice"></div>
+            <div id="mobileDetailsStatus"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* MOBILE ITEM DETAILS ONLY */
+.mobile-item-details {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .mobile-item-details {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        background: rgba(0,0,0,0.55);
+        align-items: flex-end;
+        justify-content: center;
+    }
+
+    .mobile-item-details.open {
+        display: flex;
+    }
+
+    .mobile-item-details-box {
+        position: relative;
+        width: 100%;
+        max-height: 88vh;
+        overflow: hidden;
+        background: #fffdf7;
+        border-radius: 24px 24px 0 0;
+        border-top: 2px solid #b8953f;
+        box-shadow: 0 -10px 35px rgba(0,0,0,0.25);
+    }
+
+    .mobile-item-details-box img {
+        display: block;
+        width: 100%;
+        height: 240px;
+        object-fit: cover;
+    }
+
+    .mobile-details-close {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        z-index: 2;
+
+        width: 38px;
+        height: 38px;
+
+        border: none;
+        border-radius: 50%;
+
+        background: rgba(255,253,247,0.95);
+        color: #927326;
+
+        font-size: 28px;
+        line-height: 35px;
+        font-weight: 700;
+    }
+
+    .mobile-details-content {
+        padding: 20px;
+    }
+
+    .mobile-details-content h2 {
+        margin: 0 0 6px;
+        color: #29251d;
+        font-size: 1.45rem;
+    }
+
+    #mobileDetailsCategory {
+        color: #756f63;
+        font-size: 0.9rem;
+        text-transform: capitalize;
+        margin-bottom: 12px;
+    }
+
+    #mobileDetailsPrice {
+        color: #927326;
+        font-size: 1.35rem;
+        font-weight: 800;
+        margin-bottom: 10px;
+    }
+
+    #mobileDetailsStatus {
+        color: #756f63;
+        font-size: 0.9rem;
+    }
+}
+</style>
+
+<script>
+function openMobileItemDetails(item) {
+    if (window.innerWidth > 768) return;
+
+    document.getElementById('mobileDetailsImage').src =
+        item.photo_url || 'https://via.placeholder.com/600x400';
+
+    document.getElementById('mobileDetailsImage').alt =
+        item.item_name || 'Food item';
+
+    document.getElementById('mobileDetailsName').textContent =
+        item.item_name || '';
+
+    document.getElementById('mobileDetailsCategory').textContent =
+        item.category || '';
+
+    document.getElementById('mobileDetailsPrice').textContent =
+        '₹' + Number(item.price || 0).toFixed(2);
+
+    document.getElementById('mobileDetailsStatus').textContent =
+        item.is_active ? 'Available' : 'Currently unavailable';
+
+    document.getElementById('mobileItemDetails').classList.add('open');
+
+    document.body.style.overflow = 'hidden';
+}
+
+function closeMobileItemDetails() {
+    document.getElementById('mobileItemDetails').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+document.getElementById('mobileItemDetails').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeMobileItemDetails();
+    }
+});
+</script>
+
 
 </body>
 </html>
