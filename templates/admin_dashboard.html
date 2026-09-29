@@ -726,6 +726,240 @@ tr:hover td {
 
 </style>
 
+
+<style>
+/* =========================================================
+   GRAND PALACE - UNIVERSAL ADMIN NOTIFICATION
+   Only replaces browser alert appearance.
+   Existing website functionality remains unchanged.
+   ========================================================= */
+
+#grandPalaceNotifications {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 999999;
+    width: min(390px, calc(100vw - 30px));
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+}
+
+.grand-palace-notification {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+
+    padding: 16px 17px;
+
+    background: rgba(255, 253, 247, 0.98);
+    color: #29251d;
+
+    border: 1px solid #d8c99a;
+    border-left: 5px solid #b8953f;
+    border-radius: 14px;
+
+    box-shadow:
+        0 12px 35px rgba(60, 50, 25, 0.20),
+        0 3px 10px rgba(60, 50, 25, 0.10);
+
+    backdrop-filter: blur(12px);
+
+    pointer-events: auto;
+
+    animation: gpNotificationIn .28s ease forwards;
+}
+
+.grand-palace-notification.gp-hide {
+    animation: gpNotificationOut .28s ease forwards;
+}
+
+.gp-notification-icon {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #b8953f;
+    color: #fffdf7;
+
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.gp-notification-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.gp-notification-title {
+    margin-bottom: 3px;
+
+    color: #927326;
+
+    font-size: 0.95rem;
+    font-weight: 800;
+}
+
+.gp-notification-message {
+    color: #756f63;
+
+    font-size: 0.88rem;
+    line-height: 1.4;
+
+    word-break: break-word;
+}
+
+.gp-notification-close {
+    border: 0;
+    background: transparent;
+
+    color: #927326;
+
+    font-size: 21px;
+    line-height: 1;
+
+    padding: 0;
+    cursor: pointer;
+}
+
+.gp-notification-close:hover {
+    color: #6f571d;
+}
+
+@keyframes gpNotificationIn {
+    from {
+        opacity: 0;
+        transform: translateX(35px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes gpNotificationOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateX(35px);
+    }
+}
+
+@media (max-width: 600px) {
+    #grandPalaceNotifications {
+        top: 12px;
+        left: 12px;
+        right: 12px;
+        width: auto;
+    }
+}
+</style>
+
+<script>
+/* =========================================================
+   UNIVERSAL ALERT REPLACEMENT
+   Every existing alert() in this admin page uses this.
+   ========================================================= */
+
+(function () {
+
+    function grandPalaceNotification(message) {
+
+        let container =
+            document.getElementById("grandPalaceNotifications");
+
+        if (!container) {
+            container = document.createElement("div");
+            container.id = "grandPalaceNotifications";
+            document.body.appendChild(container);
+        }
+
+        const notification =
+            document.createElement("div");
+
+        notification.className =
+            "grand-palace-notification";
+
+        notification.innerHTML = `
+            <div class="gp-notification-icon">✓</div>
+
+            <div class="gp-notification-content">
+                <div class="gp-notification-title">
+                    Grand Palace
+                </div>
+
+                <div class="gp-notification-message"></div>
+            </div>
+
+            <button
+                class="gp-notification-close"
+                type="button"
+                aria-label="Close"
+            >×</button>
+        `;
+
+        /*
+         * Use textContent instead of innerHTML so that
+         * existing alert messages remain safe.
+         */
+        notification.querySelector(
+            ".gp-notification-message"
+        ).textContent = String(message);
+
+        container.appendChild(notification);
+
+        const close = () => {
+
+            if (
+                notification.classList.contains("gp-hide")
+            ) {
+                return;
+            }
+
+            notification.classList.add("gp-hide");
+
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
+        };
+
+        notification.querySelector(
+            ".gp-notification-close"
+        ).addEventListener("click", close);
+
+        /*
+         * Automatically disappear.
+         */
+        setTimeout(close, 3500);
+    }
+
+    /*
+     * THIS IS THE IMPORTANT PART.
+     *
+     * Existing code can continue doing:
+     *
+     * alert("Kitchen status updated");
+     *
+     * We don't have to modify those existing lines.
+     */
+    window.alert = grandPalaceNotification;
+
+})();
+</script>
+
 </head>
 <body>
 
