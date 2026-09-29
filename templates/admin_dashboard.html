@@ -130,9 +130,7 @@
         .btn-ready { background: #e2f1f5; color: #226879; }
         .btn-deliver { background: #e5f6ed; color: #137951; }
 
-        /* =========================================================
-           RESPONSIVE MENU CATALOGUE (MOBILE CARDS VS DESKTOP TABLE)
-           ========================================================= */
+        /* Menu Display Layouts */
         .desktop-menu-table { width: 100%; border-collapse: collapse; }
         .desktop-menu-table th { padding: 0.75rem 1rem; text-align: left; background: #f7f2e7; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; }
         .desktop-menu-table td { padding: 0.75rem 1rem; border-bottom: 1px solid #ded3b8; vertical-align: middle; }
@@ -176,19 +174,24 @@
         }
 
         /* =========================================================
-           MOBILE BOTTOM-SHEET MODAL FOR MENU DISH EDITING
+           MODAL Z-INDEX LAYER FIX (Alerts always on top of modals)
            ========================================================= */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(55,43,20,0.5); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+            background: rgba(55,43,20,0.55); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
             display: none; align-items: center; justify-content: center; z-index: 2000;
         }
         .modal-overlay.open { display: flex; }
 
+        /* Confirmation and prompt modals placed on TOP of other active dialogs */
+        #adminConfirmModal, #adminCancelPromptModal {
+            z-index: 2500 !important;
+        }
+
         .modal-box {
             background: #fffdf7; border: 1px solid #ded3b8; border-radius: 20px;
             width: 100%; max-width: 520px; padding: 2rem; max-height: 88vh; overflow-y: auto;
-            box-shadow: 0 20px 55px rgba(55,43,20,0.22); position: relative;
+            box-shadow: 0 20px 55px rgba(55,43,20,0.25); position: relative;
         }
 
         @media (max-width: 768px) {
@@ -269,7 +272,6 @@
 
         <!-- TAB 1: ORDERS MANAGER -->
         <section id="ordersTab">
-            <!-- BOX 1: NEW INCOMING ORDERS -->
             <div class="section-box" style="border-left: 4px solid var(--amber);">
                 <div class="section-header">
                     <div class="section-title">
@@ -283,7 +285,6 @@
                 </div>
             </div>
 
-            <!-- BOX 2: ACTIVE IN-PROGRESS ORDERS -->
             <div class="section-box" style="border-left: 4px solid var(--primary);">
                 <div class="section-header">
                     <div class="section-title">
@@ -298,7 +299,7 @@
             </div>
         </section>
 
-        <!-- TAB 2: MENU CATALOGUE (DESKTOP TABLE + MOBILE CARDS) -->
+        <!-- TAB 2: MENU CATALOGUE -->
         <section id="menuTab" style="display:none;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
                 <h3 style="font-size:1.2rem; font-weight:800; color:#302a20;">Live Restaurant Menu</h3>
@@ -308,7 +309,7 @@
                 </div>
             </div>
 
-            <!-- Desktop View: Standard Table -->
+            <!-- Desktop View: Table -->
             <div class="desktop-menu-table-wrap" style="background:#fffdf7; border:1px solid #ded3b8; border-radius:16px; overflow:hidden;">
                 <table class="desktop-menu-table">
                     <thead>
@@ -325,12 +326,12 @@
                 </table>
             </div>
 
-            <!-- Mobile View: Touch-Friendly Responsive Cards -->
+            <!-- Mobile View: Cards -->
             <div class="mobile-menu-grid" id="mobileMenuGrid"></div>
         </section>
     </div>
 
-    <!-- THEMED CONFIRMATION MODAL -->
+    <!-- THEMED CONFIRMATION MODAL (z-index: 2500) -->
     <div class="modal-overlay" id="adminConfirmModal">
         <div class="modal-box" style="max-width: 400px; text-align:center;">
             <div class="dialog-icon" id="confirmDialogIcon">⚠️</div>
@@ -343,7 +344,7 @@
         </div>
     </div>
 
-    <!-- THEMED CANCEL PROMPT MODAL -->
+    <!-- THEMED CANCEL PROMPT MODAL (z-index: 2500) -->
     <div class="modal-overlay" id="adminCancelPromptModal">
         <div class="modal-box" style="max-width: 440px;">
             <div class="modal-header-row">
@@ -359,7 +360,7 @@
         </div>
     </div>
 
-    <!-- MOBILE-FRIENDLY ADD / EDIT MENU ITEM BOTTOM-SHEET MODAL -->
+    <!-- MENU ITEM BOTTOM-SHEET MODAL -->
     <div class="modal-overlay" id="itemModal">
         <div class="modal-box">
             <div class="modal-header-row">
@@ -415,7 +416,7 @@
         </div>
     </div>
 
-    <!-- Static Photos Manager Modal -->
+    <!-- PHOTOS MODAL -->
     <div class="modal-overlay" id="photosModal">
         <div class="modal-box">
             <div class="modal-header-row">
@@ -430,7 +431,7 @@
         </div>
     </div>
 
-    <!-- Password Modal -->
+    <!-- PASSWORD MODAL -->
     <div class="modal-overlay" id="passwordModal">
         <div class="modal-box" style="max-width:380px;">
             <div class="modal-header-row">
@@ -459,7 +460,7 @@
             if (tabId === 'menuTab') loadAdminMenu();
         }
 
-        // Custom Confirm and Cancel Prompts
+        // Custom Confirm and Cancel Prompts with Promise Resolvers
         let confirmResolve = null;
         function showAdminConfirm(title, message, icon="⚠️") {
             document.getElementById("confirmDialogTitle").textContent = title;
@@ -645,7 +646,7 @@
             mobileGrid.innerHTML = "";
 
             currentMenuItems.forEach(item => {
-                // 1. Desktop Row
+                // Desktop row
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td><img src="${item.photo_url || 'https://via.placeholder.com/50'}" style="width:50px; height:50px; border-radius:8px; object-fit:cover;" onerror="this.src='https://via.placeholder.com/50'"/></td>
@@ -660,7 +661,7 @@
                 `;
                 tbody.appendChild(row);
 
-                // 2. Mobile Touch Card
+                // Mobile touch card
                 const card = document.createElement("div");
                 card.className = "mobile-menu-card";
                 card.innerHTML = `
@@ -767,15 +768,17 @@
                 card.style.overflow = "hidden";
                 card.innerHTML = `
                     <img src="${p.url}" style="width:100%; height:80px; object-fit:cover; display:block;" />
-                    <button style="position:absolute; top:4px; right:4px; background:#c53d3d; color:#fff; border:none; border-radius:50%; width:22px; height:22px; font-weight:800; cursor:pointer;" onclick="deleteStaticPhoto('${p.filename}')">×</button>
+                    <button type="button" style="position:absolute; top:4px; right:4px; background:#c53d3d; color:#fff; border:none; border-radius:50%; width:24px; height:24px; font-weight:800; cursor:pointer; line-height:24px; font-size:14px;" onclick="event.stopPropagation(); deleteStaticPhoto('${p.filename}')">×</button>
                 `;
                 box.appendChild(card);
             });
         }
 
         async function deleteStaticPhoto(fname) {
+            // Confirmation modal pops up in FRONT of photos modal with z-index: 2500
             const confirmed = await showAdminConfirm("Delete Photo", `Are you sure you want to delete ${fname}?`);
             if (!confirmed) return;
+            
             const res = await fetch("/api/admin/photos/delete", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
