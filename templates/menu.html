@@ -7,18 +7,25 @@
     <style>
         :root {
             --ivory: #f7f3e8;
+            --ivory-light: #fbf9f2;
             --cream: #eee8d8;
-            --gold: #b8953f;
+            --cream-dark: #e3dbc8;
+            --gold: #b89b5e;
             --gold-dark: #927326;
             --gold-light: #d8bd70;
+            --gold-soft: #eadfbe;
             --gold-border: #d8c9a4;
             --espresso: #30291f;
+            --brown: #4a4032;
             --brown-light: #6e6250;
+            --white: #ffffff;
             --green: #22a878;
             --red: #c94b45;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", system-ui, sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
+        
+        html { width: 100%; overflow-x: hidden; scroll-behavior: smooth; }
         body {
             width: 100%; min-height: 100vh; margin: 0; padding-bottom: 120px;
             background: linear-gradient(135deg, #fbf9f2 0%, #f7f3e8 45%, #eee8d8 100%) !important;
@@ -33,23 +40,33 @@
             box-shadow: 0 3px 15px rgba(80, 60, 25, 0.05); padding: 0.85rem 1.5rem;
         }
 
-        .top-bar { display: flex; align-items: center; width: 100%; gap: 10px; }
-        .search-container { flex: 1 1 auto; position: relative; }
+        .top-bar { display: flex !important; align-items: center !important; width: 100% !important; gap: 10px !important; }
+        .search-container { flex: 1 1 auto !important; position: relative !important; min-width: 0 !important; }
         .search-input {
-            width: 100%; height: 48px; box-sizing: border-box; padding: 0 18px 0 48px;
-            font-size: 16px; background: rgba(255, 255, 255, 0.90) !important;
+            width: 100% !important; height: 48px !important; min-height: 48px !important; box-sizing: border-box !important;
+            padding: 0 18px 0 48px !important; font-size: 16px !important; background: rgba(255, 255, 255, 0.90) !important;
             color: var(--espresso) !important; border: 1px solid var(--gold-border) !important;
-            border-radius: 999px !important; outline: none; box-shadow: 0 3px 12px rgba(80, 60, 25, 0.06);
+            border-radius: 999px !important; outline: none; box-shadow: 0 3px 12px rgba(80, 60, 25, 0.06) !important;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+        .search-input:focus {
+            border-color: var(--gold) !important;
+            box-shadow: 0 0 0 3px rgba(184, 155, 94, 0.13), 0 4px 15px rgba(80, 60, 25, 0.08) !important;
         }
         .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--gold-dark); font-size: 19px; }
 
         .profile-btn {
-            flex: 0 0 48px; width: 48px; height: 48px; border-radius: 50% !important;
-            display: flex; align-items: center; justify-content: center; cursor: pointer;
-            background: linear-gradient(135deg, #d8bd70, #b8953f) !important;
-            border: 1px solid #927326 !important; position: relative; font-size: 0 !important;
+            flex: 0 0 48px !important; width: 48px !important; height: 48px !important; min-width: 48px !important; min-height: 48px !important;
+            border-radius: 50% !important; display: flex !important; align-items: center !important; justify-content: center !important;
+            cursor: pointer !important; background: linear-gradient(135deg, #d8bd70, #b8953f) !important;
+            border: 1px solid #927326 !important; position: relative !important; font-size: 0 !important;
+            box-shadow: 0 3px 10px rgba(80, 60, 25, 0.18) !important; overflow: hidden !important;
         }
-        .profile-btn::before { content: attr(data-initial); font-size: 20px; font-weight: 800; color: #1c160b; }
+        .profile-btn::before {
+            content: attr(data-initial) !important; position: absolute !important; left: 50% !important; top: 50% !important;
+            transform: translate(-50%, -50%) !important; font-family: Arial, sans-serif !important;
+            font-size: 20px !important; font-weight: 800 !important; color: #1c160b !important;
+        }
 
         .kitchen-banner {
             display: none; background: #f8e9e5 !important; color: #9c4039 !important;
@@ -66,7 +83,9 @@
             background: rgba(255, 255, 255, 0.75) !important; color: var(--brown-light) !important;
             border: 1px solid var(--gold-border) !important; border-radius: 999px !important;
             padding: 0.6rem 1.4rem; font-size: 0.9rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+            transition: all 0.25s ease;
         }
+        .cat-btn:hover { background: var(--cream) !important; color: var(--gold-dark) !important; }
         .cat-btn.active {
             background: linear-gradient(135deg, #c5a765, #a88648) !important;
             color: #fffdf7 !important; border-color: var(--gold) !important;
@@ -77,36 +96,81 @@
             max-width: 1400px; margin: 1.5rem auto; padding: 0 1.5rem;
             display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px;
         }
-        @media (max-width: 1100px) { .menu-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+        @media (min-width: 769px) and (max-width: 1100px) { .menu-list { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; } }
         @media (max-width: 768px) {
             .menu-list { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px !important; padding: 0 16px !important; }
-            .item-text h3 { font-size: 1rem !important; }
-            .photo-container { height: 165px !important; }
         }
 
         .item-card {
-            background: rgba(255, 255, 255, 0.94) !important; border: 1px solid var(--gold-border) !important;
-            border-radius: 18px !important; overflow: hidden; display: flex; flex-direction: column;
-            justify-content: space-between; box-shadow: 0 4px 15px rgba(70, 55, 30, 0.06);
+            background: rgba(255, 255, 255, 0.94) !important; color: var(--espresso) !important;
+            border: 1px solid var(--gold-border) !important; border-radius: 18px !important;
+            overflow: hidden; display: flex; flex-direction: column; justify-content: space-between;
+            box-shadow: 0 8px 24px rgba(212, 175, 55, 0.28), 0 2px 8px rgba(212, 175, 55, 0.18);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
         }
-        .photo-container { position: relative; width: 100%; height: 180px; background: var(--cream); }
-        .photo-container img { width: 100%; height: 100%; object-fit: cover; }
-        .status-dot { position: absolute; top: 10px; left: 10px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fffdf7; }
-        .status-dot.active { background-color: var(--green); }
-        .status-dot.inactive { background-color: var(--red); }
+        @media (min-width: 769px) {
+            .item-card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(70, 55, 30, 0.12); }
+        }
 
-        .action-ctrl {
-            position: absolute; bottom: 10px; right: 10px; background: rgba(255, 255, 255, 0.96);
-            border: 1px solid var(--gold-border); border-radius: 999px; display: flex; align-items: center;
-            box-shadow: 0 4px 12px rgba(60, 45, 20, 0.14);
+        .photo-container { position: relative; width: 100%; height: 180px; background: var(--cream); cursor: pointer; }
+        @media (max-width: 768px) { .photo-container { height: 165px !important; } }
+        @media (max-width: 420px) { .photo-container { height: 145px !important; } }
+        .photo-container img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        
+        .status-dot {
+            position: absolute; top: 10px; left: 10px; width: 12px; height: 12px; border-radius: 50%;
+            border: 2px solid #fffdf7 !important; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
         }
-        .action-btn { background: none; border: none; padding: 0.45rem 0.75rem; font-size: 1rem; cursor: pointer; color: var(--gold-dark); font-weight: 700; }
+        .status-dot.active { background-color: var(--green) !important; }
+        .status-dot.inactive { background-color: var(--red) !important; }
+
+        /* THE EXACT MENU12 ACTION CONTROL (ADD BUTTON & PILL) */
+        .action-ctrl {
+            position: absolute; bottom: 10px; right: 10px; background: rgba(255, 255, 255, 0.96) !important;
+            border: 1px solid var(--gold-border); border-radius: 9999px; display: flex; align-items: center;
+            box-shadow: 0 4px 12px rgba(60, 45, 20, 0.14); z-index: 5;
+        }
+        .action-btn {
+            background: none; border: none; padding: 0.45rem 0.75rem; font-size: 1rem;
+            cursor: pointer; color: var(--gold-dark); font-weight: 700; outline: none;
+            transition: color 0.2s ease;
+        }
+        .action-btn:hover { color: var(--gold); }
         .qty-label { font-size: 0.9rem; min-width: 20px; text-align: center; color: var(--espresso); font-weight: 700; }
 
-        .item-info { padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: flex-end; background: #fffdf8; }
-        .item-text h3 { font-size: 1.05rem; color: var(--espresso); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        /* FIXED SPACE WITH DOTS FOR LONG DISH NAMES */
+        .item-info {
+            padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: flex-end;
+            background: #fffdf8; cursor: pointer; min-width: 0; gap: 8px;
+        }
+        .item-text {
+            flex: 1 1 0;
+            min-width: 0;
+            overflow: hidden;
+        }
+        .item-text h3 {
+            font-size: 1.05rem;
+            color: var(--espresso);
+            font-weight: 700;
+            margin: 0 0 4px 0;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            display: block !important;
+            max-width: 100% !important;
+        }
         .item-category { font-size: 0.8rem; color: var(--brown-light); text-transform: capitalize; }
-        .item-price { font-size: 1.15rem; font-weight: 800; color: var(--gold-dark); }
+        .item-price { font-size: 1.15rem; font-weight: 800; color: var(--gold-dark); white-space: nowrap; flex-shrink: 0; }
+
+        @media (max-width: 768px) {
+            .item-text h3 { font-size: 0.98rem !important; }
+            .item-info { padding: 10px 12px !important; }
+        }
+        @media (max-width: 420px) {
+            .item-text h3 { font-size: 0.90rem !important; }
+            .item-info { padding: 9px 10px !important; }
+            .item-price { font-size: 0.95rem !important; }
+        }
 
         /* Floating Bars */
         .floating-action-bar {
@@ -118,6 +182,7 @@
         .floating-action-bar.visible { display: flex; }
         .badge { background: rgba(255, 255, 255, 0.18); padding: 0.35rem 0.75rem; border-radius: 8px; font-weight: 800; }
 
+        /* Responsive Circular Mobile Cart */
         .mobile-cart-icon { display: none; }
         @media (max-width: 768px) {
             #cartBar.cart-bar {
@@ -130,11 +195,11 @@
             #cartBar #cartTotalLabel { font-size: 0.72rem !important; background: transparent !important; padding: 0 !important; }
         }
 
-        /* Modal Overlays */
+        /* 4-Stage Stepper Live Progress Modal */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(48, 41, 31, 0.45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-            display: none; align-items: center; justify-content: center; z-index: 2000;
+            display: none; align-items: center; justify-content: center; z-index: 1500;
         }
         .modal-overlay.open { display: flex; }
         .progress-box {
@@ -196,6 +261,35 @@
         .save-username-btn {
             background: linear-gradient(135deg, #c2a45e, #9e7d3e); color: #fff;
             border: none; padding: 0.65rem 1rem; border-radius: 8px; font-weight: 700; cursor: pointer;
+        }
+
+        /* MOBILE FOOD ITEM DETAILS BOTTOM SHEET */
+        .mobile-item-details { display: none; }
+        @media (max-width: 768px) {
+            .mobile-item-details {
+                position: fixed; inset: 0; z-index: 99999; background: rgba(0,0,0,0.55);
+                align-items: flex-end; justify-content: center; backdrop-filter: blur(4px);
+            }
+            .mobile-item-details.open { display: flex; }
+            .mobile-item-details-box {
+                position: relative; width: 100%; max-height: 88vh; overflow-y: auto;
+                background: #fffdf7; border-radius: 24px 24px 0 0; border-top: 2px solid #b8953f;
+                box-shadow: 0 -10px 35px rgba(0,0,0,0.25);
+                animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+            .mobile-item-details-box img { display: block; width: 100%; height: 240px; object-fit: cover; }
+            .mobile-details-close {
+                position: absolute; top: 14px; right: 14px; z-index: 2; width: 36px; height: 36px;
+                border: none; border-radius: 50%; background: rgba(255,253,247,0.95);
+                color: #927326; font-size: 26px; line-height: 36px; font-weight: 700; cursor: pointer;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            }
+            .mobile-details-content { padding: 20px; }
+            .mobile-details-content h2 { margin: 0 0 6px; color: #29251d; font-size: 1.4rem; font-weight: 800; }
+            #mobileDetailsCategory { color: #756f63; font-size: 0.9rem; text-transform: capitalize; margin-bottom: 12px; }
+            #mobileDetailsPrice { color: #927326; font-size: 1.35rem; font-weight: 800; margin-bottom: 10px; }
+            #mobileDetailsStatus { color: #756f63; font-size: 0.9rem; font-weight: 600; }
         }
     </style>
 </head>
@@ -270,7 +364,7 @@
         </div>
     </div>
 
-    <!-- THEMED NOTIFICATION POPUP (Replaces all browser alerts) -->
+    <!-- THEMED NOTIFICATION POPUP -->
     <div class="modal-overlay" id="themedPopupModal">
         <div class="themed-popup-box">
             <div class="themed-popup-icon" id="themedPopupIcon">✨</div>
@@ -278,6 +372,20 @@
             <p class="themed-popup-msg" id="themedPopupMsg"></p>
             <div class="themed-popup-reason" id="themedPopupReason" style="display:none;"></div>
             <button class="btn-themed-ack" id="themedPopupAckBtn" onclick="closeThemedPopup()">Understood</button>
+        </div>
+    </div>
+
+    <!-- MOBILE FOOD ITEM DETAILS SHEET -->
+    <div id="mobileItemDetails" class="mobile-item-details">
+        <div class="mobile-item-details-box">
+            <button class="mobile-details-close" onclick="closeMobileItemDetails()">×</button>
+            <img id="mobileDetailsImage" src="" alt="Dish">
+            <div class="mobile-details-content">
+                <h2 id="mobileDetailsName"></h2>
+                <div id="mobileDetailsCategory"></div>
+                <div id="mobileDetailsPrice"></div>
+                <div id="mobileDetailsStatus"></div>
+            </div>
         </div>
     </div>
 
@@ -319,7 +427,6 @@
         let lastReportedStatus = null;
         let popupOnCloseCallback = null;
 
-        // Custom Themed Popup Function
         function showThemedPopup({ title, message, icon="✨", reason=null, btnText="Understood", onClose=null }) {
             document.getElementById("themedPopupTitle").textContent = title;
             document.getElementById("themedPopupMsg").textContent = message;
@@ -346,7 +453,6 @@
             }
         }
 
-        // Live Polling
         async function checkOrderStatus() {
             try {
                 const res = await fetch('/api/order/active');
@@ -354,12 +460,10 @@
                 const orderPlacedBar = document.getElementById('orderPlacedBar');
                 const cartBar = document.getElementById('cartBar');
 
-                // Kitchen toggle banner
                 const closedBanner = document.getElementById('kitchenClosedBanner');
                 if (!data.kitchen_open) closedBanner.classList.add('show');
                 else closedBanner.classList.remove('show');
 
-                // Auto live menu reload on sync
                 if (localMenuVersion !== null && data.menu_version && data.menu_version !== localMenuVersion) {
                     localMenuVersion = data.menu_version;
                     loadMenuAndCart();
@@ -367,7 +471,6 @@
                     localMenuVersion = data.menu_version;
                 }
 
-                // 1. CANCELLATION POPUP (With reason)
                 if (data.alert && data.status === 'cancelled') {
                     showThemedPopup({
                         title: "Order Cancelled by Kitchen",
@@ -393,7 +496,6 @@
                     return;
                 }
 
-                // 2. DELIVERED POPUP
                 if (data.alert && data.status === 'delivered') {
                     showThemedPopup({
                         title: "Order Delivered!",
@@ -418,11 +520,9 @@
                     return;
                 }
 
-                // 3. ACTIVE ORDER TRANSITIONS (Popups for accept, preparing, prepared)
                 if (data.has_active_order) {
                     activeOrder = data;
 
-                    // POPUPS FOR EVERY STATUS UPDATE
                     if (lastReportedStatus && lastReportedStatus !== data.status) {
                         if (data.status === 'accepted') {
                             showThemedPopup({
@@ -449,7 +549,6 @@
                     }
                     lastReportedStatus = data.status;
 
-                    // Strict Button Switch
                     if (data.payment_status === 'paid') {
                         cartBar.classList.remove('visible');
                         orderPlacedBar.classList.add('visible');
@@ -554,21 +653,35 @@
                 const card = document.createElement('div');
                 card.className = 'item-card';
 
+                // Responsive mobile interaction listener from menu12.html
+                card.addEventListener('click', function(e) {
+                    if (e.target.closest('.action-ctrl')) return;
+                    if (window.innerWidth <= 768) {
+                        openMobileItemDetails(item);
+                    }
+                });
+
+                // EXACT ADD BUTTON & PILL DESIGN
                 let actionHtml = '';
                 if (item.is_active) {
                     if (qty === 0) {
-                        actionHtml = `<div class="action-ctrl"><button class="action-btn" onclick="updateItemQuantity(${item.id}, 1)">+</button></div>`;
+                        actionHtml = `
+                            <div class="action-ctrl" onclick="event.stopPropagation();">
+                                <button class="action-btn" onclick="event.stopPropagation(); updateItemQuantity(${item.id}, 1)">+</button>
+                            </div>
+                        `;
                     } else {
                         actionHtml = `
-                            <div class="action-ctrl">
-                                <button class="action-btn" onclick="updateItemQuantity(${item.id}, -1)">−</button>
+                            <div class="action-ctrl" onclick="event.stopPropagation();">
+                                <button class="action-btn" onclick="event.stopPropagation(); updateItemQuantity(${item.id}, -1)">−</button>
                                 <span class="qty-label">${qty}</span>
-                                <button class="action-btn" onclick="updateItemQuantity(${item.id}, 1)">+</button>
+                                <button class="action-btn" onclick="event.stopPropagation(); updateItemQuantity(${item.id}, 1)">+</button>
                             </div>
                         `;
                     }
                 }
 
+                // FIXED SPACE CONTAINER WITH TRAILING DOTS (...) FOR LONG DISH NAMES
                 card.innerHTML = `
                     <div class="photo-container">
                         <img src="${item.photo_url || 'https://via.placeholder.com/600x400'}" alt="${item.item_name}">
@@ -576,7 +689,7 @@
                         ${actionHtml}
                     </div>
                     <div class="item-info">
-                        <div class="item-text">
+                        <div class="item-text" title="${item.item_name}">
                             <h3>${item.item_name}</h3>
                             <div class="item-category">${item.category}</div>
                         </div>
@@ -674,6 +787,29 @@
                 listEl.appendChild(card);
             });
         }
+
+        function openMobileItemDetails(item) {
+            if (window.innerWidth > 768) return;
+            document.getElementById('mobileDetailsImage').src = item.photo_url || 'https://via.placeholder.com/600x400';
+            document.getElementById('mobileDetailsImage').alt = item.item_name || 'Food item';
+            document.getElementById('mobileDetailsName').textContent = item.item_name || '';
+            document.getElementById('mobileDetailsCategory').textContent = item.category || '';
+            document.getElementById('mobileDetailsPrice').textContent = '₹' + Number(item.price || 0).toFixed(2);
+            document.getElementById('mobileDetailsStatus').textContent = item.is_active ? 'Available' : 'Currently unavailable';
+            document.getElementById('mobileItemDetails').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMobileItemDetails() {
+            document.getElementById('mobileItemDetails').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        document.getElementById('mobileItemDetails').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeMobileItemDetails();
+            }
+        });
 
         async function init() {
             await loadMenuAndCart();
