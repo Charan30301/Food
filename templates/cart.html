@@ -6,489 +6,109 @@
     <title>Review Order & Cart - Grand Palace Hotel</title>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <style>
-/* =========================================================
-   GRAND PALACE — LUXURY IVORY & CHAMPAGNE GOLD
-   Cart / Checkout Theme
-   ========================================================= */
-
-:root {
-    --bg: #f7f3e8;
-    --card-bg: #fffdf7;
-    --card-soft: #f4efe2;
-
-    --border: #d8c99a;
-    --border-light: #e8dfc5;
-
-    --text: #29251d;
-    --muted: #756f63;
-
-    --gold: #b8953f;
-    --gold-dark: #927326;
-    --gold-light: #d8bd70;
-
-    --success: #b8953f;
-    --danger: #b94a48;
-}
-
-/* ---------- GLOBAL ---------- */
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family:
-        "Segoe UI",
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        sans-serif;
-}
-
-html {
-    background: var(--bg);
-}
-
-body {
-    background:
-        radial-gradient(
-            circle at top,
-            #fffdf7 0%,
-            #f7f3e8 55%,
-            #f1ead9 100%
-        );
-
-    color: var(--text);
-
-    min-height: 100vh;
-
-    padding: 1.5rem 1rem 4rem;
-}
-
-/* ---------- CONTAINER ---------- */
-
-.container {
-    width: 100%;
-    max-width: 700px;
-    margin: 0 auto;
-}
-
-/* ---------- HEADER ---------- */
-
-.header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-
-    margin-bottom: 1.5rem;
-}
-
-.header h1,
-.header h2 {
-    color: var(--text);
-}
-
-/* ---------- BACK BUTTON ---------- */
-
-.back-btn {
-    color: var(--gold-dark) !important;
-
-    text-decoration: none;
-
-    font-size: 1rem;
-    font-weight: 600;
-
-    transition: color 0.2s ease;
-}
-
-.back-btn:hover {
-    color: var(--gold) !important;
-}
-
-/* ---------- CART LIST ---------- */
-
-.cart-list {
-    display: flex;
-    flex-direction: column;
-
-    gap: 0.9rem;
-
-    margin-bottom: 1.5rem;
-}
-
-/* ---------- CART ITEM ---------- */
-
-.cart-row {
-    background: rgba(255, 253, 247, 0.96) !important;
-
-    border: 1px solid var(--border) !important;
-
-    border-radius: 16px !important;
-
-    padding: 0.9rem;
-
-    display: flex;
-    align-items: center;
-
-    gap: 1rem;
-
-    box-shadow:
-        0 3px 12px rgba(105, 83, 30, 0.08),
-        0 1px 3px rgba(0, 0, 0, 0.03);
-
-    transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease,
-        border-color 0.2s ease;
-}
-
-.cart-row:hover {
-    transform: translateY(-1px);
-
-    border-color: var(--gold-light) !important;
-
-    box-shadow:
-        0 6px 18px rgba(105, 83, 30, 0.12);
-}
-
-/* ---------- FOOD IMAGE ---------- */
-
-.item-thumb {
-    width: 64px !important;
-    height: 64px !important;
-
-    border-radius: 10px !important;
-
-    object-fit: cover;
-
-    border: 1px solid var(--border-light);
-}
-
-/* ---------- ITEM DETAILS ---------- */
-
-.item-details {
-    flex: 1;
-    min-width: 0;
-}
-
-.item-details h3,
-.item-details h4,
-.item-details strong {
-    color: var(--text);
-}
-
-.item-details p,
-.item-details span {
-    color: var(--muted);
-}
-
-/* ---------- QUANTITY ---------- */
-
-.item-qty-badge {
-    background: var(--card-soft) !important;
-
-    color: var(--text) !important;
-
-    border: 1px solid var(--border) !important;
-
-    padding: 0.35rem 0.65rem;
-
-    border-radius: 8px;
-
-    font-size: 0.85rem;
-
-    white-space: nowrap;
-}
-
-/* ---------- ITEM PRICE ---------- */
-
-.item-line-total {
-    font-weight: 800;
-
-    color: var(--gold-dark) !important;
-
-    min-width: 85px;
-
-    text-align: right;
-
-    white-space: nowrap;
-}
-
-/* ---------- BILL CARD ---------- */
-
-.bill-card {
-    background: rgba(255, 253, 247, 0.98) !important;
-
-    color: var(--text) !important;
-
-    border: 1px solid var(--border) !important;
-
-    border-radius: 18px !important;
-
-    padding: 1.4rem;
-
-    box-shadow:
-        0 5px 20px rgba(105, 83, 30, 0.09);
-}
-
-/* ---------- BILL TOTAL ---------- */
-
-.bill-total {
-    display: flex;
-
-    justify-content: space-between;
-
-    align-items: center;
-
-    font-size: 1.35rem;
-
-    font-weight: 800;
-
-    color: var(--text);
-
-    border-top: 1px dashed var(--border) !important;
-
-    padding-top: 1rem;
-
-    margin-top: 1rem;
-}
-
-.bill-total strong,
-.bill-total span {
-    color: var(--gold-dark) !important;
-}
-
-/* ---------- BUTTONS ---------- */
-
-.action-btn {
-    width: 100%;
-
-    background:
-        linear-gradient(
-            135deg,
-            #c4a34d,
-            #a7832f
-        ) !important;
-
-    color: #fffdf7 !important;
-
-    border: 1px solid #a7832f !important;
-
-    border-radius: 12px !important;
-
-    padding: 1rem;
-
-    font-size: 1.05rem;
-
-    font-weight: 700;
-
-    cursor: pointer;
-
-    box-shadow:
-        0 5px 15px rgba(168, 132, 47, 0.25);
-
-    transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease,
-        filter 0.2s ease;
-}
-
-.action-btn:hover {
-    filter: brightness(1.04);
-
-    transform: translateY(-1px);
-
-    box-shadow:
-        0 7px 20px rgba(168, 132, 47, 0.30);
-}
-
-.action-btn:active {
-    transform: translateY(0);
-}
-
-/* ---------- ALL COMMON BUTTONS ---------- */
-
-button {
-    font-family: inherit;
-}
-
-button:not(.action-btn) {
-    color: var(--gold-dark);
-}
-
-/* ---------- LINKS ---------- */
-
-a {
-    color: var(--gold-dark);
-}
-
-/* ---------- INPUTS ---------- */
-
-input,
-select,
-textarea {
-    background: #fffdf7 !important;
-
-    color: var(--text) !important;
-
-    border: 1px solid var(--border) !important;
-
-    border-radius: 8px;
-}
-
-input:focus,
-select:focus,
-textarea:focus {
-    outline: none;
-
-    border-color: var(--gold) !important;
-
-    box-shadow:
-        0 0 0 2px rgba(184, 149, 63, 0.12);
-}
-
-/* ---------- RAZORPAY / PAYMENT AREAS ---------- */
-
-.payment-section,
-.payment-card {
-    background: var(--card-bg);
-    border-color: var(--border);
-}
-
-/* ---------- MOBILE ---------- */
-
-@media (max-width: 600px) {
-
-    body {
-        padding:
-            1rem
-            0.75rem
-            3rem;
-    }
-
-    .container {
-        width: 100%;
-    }
-
-    .header {
-        margin-bottom: 1.1rem;
-    }
-
-    .header h1 {
-        font-size: 1.8rem;
-    }
-
-    .header h2 {
-        font-size: 1.5rem;
-    }
-
-    .cart-row {
-        gap: 0.7rem;
-
-        padding: 0.75rem;
-
-        border-radius: 14px !important;
-    }
-
-    .item-thumb {
-        width: 58px !important;
-        height: 58px !important;
-    }
-
-    .item-line-total {
-        min-width: 70px;
-
-        font-size: 0.95rem;
-    }
-
-    .item-qty-badge {
-        padding: 0.3rem 0.5rem;
-
-        font-size: 0.8rem;
-    }
-
-    .bill-card {
-        padding: 1.1rem;
-
-        border-radius: 16px !important;
-    }
-
-    .bill-total {
-        font-size: 1.2rem;
-    }
-
-    .action-btn {
-        padding: 0.9rem;
-
-        font-size: 1rem;
-    }
-}
-
-/* ---------- SMALL PHONES ---------- */
-
-@media (max-width: 400px) {
-
-    body {
-        padding-left: 0.6rem;
-        padding-right: 0.6rem;
-    }
-
-    .cart-row {
-        gap: 0.55rem;
-    }
-
-    .item-thumb {
-        width: 52px !important;
-        height: 52px !important;
-    }
-
-    .item-line-total {
-        min-width: 62px;
-
-        font-size: 0.88rem;
-    }
-
-    .item-qty-badge {
-        font-size: 0.76rem;
-    }
-}
-#timerBox { display: none !important; }
-#timerBox.timer-visible { display: block !important; }
-
-
-/* ---------- KITCHEN WAITING TIMER ---------- */
-#timerBox {
-    display: none !important;
-    width: 100%;
-    margin-top: 10px;
-    padding: 16px 12px;
-    text-align: center;
-    background: linear-gradient(135deg, #d8bd70, #b8953f);
-    border: 1px solid #927326;
-    border-radius: 14px;
-    box-sizing: border-box;
-}
-
-#timerBox.timer-visible {
-    display: block !important;
-}
-
-#timerBox h3 {
-    margin: 0 0 8px;
-    color: #fffdf7;
-    font-size: 1rem;
-    font-weight: 700;
-}
-
-#timerBox .timer-val {
-    font-size: 1.8rem;
-    font-weight: 800;
-    color: #fffdf7;
-    letter-spacing: 1px;
-    line-height: 1.2;
-}
-
-</style>
+        :root {
+            --ivory: #f7f3e8;
+            --cream: #eee8d8;
+            --gold: #b8953f;
+            --gold-dark: #927326;
+            --gold-light: #d8bd70;
+            --gold-border: #d8c9a4;
+            --espresso: #30291f;
+            --brown-light: #6e6250;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", system-ui, sans-serif; }
+        body {
+            background: linear-gradient(135deg, #fbf9f2 0%, #f7f3e8 45%, #eee8d8 100%) !important;
+            color: var(--espresso) !important;
+            min-height: 100vh;
+            padding: 1.5rem 1rem 4rem;
+        }
+
+        .container { width: 100%; max-width: 700px; margin: 0 auto; }
+        .header { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 1.5rem; }
+        .back-btn { color: var(--gold-dark); text-decoration: none; font-size: 1rem; font-weight: 700; }
+        .back-btn:hover { color: var(--gold); }
+
+        .cart-list { display: flex; flex-direction: column; gap: 0.9rem; margin-bottom: 1.5rem; }
+        .cart-row {
+            background: rgba(255, 253, 247, 0.96); border: 1px solid var(--gold-border);
+            border-radius: 16px; padding: 0.9rem; display: flex; align-items: center; gap: 1rem;
+            box-shadow: 0 3px 12px rgba(105, 83, 30, 0.08);
+        }
+        .item-thumb { width: 64px; height: 64px; border-radius: 10px; object-fit: cover; border: 1px solid #e8dfc5; }
+        .item-details { flex: 1; min-width: 0; }
+        .item-details h4 { color: var(--espresso); font-size: 1rem; margin-bottom: 0.2rem; }
+        .item-details span { color: var(--brown-light); font-size: 0.8rem; text-transform: capitalize; }
+        .item-qty-badge {
+            background: #f4efe2; color: var(--espresso); border: 1px solid var(--gold-border);
+            padding: 0.35rem 0.65rem; border-radius: 8px; font-size: 0.85rem; font-weight: 700;
+        }
+        .item-line-total { font-weight: 800; color: var(--gold-dark); min-width: 85px; text-align: right; }
+
+        .bill-card {
+            background: rgba(255, 253, 247, 0.98); border: 1px solid var(--gold-border);
+            border-radius: 18px; padding: 1.4rem; box-shadow: 0 5px 20px rgba(105, 83, 30, 0.09);
+        }
+        .bill-total {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 1.35rem; font-weight: 800; color: var(--espresso);
+            border-top: 1px dashed var(--gold-border); padding-top: 1rem; margin-top: 1rem;
+        }
+        .bill-total span { color: var(--gold-dark); }
+
+        .action-btn {
+            width: 100%; background: linear-gradient(135deg, #c4a34d, #a7832f);
+            color: #fffdf7; border: 1px solid #a7832f; border-radius: 12px;
+            padding: 1rem; font-size: 1.05rem; font-weight: 700; cursor: pointer;
+            box-shadow: 0 5px 15px rgba(168, 132, 47, 0.25); transition: 0.25s; margin-top: 1.25rem;
+        }
+        .action-btn:disabled { background: #b5ac9a !important; border-color: #b5ac9a !important; cursor: not-allowed; }
+
+        /* SOLID GREEN PAY NOW BUTTON */
+        .btn-pay-green {
+            background: linear-gradient(135deg, #22a878, #13845e) !important;
+            border: 1px solid #0f684a !important;
+            box-shadow: 0 6px 20px rgba(24, 168, 120, 0.45) !important;
+            color: #ffffff !important;
+            animation: pulse-green 1.5s infinite alternate;
+        }
+        @keyframes pulse-green {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.02); }
+        }
+
+        .timer-box {
+            display: none; width: 100%; margin-top: 1rem; padding: 16px 12px; text-align: center;
+            background: linear-gradient(135deg, #d8bd70, #b8953f); border: 1px solid #927326;
+            border-radius: 14px; box-sizing: border-box; color: #fffdf7;
+        }
+        .timer-val { font-size: 2rem; font-weight: 800; letter-spacing: 1px; margin-top: 0.3rem; }
+
+        /* THEMED MODAL (Replaces all browser alert() and confirm()) */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(48, 41, 31, 0.45); backdrop-filter: blur(6px);
+            display: none; align-items: center; justify-content: center; z-index: 2000;
+        }
+        .modal-overlay.open { display: flex; }
+        .themed-dialog {
+            background: #fffdf7; border: 1px solid var(--gold-border); border-radius: 20px;
+            padding: 2rem; width: 90%; max-width: 440px; text-align: center;
+            box-shadow: 0 20px 55px rgba(55,43,20,0.22);
+        }
+        .themed-dialog-title { font-size: 1.25rem; font-weight: 800; color: var(--espresso); margin-bottom: 0.6rem; }
+        .themed-dialog-msg { font-size: 0.95rem; color: var(--brown-light); line-height: 1.5; margin-bottom: 1.4rem; }
+        .dialog-buttons-row { display: flex; gap: 0.75rem; justify-content: center; }
+        .btn-dialog-primary {
+            flex: 1; padding: 0.8rem; background: linear-gradient(135deg, #d8bd70, #b8953f);
+            color: #fffdf7; border: 1px solid #927326; border-radius: 999px; font-weight: 800; cursor: pointer;
+        }
+        .btn-dialog-secondary {
+            flex: 1; padding: 0.8rem; background: #fffdf7; color: #665b48;
+            border: 1px solid #d7cbb0; border-radius: 999px; font-weight: 700; cursor: pointer;
+        }
+    </style>
 </head>
 <body>
 
@@ -506,20 +126,33 @@ textarea:focus {
             <span id="totalPayableLabel">₹0.00</span>
         </div>
 
-        <!-- Hidden until Place Order is clicked -->
-
-        <!-- Dynamic Two-Stage Button -->
         <button class="action-btn" id="mainActionButton" onclick="handleActionButtonClick()">Place Order & Await Acceptance</button>
 
-<div class="timer-box" id="timerBox" style="display:none;">
-    <h3 id="timerHeader">Waiting for Kitchen to Accept</h3>
-    <div class="timer-val" id="timerDisplay">01:00</div>
+        <div class="timer-box" id="timerBox">
+            <h3>Waiting for Kitchen to Accept</h3>
+            <div class="timer-val" id="timerDisplay">01:00</div>
+        </div>
+    </div>
 </div>
+
+<!-- THEMED CUSTOM DIALOG -->
+<div class="modal-overlay" id="customDialogModal">
+    <div class="themed-dialog">
+        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;" id="dialogIcon">✨</div>
+        <h3 class="themed-dialog-title" id="dialogTitle">Notice</h3>
+        <p class="themed-dialog-msg" id="dialogMsg"></p>
+        <div class="dialog-buttons-row" id="dialogButtonsRow">
+            <button class="btn-dialog-primary" id="dialogPrimaryBtn" onclick="handleDialogSubmit(true)">OK</button>
+            <button class="btn-dialog-secondary" id="dialogSecondaryBtn" style="display:none;" onclick="handleDialogSubmit(false)">Cancel</button>
+        </div>
     </div>
 </div>
 
 <script>
-
+    const IS_TEST_MODE = "{{ 'true' if test_mode else 'false' }}" === "true";
+    const RZP_KEY_ID = "{{ rzp_key }}";
+    const USER_EMAIL = "{{ email }}";
+    const USER_NAME = "{{ username }}";
 
     let cartTotal = 0;
     let submittedOrderId = null;
@@ -527,103 +160,87 @@ textarea:focus {
     let timerInterval = null;
     let pollInterval = null;
     let secondsLeft = 60;
-    let orderState = "cart"; // "cart" | "awaiting_acceptance" | "accepted_unpaid"
-    let cancellationHandled = false;
+    let orderState = "cart";
+    let dialogCallback = null;
+
+    // Themed Dialog Popup Function
+    function showThemedPopup({ title, message, icon="✨", confirmText="OK", cancelText=null, onResolve=null }) {
+        document.getElementById("dialogTitle").textContent = title;
+        document.getElementById("dialogMsg").textContent = message;
+        document.getElementById("dialogIcon").textContent = icon;
+        document.getElementById("dialogPrimaryBtn").textContent = confirmText;
+
+        const secondaryBtn = document.getElementById("dialogSecondaryBtn");
+        if (cancelText) {
+            secondaryBtn.textContent = cancelText;
+            secondaryBtn.style.display = "block";
+        } else {
+            secondaryBtn.style.display = "none";
+        }
+
+        dialogCallback = onResolve;
+        document.getElementById("customDialogModal").classList.add("open");
+    }
+
+    function handleDialogSubmit(isConfirmed) {
+        document.getElementById("customDialogModal").classList.remove("open");
+        if (dialogCallback) {
+            dialogCallback(isConfirmed);
+            dialogCallback = null;
+        }
+    }
 
     async function handleKitchenCancellation(data) {
-        if (cancellationHandled) return;
-        cancellationHandled = true;
-
-        console.log("KITCHEN CANCELLATION RECEIVED:", data);
-
-        // STOP EVERYTHING IMMEDIATELY
         clearInterval(timerInterval);
         clearInterval(pollInterval);
 
-        timerInterval = null;
-        pollInterval = null;
-
-        secondsLeft = 0;
-        orderState = "cart";
-        currentActiveOrder = null;
-        submittedOrderId = null;
-
-        // Hide waiting timer
-        const timerBox = document.getElementById('timerBox');
-        if (timerBox) {
-            timerBox.classList.remove('timer-visible');
-            timerBox.style.display = 'none';
-        }
-
-        // Reset main button
-        const btn = document.getElementById('mainActionButton');
-        if (btn) {
-            btn.disabled = false;
-            btn.className = "action-btn";
-            btn.textContent = "Place Order & Await Acceptance";
-        }
-
-        // Show cancellation notification
-        const reason = data.reason || "The kitchen cancelled your order.";
-
-        alert(
-            "ORDER CANCELLED BY KITCHEN\n\n" +
-            "Your order was cancelled by the kitchen.\n\n" +
-            "Reason: " + reason
-        );
-
-        // Acknowledge the server alert
-        try {
-            await fetch('/api/order/ack-alert', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    order_id: data.order_id
-                })
-            });
-        } catch (e) {
-            console.error("Cancellation acknowledgement failed:", e);
-        }
-
-        // Return customer to menu
-        window.location.replace("/menu");
+        const reason = data.reason || "The kitchen was unable to accept your order.";
+        showThemedPopup({
+            title: "Order Cancelled by Kitchen",
+            message: `Reason: ${reason}`,
+            icon: "❌",
+            confirmText: "Understood",
+            onResolve: async () => {
+                try {
+                    await fetch('/api/order/ack-alert', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ order_id: data.order_id })
+                    });
+                } catch (e) {}
+                window.location.replace("/menu");
+            }
+        });
     }
 
     async function loadCartData() {
-        // 1. Check existing order state on server first
         const statusRes = await fetch('/api/order/active');
         const statusData = await statusRes.json();
 
-        // Kitchen cancelled the order
         if (statusData.alert && statusData.status === 'cancelled') {
             await handleKitchenCancellation(statusData);
             return;
         }
 
-        // Case A: Order already submitted, awaiting kitchen acceptance within 60s
         if (statusData.has_active_order && statusData.status === 'placed') {
             submittedOrderId = statusData.order_id;
             currentActiveOrder = statusData;
             secondsLeft = statusData.seconds_left !== undefined ? statusData.seconds_left : 60;
             orderState = "awaiting_acceptance";
-
             await renderCartItems();
             setAwaitingAcceptanceUI();
             return;
         }
 
-        // Case B: Kitchen already accepted, but user hasn't paid yet!
         if (statusData.has_active_order && statusData.status !== 'placed' && statusData.payment_status !== 'paid') {
             submittedOrderId = statusData.order_id;
             currentActiveOrder = statusData;
             orderState = "accepted_unpaid";
-
             await renderCartItems();
             setPayNowUI();
             return;
         }
 
-        // Case C: Standard fresh cart
         orderState = "cart";
         await renderCartItems();
     }
@@ -635,7 +252,7 @@ textarea:focus {
         const billBox = document.getElementById('billBox');
 
         if (!data.items || data.items.length === 0) {
-            list.innerHTML = '<p style="text-align:center; color:var(--muted); padding:3rem;">Your cart is empty.</p>';
+            list.innerHTML = '<p style="text-align:center; color:var(--brown-light); padding:3rem;">Your cart is empty.</p>';
             billBox.style.display = 'none';
             return;
         }
@@ -645,10 +262,10 @@ textarea:focus {
         data.items.forEach(item => {
             list.innerHTML += `
                 <div class="cart-row">
-                    <img src="${item.photo_url}" class="item-thumb" alt="${item.item_name}" onerror="this.src='https://via.placeholder.com/48'">
+                    <img src="${item.photo_url}" class="item-thumb" alt="${item.item_name}" onerror="this.src='https://via.placeholder.com/64'">
                     <div class="item-details">
                         <h4>${item.item_name}</h4>
-                        <div style="font-size:0.75rem; color:var(--muted); text-transform:capitalize;">${item.category}</div>
+                        <span>${item.category}</span>
                     </div>
                     <div class="item-qty-badge">${item.quantity} pcs</div>
                     <div class="item-line-total">₹${item.line_total.toFixed(2)}</div>
@@ -660,7 +277,6 @@ textarea:focus {
         billBox.style.display = 'block';
     }
 
-    // Controls the single primary button's click behavior
     function handleActionButtonClick() {
         if (orderState === "cart") {
             requestOrderAcceptance();
@@ -669,7 +285,6 @@ textarea:focus {
         }
     }
 
-    // Step 1: User clicks "Place Order & Await Acceptance"
     async function requestOrderAcceptance() {
         const btn = document.getElementById('mainActionButton');
         btn.disabled = true;
@@ -680,7 +295,11 @@ textarea:focus {
             const data = await res.json();
 
             if (!res.ok) {
-                alert(data.error || "Order submission failed");
+                showThemedPopup({
+                    title: "Order Failed",
+                    message: data.error || "Unable to place order.",
+                    icon: "❌"
+                });
                 btn.disabled = false;
                 btn.textContent = "Place Order & Await Acceptance";
                 return;
@@ -689,11 +308,14 @@ textarea:focus {
             submittedOrderId = data.order_id;
             orderState = "awaiting_acceptance";
             secondsLeft = 60;
-
             setAwaitingAcceptanceUI();
 
         } catch (err) {
-            alert("Network error submitting order");
+            showThemedPopup({
+                title: "Network Error",
+                message: "Unable to connect to server.",
+                icon: "⚠️"
+            });
             btn.disabled = false;
             btn.textContent = "Place Order & Await Acceptance";
         }
@@ -703,9 +325,7 @@ textarea:focus {
         const btn = document.getElementById('mainActionButton');
         const timerBox = document.getElementById('timerBox');
 
-        // Show waiting timer ONLY while kitchen is deciding
-        timerBox.classList.add('timer-visible');
-
+        timerBox.style.display = 'block';
         btn.disabled = true;
         btn.className = "action-btn";
         btn.textContent = "Awaiting Kitchen Acceptance...";
@@ -716,53 +336,42 @@ textarea:focus {
         clearInterval(pollInterval);
 
         timerInterval = setInterval(handleTimerTick, 1000);
-        pollInterval = setInterval(checkIfAccepted, 2000);
+        pollInterval = setInterval(checkIfAccepted, 1500);
     }
 
     function setPayNowUI() {
-        // STOP both timers immediately
         clearInterval(timerInterval);
         clearInterval(pollInterval);
-
         timerInterval = null;
         pollInterval = null;
 
-        // COMPLETELY HIDE the waiting timer after kitchen accepts
         const timerBox = document.getElementById('timerBox');
-        timerBox.classList.remove('timer-visible');
+        if (timerBox) timerBox.style.display = 'none';
 
         const btn = document.getElementById('mainActionButton');
-
-        btn.disabled = false;
-        btn.className = "action-btn btn-pay-now";
-        btn.textContent =
-            `Pay Now (Accepted) - ₹${currentActiveOrder ? currentActiveOrder.total_amount.toFixed(2) : cartTotal.toFixed(2)}`;
+        if (btn) {
+            btn.disabled = false;
+            // VIBRANT GREEN BUTTON
+            btn.className = "action-btn btn-pay-green";
+            const amt = currentActiveOrder ? currentActiveOrder.total_amount.toFixed(2) : cartTotal.toFixed(2);
+            btn.textContent = `Pay Now (Accepted) - ₹${amt}`;
+        }
     }
 
     function updateTimerDisplay() {
         const mins = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
         const secs = String(secondsLeft % 60).padStart(2, '0');
-
-        document.getElementById('timerDisplay').textContent =
-            `${mins}:${secs}`;
+        document.getElementById('timerDisplay').textContent = `${mins}:${secs}`;
     }
 
     function handleTimerTick() {
         secondsLeft--;
-
         if (secondsLeft <= 0) {
             clearInterval(timerInterval);
             clearInterval(pollInterval);
-
-            timerInterval = null;
-            pollInterval = null;
-
-            document.getElementById('timerBox').classList.remove('timer-visible');
-
             handleTimeoutCancellation();
             return;
         }
-
         updateTimerDisplay();
     }
 
@@ -771,38 +380,32 @@ textarea:focus {
             const res = await fetch('/api/order/active');
             const data = await res.json();
 
-            console.log("ORDER STATUS POLL:", data);
-
-            // =====================================================
-            // KITCHEN CANCELLED THE ORDER
-            // =====================================================
             if (data.alert && data.status === 'cancelled') {
                 await handleKitchenCancellation(data);
                 return;
             }
 
-            // =====================================================
-            // KITCHEN ACCEPTED THE ORDER
-            // =====================================================
-            if (
-                data.has_active_order &&
-                String(data.order_id) === String(submittedOrderId) &&
-                data.status !== 'placed' &&
-                data.status !== 'cancelled'
-            ) {
-                console.log("KITCHEN ACCEPTED ORDER - STOPPING TIMER:", data);
-
+            // Kitchen accepted the order
+            if (data.has_active_order && data.status !== 'placed') {
                 currentActiveOrder = data;
                 orderState = "accepted_unpaid";
-
                 setPayNowUI();
 
-                return;
+                // Show Themed Acceptance Popup
+                showThemedPopup({
+                    title: "Kitchen Accepted Your Order!",
+                    message: `Chef accepted Token #${data.daily_order_number}! Click 'Pay Now' to complete your order.`,
+                    icon: "🎉",
+                    confirmText: "Pay Now",
+                    cancelText: "Later",
+                    onResolve: (confirmed) => {
+                        if (confirmed) {
+                            launchPaymentFlow(data);
+                        }
+                    }
+                });
             }
-
-        } catch (e) {
-            console.error("Order status polling error:", e);
-        }
+        } catch (e) {}
     }
 
     async function handleTimeoutCancellation() {
@@ -811,50 +414,56 @@ textarea:focus {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ order_id: submittedOrderId })
         });
-        alert("The kitchen is not accepting orders, please try again in a few minutes.");
-        window.location.href = "/menu";
-    }
 
-    // Step 2: User clicks "Pay Now (Accepted)"
-    // Read the test_mode variable passed from Flask
-    const IS_TEST_MODE = "{{ 'true' if test_mode else 'false' }}" === "true";
-    const RZP_KEY_ID = "{{ rzp_key }}";
-    const USER_EMAIL = "{{ email }}";
-    const USER_NAME = "{{ username }}";
-
-    // ... (rest of your variables and functions stay identical) ...
-
-    async function launchPaymentFlow(orderData) {
-        // --- 1. IF IN TEST MODE: BYPASS RAZORPAY GATEWAY ENTIRELY ---
-        if (IS_TEST_MODE) {
-            const confirmTest = confirm(`Kitchen Accepted Order #${orderData.daily_order_number}!\n\n[TEST MODE] Click OK to place order and confirm test payment of ₹${orderData.total_amount.toFixed(2)}.`);
-            
-            if (confirmTest) {
-                try {
-                    const payRes = await fetch('/api/payment/confirm-test', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ order_id: orderData.order_id })
-                    });
-                    const payData = await payRes.json();
-                    
-                    if (payData.success) {
-                        alert("✅ Test Payment Successful! Your order has been placed.");
-                        window.location.href = "/menu";
-                    } else {
-                        alert("❌ Failed to record test payment.");
-                    }
-                } catch (err) {
-                    alert("Network error confirming test payment.");
-                }
-            } else {
-                alert("Payment was not completed. The order placed button will not activate until payment is complete.");
+        showThemedPopup({
+            title: "Order Timed Out",
+            message: "The kitchen is not accepting orders, please try again in a few minutes.",
+            icon: "⏳",
+            confirmText: "Back to Menu",
+            onResolve: () => {
                 window.location.href = "/menu";
             }
+        });
+    }
+
+    async function launchPaymentFlow(orderData) {
+        if (IS_TEST_MODE) {
+            showThemedPopup({
+                title: "Confirm Test Payment",
+                message: `Pay ₹${orderData.total_amount.toFixed(2)} for Token #${orderData.daily_order_number}?`,
+                icon: "💳",
+                confirmText: "Confirm Pay",
+                cancelText: "Cancel",
+                onResolve: async (confirmed) => {
+                    if (confirmed) {
+                        try {
+                            const payRes = await fetch('/api/payment/confirm-test', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ order_id: orderData.order_id })
+                            });
+                            const payData = await payRes.json();
+                            if (payData.success) {
+                                showThemedPopup({
+                                    title: "Payment Successful!",
+                                    message: "Your preorder has been placed and sent to the kitchen!",
+                                    icon: "✅",
+                                    confirmText: "View Menu Status",
+                                    onResolve: () => {
+                                        window.location.href = "/menu";
+                                    }
+                                });
+                            }
+                        } catch (err) {
+                            showThemedPopup({ title: "Error", message: "Network error recording payment.", icon: "❌" });
+                        }
+                    }
+                }
+            });
             return;
         }
 
-        // --- 2. REAL RAZORPAY GATEWAY (Only runs when test_mode is False) ---
+        // Live Razorpay
         const options = {
             "key": RZP_KEY_ID,
             "amount": Math.round(orderData.total_amount * 100),
@@ -863,7 +472,7 @@ textarea:focus {
             "description": `Token #${orderData.daily_order_number}`,
             "order_id": orderData.gateway_order_id,
             "prefill": { "name": USER_NAME, "email": USER_EMAIL },
-            "theme": { "color": "#0284c7" },
+            "theme": { "color": "#b8953f" },
             "handler": async function (response) {
                 const verifyRes = await fetch('/api/payment/verify', {
                     method: 'POST',
@@ -876,16 +485,15 @@ textarea:focus {
                 });
                 const verifyData = await verifyRes.json();
                 if (verifyData.success) {
-                    alert("Payment Verified! Your order is placed.");
-                    window.location.href = "/menu";
-                } else {
-                    alert("Payment verification failed");
-                }
-            },
-            "modal": {
-                "ondismiss": function() {
-                    alert("Payment cancelled. Order placed button will not activate until payment is complete.");
-                    window.location.href = "/menu";
+                    showThemedPopup({
+                        title: "Payment Verified!",
+                        message: "Your order is placed and the kitchen is preparing your food!",
+                        icon: "✅",
+                        confirmText: "View Status",
+                        onResolve: () => {
+                            window.location.href = "/menu";
+                        }
+                    });
                 }
             }
         };
@@ -896,10 +504,5 @@ textarea:focus {
 
     loadCartData();
 </script>
-
-<style>
-/* ===== KITCHEN WAITING GOLD PANEL ===== */
-
-
 </body>
 </html>

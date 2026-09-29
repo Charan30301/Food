@@ -6,158 +6,198 @@
     <title>Grand Palace Hotel - Menu</title>
     <style>
         :root {
-            --bg: #0b1329;
-            --card-bg: #1e293b;
-            --card-border: #334155;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --primary: #0284c7;
-            --success: #10b981;
-            --danger: #ef4444;
-            --amber: #f59e0b;
+            --ivory: #f7f3e8;
+            --cream: #eee8d8;
+            --gold: #b8953f;
+            --gold-dark: #927326;
+            --gold-light: #d8bd70;
+            --gold-border: #d8c9a4;
+            --espresso: #30291f;
+            --brown-light: #6e6250;
+            --green: #22a878;
+            --red: #c94b45;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
-        body { background-color: var(--bg); color: var(--text-main); min-height: 100vh; padding-bottom: 120px; overflow-x: hidden; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", system-ui, sans-serif; }
+        body {
+            width: 100%; min-height: 100vh; margin: 0; padding-bottom: 120px;
+            background: linear-gradient(135deg, #fbf9f2 0%, #f7f3e8 45%, #eee8d8 100%) !important;
+            color: var(--espresso) !important; overflow-x: hidden;
+        }
 
         header {
             position: sticky; top: 0; z-index: 100;
-            background: rgba(11, 19, 41, 0.95); backdrop-filter: blur(8px);
-            border-bottom: 1px solid var(--card-border); padding: 1rem 1.5rem;
+            background: rgba(251, 249, 242, 0.96) !important;
+            border-bottom: 1px solid var(--gold-border) !important;
+            backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+            box-shadow: 0 3px 15px rgba(80, 60, 25, 0.05); padding: 0.85rem 1.5rem;
         }
 
-        .top-bar { display: flex; align-items: center; gap: 1rem; max-width: 1400px; margin: 0 auto; }
-        .search-container { flex: 1; position: relative; }
+        .top-bar { display: flex; align-items: center; width: 100%; gap: 10px; }
+        .search-container { flex: 1 1 auto; position: relative; }
         .search-input {
-            width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem;
-            background: var(--card-bg); border: 1px solid var(--card-border);
-            border-radius: 9999px; color: #fff; font-size: 0.95rem; outline: none;
+            width: 100%; height: 48px; box-sizing: border-box; padding: 0 18px 0 48px;
+            font-size: 16px; background: rgba(255, 255, 255, 0.90) !important;
+            color: var(--espresso) !important; border: 1px solid var(--gold-border) !important;
+            border-radius: 999px !important; outline: none; box-shadow: 0 3px 12px rgba(80, 60, 25, 0.06);
         }
-        .search-icon { position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+        .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--gold-dark); font-size: 19px; }
 
         .profile-btn {
-            display: flex; align-items: center; gap: 0.5rem; background: var(--card-bg);
-            border: 1px solid var(--card-border); padding: 0.5rem 1rem; border-radius: 9999px;
-            color: var(--text-main); font-size: 0.9rem; cursor: pointer; transition: 0.2s;
+            flex: 0 0 48px; width: 48px; height: 48px; border-radius: 50% !important;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            background: linear-gradient(135deg, #d8bd70, #b8953f) !important;
+            border: 1px solid #927326 !important; position: relative; font-size: 0 !important;
         }
-        .profile-btn:hover { border-color: var(--primary); background: #253348; }
+        .profile-btn::before { content: attr(data-initial); font-size: 20px; font-weight: 800; color: #1c160b; }
 
         .kitchen-banner {
-            display: none; background: #ef4444; color: white; text-align: center;
-            padding: 0.65rem; font-weight: 700; font-size: 0.9rem;
+            display: none; background: #f8e9e5 !important; color: #9c4039 !important;
+            border-bottom: 1px solid #dfbdb5; text-align: center; padding: 0.65rem; font-weight: 700; font-size: 0.9rem;
         }
         .kitchen-banner.show { display: block; }
 
         .categories-container {
             max-width: 1400px; margin: 1.25rem auto 0.5rem; padding: 0 1.5rem;
-            display: flex; gap: 0.75rem; overflow-x: auto;
+            display: flex; gap: 0.75rem; overflow-x: auto; scrollbar-width: none;
         }
-
+        .categories-container::-webkit-scrollbar { display: none; }
         .cat-btn {
-            background: var(--card-bg); color: var(--text-muted); border: 1px solid var(--card-border);
-            padding: 0.6rem 1.4rem; border-radius: 9999px; font-size: 0.9rem; font-weight: 600;
-            cursor: pointer; text-transform: capitalize; white-space: nowrap;
+            background: rgba(255, 255, 255, 0.75) !important; color: var(--brown-light) !important;
+            border: 1px solid var(--gold-border) !important; border-radius: 999px !important;
+            padding: 0.6rem 1.4rem; font-size: 0.9rem; font-weight: 600; cursor: pointer; white-space: nowrap;
         }
-        .cat-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .cat-btn.active {
+            background: linear-gradient(135deg, #c5a765, #a88648) !important;
+            color: #fffdf7 !important; border-color: var(--gold) !important;
+            box-shadow: 0 5px 14px rgba(145, 112, 54, 0.20);
+        }
 
         .menu-list {
             max-width: 1400px; margin: 1.5rem auto; padding: 0 1.5rem;
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem;
+            display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px;
         }
-
+        @media (max-width: 1100px) { .menu-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
         @media (max-width: 768px) {
-            .menu-list { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; padding: 0 0.75rem; }
-            .photo-container { height: 140px !important; }
+            .menu-list { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px !important; padding: 0 16px !important; }
+            .item-text h3 { font-size: 1rem !important; }
+            .photo-container { height: 165px !important; }
         }
 
         .item-card {
-    box-shadow:
-        0 8px 24px rgba(212, 175, 55, 0.28),
-        0 2px 8px rgba(212, 175, 55, 0.18);
-
-            background: var(--card-bg); border: 1px solid var(--card-border);
-            border-radius: 14px; overflow: hidden; display: flex; flex-direction: column;
-            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.94) !important; border: 1px solid var(--gold-border) !important;
+            border-radius: 18px !important; overflow: hidden; display: flex; flex-direction: column;
+            justify-content: space-between; box-shadow: 0 4px 15px rgba(70, 55, 30, 0.06);
         }
-        .photo-container { position: relative; width: 100%; height: 180px; background: #000; }
+        .photo-container { position: relative; width: 100%; height: 180px; background: var(--cream); }
         .photo-container img { width: 100%; height: 100%; object-fit: cover; }
-
-        .status-dot {
-            position: absolute; top: 10px; left: 10px; width: 12px; height: 12px;
-            border-radius: 50%; border: 2px solid #fff; z-index: 2;
-        }
-        .status-dot.active { background-color: var(--success); }
-        .status-dot.inactive { background-color: var(--danger); }
+        .status-dot { position: absolute; top: 10px; left: 10px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fffdf7; }
+        .status-dot.active { background-color: var(--green); }
+        .status-dot.inactive { background-color: var(--red); }
 
         .action-ctrl {
-            position: absolute; bottom: 10px; right: 10px; background: #ffffff;
-            border-radius: 9999px; display: flex; align-items: center; z-index: 2;
+            position: absolute; bottom: 10px; right: 10px; background: rgba(255, 255, 255, 0.96);
+            border: 1px solid var(--gold-border); border-radius: 999px; display: flex; align-items: center;
+            box-shadow: 0 4px 12px rgba(60, 45, 20, 0.14);
         }
-        .action-btn { background: none; border: none; padding: 0.45rem 0.75rem; font-size: 1rem; cursor: pointer; color: #0f172a; font-weight: bold; }
-        .qty-label { font-size: 0.9rem; min-width: 20px; text-align: center; color: #0f172a; font-weight: bold; }
+        .action-btn { background: none; border: none; padding: 0.45rem 0.75rem; font-size: 1rem; cursor: pointer; color: var(--gold-dark); font-weight: 700; }
+        .qty-label { font-size: 0.9rem; min-width: 20px; text-align: center; color: var(--espresso); font-weight: 700; }
 
-        .item-info { padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: flex-end; }
-        .item-text h3 { font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .item-category { font-size: 0.8rem; color: var(--text-muted); text-transform: capitalize; }
-        .item-price { font-size: 1.15rem; font-weight: 700; color: #38bdf8; }
+        .item-info { padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: flex-end; background: #fffdf8; }
+        .item-text h3 { font-size: 1.05rem; color: var(--espresso); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-category { font-size: 0.8rem; color: var(--brown-light); text-transform: capitalize; }
+        .item-price { font-size: 1.15rem; font-weight: 800; color: var(--gold-dark); }
 
         /* Floating Bars */
         .floating-action-bar {
             position: fixed; bottom: 20px; right: 20px; padding: 0.85rem 1.25rem;
-            border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: none;
-            align-items: center; gap: 1.25rem; z-index: 900; cursor: pointer; text-decoration: none;
+            border-radius: 16px; display: none; align-items: center; gap: 1.25rem; z-index: 900;
+            cursor: pointer; text-decoration: none; background: linear-gradient(135deg, #c2a45e, #9e7d3e) !important;
+            color: #fffdf6 !important; box-shadow: 0 10px 30px rgba(120, 90, 35, 0.25);
         }
         .floating-action-bar.visible { display: flex; }
-        .cart-bar { background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; }
-        .order-placed-bar { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
+        .badge { background: rgba(255, 255, 255, 0.18); padding: 0.35rem 0.75rem; border-radius: 8px; font-weight: 800; }
 
-        .badge { font-size: 1.1rem; font-weight: 800; background: rgba(255,255,255,0.2); padding: 0.35rem 0.75rem; border-radius: 8px; }
+        .mobile-cart-icon { display: none; }
+        @media (max-width: 768px) {
+            #cartBar.cart-bar {
+                width: 68px !important; height: 68px !important; min-width: 68px !important; min-height: 68px !important;
+                padding: 0 !important; border-radius: 50% !important; flex-direction: column !important;
+                justify-content: center !important; gap: 2px !important; right: 16px !important; bottom: 16px !important;
+            }
+            #cartBar .mobile-cart-icon { display: flex !important; font-size: 24px; line-height: 1; }
+            #cartBar .cart-text-area { display: none !important; }
+            #cartBar #cartTotalLabel { font-size: 0.72rem !important; background: transparent !important; padding: 0 !important; }
+        }
 
-        /* Step Progress Modal */
+        /* Modal Overlays */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
-            display: none; align-items: center; justify-content: center; z-index: 1500;
+            background: rgba(48, 41, 31, 0.45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+            display: none; align-items: center; justify-content: center; z-index: 2000;
         }
         .modal-overlay.open { display: flex; }
         .progress-box {
-            background: var(--card-bg); border: 1px solid var(--card-border);
-            border-radius: 16px; padding: 2rem; width: 92%; max-width: 550px; text-align: center;
+            background: #fbf9f2; border: 1px solid var(--gold-border); border-radius: 20px;
+            padding: 2rem; width: 92%; max-width: 540px; text-align: center;
+            box-shadow: 0 20px 60px rgba(40, 30, 15, 0.22);
         }
 
         .stepper-row { display: flex; justify-content: space-between; align-items: center; margin: 2rem 0; position: relative; }
-        .stepper-row::before { content: ''; position: absolute; top: 12px; left: 10%; right: 10%; height: 3px; background: #334155; z-index: 1; }
+        .stepper-row::before { content: ''; position: absolute; top: 12px; left: 10%; right: 10%; height: 3px; background: var(--gold-border); z-index: 1; }
         .step-col { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; flex: 1; }
-        .step-dot { width: 24px; height: 24px; border-radius: 50%; background: #334155; border: 3px solid #0f172a; transition: 0.3s; }
-        .step-dot.green { background: var(--success); box-shadow: 0 0 10px rgba(16, 185, 129, 0.6); }
-        .step-name { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+        .step-dot {
+            width: 24px; height: 24px; border-radius: 50%; background: #e4dfd1; border: 3px solid #fbf9f2;
+            transition: all 0.3s ease;
+        }
+        .step-dot.green { background: var(--gold) !important; box-shadow: 0 0 12px rgba(184, 155, 94, 0.5); }
+        .step-name { font-size: 0.75rem; color: var(--brown-light); font-weight: 700; text-transform: uppercase; }
 
-        /* Slide-out Sidebar */
-        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); z-index: 1100; opacity: 0; pointer-events: none; transition: 0.3s; }
+        /* Themed Notification Popup */
+        .themed-popup-box {
+            background: #fffdf7; border: 1px solid var(--gold-border); border-radius: 20px;
+            padding: 2rem; width: 90%; max-width: 460px; text-align: center;
+            box-shadow: 0 20px 55px rgba(55,43,20,0.25);
+        }
+        .themed-popup-icon { font-size: 2.8rem; margin-bottom: 0.5rem; }
+        .themed-popup-title { color: var(--espresso); font-size: 1.3rem; margin-bottom: 0.6rem; font-weight: 800; }
+        .themed-popup-msg { color: var(--brown-light); font-size: 0.95rem; margin-bottom: 1.25rem; line-height: 1.5; }
+        .themed-popup-reason {
+            background: #fff0ee; border: 1px solid #e7aaa5; color: #721c24;
+            padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; line-height: 1.5; font-size: 0.95rem; text-align: left;
+        }
+        .btn-themed-ack {
+            width: 100%; padding: 0.85rem; background: linear-gradient(135deg, #d8bd70, #b8953f);
+            color: #fffdf7; border: 1px solid #927326; border-radius: 999px; font-weight: 800; cursor: pointer; font-size: 1rem;
+        }
+
+        /* Profile Sidebar */
+        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(48, 41, 31, 0.40); z-index: 1100; opacity: 0; pointer-events: none; transition: 0.3s; }
         .sidebar-overlay.active { opacity: 1; pointer-events: auto; }
-        .profile-sidebar { position: fixed; top: 0; right: -450px; width: 100%; max-width: 420px; height: 100%; background: #0f172a; border-left: 1px solid var(--card-border); box-shadow: -10px 0 25px rgba(0, 0, 0, 0.7); z-index: 1200; display: flex; flex-direction: column; transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+        .profile-sidebar {
+            position: fixed; top: 0; right: -450px; width: 100%; max-width: 420px; height: 100%;
+            background: #fbf9f2; border-left: 1px solid var(--gold-border);
+            box-shadow: -12px 0 35px rgba(40, 30, 15, 0.15); z-index: 1200;
+            display: flex; flex-direction: column; transition: right 0.35s ease;
+        }
         .profile-sidebar.open { right: 0; }
-        .sidebar-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; }
-        .sidebar-close-btn { background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; }
+        .sidebar-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--gold-border); display: flex; justify-content: space-between; align-items: center; }
+        .sidebar-close-btn { background: none; border: none; font-size: 1.5rem; color: var(--gold-dark); cursor: pointer; }
         .sidebar-body { flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
 
-        .profile-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 1.25rem; }
-        .username-input-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
-        .username-input { flex: 1; padding: 0.65rem 0.85rem; background: #0b1329; border: 1px solid var(--card-border); border-radius: 8px; color: #fff; outline: none; }
-        .save-username-btn { background: var(--primary); color: #fff; border: none; padding: 0.65rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; }
-
-        .orders-list { display: flex; flex-direction: column; gap: 0.85rem; }
-        .order-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
-        .order-status-pill { padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
-        .pill-placed { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
-        .pill-accepted { background: rgba(2, 132, 199, 0.2); color: #38bdf8; }
-        .pill-preparing { background: rgba(234, 88, 12, 0.2); color: #fb923c; }
-        .pill-prepared { background: rgba(16, 185, 129, 0.2); color: #34d399; }
-        .pill-delivered { background: rgba(16, 185, 129, 0.4); color: #10b981; }
-        .pill-cancelled { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .profile-card, .order-card {
+            background: #fffdf8; border: 1px solid var(--gold-border); border-radius: 14px;
+            padding: 1.2rem; box-shadow: 0 3px 12px rgba(70, 55, 30, 0.05);
+        }
+        .username-input {
+            flex: 1; padding: 0.65rem 0.85rem; background: #fff; border: 1px solid var(--gold-border);
+            border-radius: 8px; color: var(--espresso); outline: none;
+        }
+        .save-username-btn {
+            background: linear-gradient(135deg, #c2a45e, #9e7d3e); color: #fff;
+            border: none; padding: 0.65rem 1rem; border-radius: 8px; font-weight: 700; cursor: pointer;
+        }
     </style>
-<link rel="stylesheet" href="{{ url_for('static', filename='css/responsive-gold.css') }}">
-
 </head>
 <body>
 
@@ -182,29 +222,30 @@
 
     <main class="menu-list" id="menuContainer"></main>
 
-    <!-- State 1: Active Cart Button (ALWAYS visible until payment is PAID) -->
+    <!-- Floating Cart Button (Visible until order is fully PAID) -->
     <a href="/cart" class="floating-action-bar cart-bar" id="cartBar">
-        <div>
+        <div class="mobile-cart-icon">🛒</div>
+        <div class="cart-text-area">
             <h4 style="font-size:0.95rem;" id="cartBarTitle">View Cart</h4>
-            <div style="font-size:0.75rem; color:#bae6fd;" id="cartCodeLabel"></div>
+            <div style="font-size:0.75rem; color:#fef3c7;" id="cartCodeLabel"></div>
         </div>
         <div class="badge" id="cartTotalLabel">₹0.00</div>
     </a>
 
-    <!-- State 2: Order Placed -->
+    <!-- Floating Order Placed Button (Active ONLY when paid) -->
     <div class="floating-action-bar order-placed-bar" id="orderPlacedBar" onclick="openOrderProgressModal()">
-        <div class="order-placed-content">
-            <h4>Order Placed!</h4>
-            <div id="orderStatusText">Kitchen is preparing your food</div>
+        <div>
+            <h4 style="font-size:0.95rem;">Order Placed!</h4>
+            <div style="font-size:0.75rem; color:#fef3c7;" id="orderStatusText">Kitchen is preparing your food</div>
         </div>
         <div class="badge">Token #<span id="activeTokenId">0</span></div>
     </div>
 
-    <!-- 4-Stage Progress Tracker Modal -->
+    <!-- 4-Stage Stepper Live Progress Modal -->
     <div class="modal-overlay" id="orderProgressModal">
         <div class="progress-box">
-            <h3>Token #<span id="modalOrderId">0</span> Status</h3>
-            <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.3rem;">Payment Verified • Preparing</p>
+            <h3 style="color:var(--gold-dark); font-size:1.35rem; font-weight:800;">Token #<span id="modalOrderId">0</span> Status</h3>
+            <p style="color:var(--brown-light); font-size:0.9rem; margin-top:0.3rem;" id="modalPaymentInfo">Payment Verified • Preparing</p>
 
             <div class="stepper-row">
                 <div class="step-col">
@@ -225,39 +266,46 @@
                 </div>
             </div>
 
-            <button class="save-username-btn" onclick="closeOrderProgressModal()" style="width:100%;">Close Status</button>
+            <button class="btn-themed-ack" onclick="closeOrderProgressModal()">Close Status</button>
         </div>
     </div>
 
-    <!-- Profile Drawer & Orders History -->
+    <!-- THEMED NOTIFICATION POPUP (Replaces all browser alerts) -->
+    <div class="modal-overlay" id="themedPopupModal">
+        <div class="themed-popup-box">
+            <div class="themed-popup-icon" id="themedPopupIcon">✨</div>
+            <h3 class="themed-popup-title" id="themedPopupTitle">Update</h3>
+            <p class="themed-popup-msg" id="themedPopupMsg"></p>
+            <div class="themed-popup-reason" id="themedPopupReason" style="display:none;"></div>
+            <button class="btn-themed-ack" id="themedPopupAckBtn" onclick="closeThemedPopup()">Understood</button>
+        </div>
+    </div>
+
+    <!-- Profile Sidebar -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeProfileSidebar()"></div>
     <aside class="profile-sidebar" id="profileSidebar">
         <div class="sidebar-header">
-            <h3>My Profile</h3>
+            <h3 style="color:var(--gold-dark);">My Profile</h3>
             <button class="sidebar-close-btn" onclick="closeProfileSidebar()">&times;</button>
         </div>
         <div class="sidebar-body">
             <div class="profile-card">
-                <label style="font-size:0.8rem; color:var(--text-muted);">Verified Gmail</label>
-                <div style="font-size:0.9rem; color:#38bdf8; margin-bottom:0.75rem;">{{ email }}</div>
+                <label style="font-size:0.8rem; color:var(--brown-light);">Verified Gmail</label>
+                <div style="font-size:0.9rem; color:var(--gold-dark); margin-bottom:0.75rem;">{{ email }}</div>
 
-                <label style="font-size:0.8rem; color:var(--text-muted);">Display Name</label>
-                <div class="username-input-row">
+                <label style="font-size:0.8rem; color:var(--brown-light);">Display Name</label>
+                <div style="display:flex; gap:0.5rem; margin-top:0.4rem;">
                     <input type="text" id="profileUsernameInput" class="username-input" value="{{ username }}">
                     <button class="save-username-btn" onclick="saveNewUsername()">Save</button>
                 </div>
-                <div id="usernameStatusMsg" style="font-size:0.8rem; margin-top:0.4rem;"></div>
             </div>
 
             <div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-                    <h4>All Orders History</h4>
-                    <button onclick="fetchOrderHistory()" style="background:none; border:none; color:var(--primary); font-size:0.85rem; cursor:pointer;">Refresh</button>
-                </div>
-                <div class="orders-list" id="ordersHistoryList"></div>
+                <h4 style="margin-bottom:0.75rem; color:var(--espresso);">Past Orders</h4>
+                <div id="ordersHistoryList" style="display:flex; flex-direction:column; gap:0.75rem;"></div>
             </div>
 
-            <a href="/logout" style="margin-top:auto; padding:0.8rem; background:rgba(239, 68, 68, 0.15); color:#ef4444; text-align:center; border-radius:8px; text-decoration:none; font-weight:600;">Log Out</a>
+            <a href="/logout" style="margin-top:auto; padding:0.8rem; background:rgba(201,75,69,0.1); color:#c94b45; text-align:center; border-radius:8px; text-decoration:none; font-weight:700;">Log Out</a>
         </div>
     </aside>
 
@@ -267,9 +315,38 @@
         let currentCategory = 'all';
         let searchQuery = '';
         let activeOrder = null;
-        let lastReportedStatus = null;
         let localMenuVersion = null;
+        let lastReportedStatus = null;
+        let popupOnCloseCallback = null;
 
+        // Custom Themed Popup Function
+        function showThemedPopup({ title, message, icon="✨", reason=null, btnText="Understood", onClose=null }) {
+            document.getElementById("themedPopupTitle").textContent = title;
+            document.getElementById("themedPopupMsg").textContent = message;
+            document.getElementById("themedPopupIcon").textContent = icon;
+            document.getElementById("themedPopupAckBtn").textContent = btnText;
+
+            const reasonEl = document.getElementById("themedPopupReason");
+            if (reason) {
+                reasonEl.innerHTML = `<strong>Reason:</strong> ${reason}`;
+                reasonEl.style.display = "block";
+            } else {
+                reasonEl.style.display = "none";
+            }
+
+            popupOnCloseCallback = onClose;
+            document.getElementById("themedPopupModal").classList.add("open");
+        }
+
+        function closeThemedPopup() {
+            document.getElementById("themedPopupModal").classList.remove("open");
+            if (popupOnCloseCallback) {
+                popupOnCloseCallback();
+                popupOnCloseCallback = null;
+            }
+        }
+
+        // Live Polling
         async function checkOrderStatus() {
             try {
                 const res = await fetch('/api/order/active');
@@ -279,13 +356,10 @@
 
                 // Kitchen toggle banner
                 const closedBanner = document.getElementById('kitchenClosedBanner');
-                if (!data.kitchen_open) {
-                    closedBanner.classList.add('show');
-                } else {
-                    closedBanner.classList.remove('show');
-                }
+                if (!data.kitchen_open) closedBanner.classList.add('show');
+                else closedBanner.classList.remove('show');
 
-                // Automatic live menu reload on sync
+                // Auto live menu reload on sync
                 if (localMenuVersion !== null && data.menu_version && data.menu_version !== localMenuVersion) {
                     localMenuVersion = data.menu_version;
                     loadMenuAndCart();
@@ -293,63 +367,102 @@
                     localMenuVersion = data.menu_version;
                 }
 
-                // 1. Terminal Alerts (Cancellation or Delivery)
-                if (data.alert) {
-                    if (data.status === 'cancelled') {
-                        alert(`⚠️ ORDER CANCELLED BY KITCHEN\n\nYour order was cancelled by the kitchen.\n\nReason: ${data.reason}`);
+                // 1. CANCELLATION POPUP (With reason)
+                if (data.alert && data.status === 'cancelled') {
+                    showThemedPopup({
+                        title: "Order Cancelled by Kitchen",
+                        message: "The restaurant was unable to prepare your order.",
+                        icon: "❌",
+                        reason: data.reason || "Kitchen is busy, please try again in a few minutes.",
+                        btnText: "Understood",
+                        onClose: async () => {
+                            try {
+                                await fetch('/api/order/ack-alert', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ order_id: data.order_id })
+                                });
+                            } catch (e) {}
+                        }
+                    });
 
-                        try {
-                            await fetch('/api/order/ack-alert', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    order_id: data.order_id
-                                })
-                            });
-                        } catch (ackError) {
-                            console.error("Could not acknowledge cancellation alert:", ackError);
-                        }
-                    } else if (data.status === 'delivered') {
-                        alert(`🎉 Your Order #${data.order_id} has been delivered! Enjoy your meal.`);
-                        try {
-                            await fetch('/api/order/ack-alert', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    order_id: data.order_id
-                                })
-                            });
-                        } catch (ackError) {
-                            console.error("Could not acknowledge delivery alert:", ackError);
-                        }
-                    }
                     activeOrder = null;
                     lastReportedStatus = null;
                     orderPlacedBar.classList.remove('visible');
-                    closeOrderProgressModal();
                     loadMenuAndCart();
                     return;
                 }
 
-                // 2. Active Orders Logic: STRICT BUTTON TRANSITION RULE
+                // 2. DELIVERED POPUP
+                if (data.alert && data.status === 'delivered') {
+                    showThemedPopup({
+                        title: "Order Delivered!",
+                        message: `Your food (Token #${data.daily_order_number || data.order_id}) has been delivered! Enjoy your meal.`,
+                        icon: "🎉",
+                        btnText: "Awesome!",
+                        onClose: async () => {
+                            try {
+                                await fetch('/api/order/ack-alert', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ order_id: data.order_id })
+                                });
+                            } catch (e) {}
+                        }
+                    });
+
+                    activeOrder = null;
+                    lastReportedStatus = null;
+                    orderPlacedBar.classList.remove('visible');
+                    loadMenuAndCart();
+                    return;
+                }
+
+                // 3. ACTIVE ORDER TRANSITIONS (Popups for accept, preparing, prepared)
                 if (data.has_active_order) {
                     activeOrder = data;
 
-                    // Trigger alert if status transitioned
+                    // POPUPS FOR EVERY STATUS UPDATE
                     if (lastReportedStatus && lastReportedStatus !== data.status) {
-                        alert(`🔔 Kitchen Update: Token #${data.daily_order_number} is now ${data.status.toUpperCase()}!`);
+                        if (data.status === 'accepted') {
+                            showThemedPopup({
+                                title: "Order Accepted by Kitchen!",
+                                message: `Chef accepted Token #${data.daily_order_number}. ${data.payment_status === 'paid' ? 'Cooking starting soon!' : 'Please complete payment via cart.'}`,
+                                icon: "👨‍🍳",
+                                btnText: "Great!"
+                            });
+                        } else if (data.status === 'preparing') {
+                            showThemedPopup({
+                                title: "Food is Preparing!",
+                                message: `The kitchen is now actively preparing Token #${data.daily_order_number}!`,
+                                icon: "🍳",
+                                btnText: "Got it"
+                            });
+                        } else if (data.status === 'prepared') {
+                            showThemedPopup({
+                                title: "Food Ready!",
+                                message: `Token #${data.daily_order_number} is prepared and ready for delivery/pickup!`,
+                                icon: "🍽️",
+                                btnText: "Ready"
+                            });
+                        }
                     }
                     lastReportedStatus = data.status;
 
+                    // Strict Button Switch
                     if (data.payment_status === 'paid') {
-                        // PAYMENT DONE -> Hide cart button, show green "Order Placed" button
                         cartBar.classList.remove('visible');
                         orderPlacedBar.classList.add('visible');
                         document.getElementById('activeTokenId').textContent = data.daily_order_number;
-                        document.getElementById('orderStatusText').textContent = `Kitchen Status: ${data.status.toUpperCase()}`;
+
+                        const statusMap = {
+                            'accepted': 'Order Accepted by Chef',
+                            'preparing': 'Kitchen is preparing your food',
+                            'prepared': 'Food is Prepared & Ready!'
+                        };
+                        document.getElementById('orderStatusText').textContent = statusMap[data.status] || data.status.toUpperCase();
                         updateStepperDots(data.status);
                     } else {
-                        // PAYMENT NOT DONE -> KEEP CART BUTTON VISIBLE!
                         orderPlacedBar.classList.remove('visible');
                         cartBar.classList.add('visible');
 
@@ -357,21 +470,16 @@
                             const secs = data.seconds_left !== undefined ? data.seconds_left : 60;
                             document.getElementById('cartBarTitle').textContent = `Awaiting Kitchen (${secs}s)`;
                         } else {
-                            // Accepted by kitchen but user closed gateway -> show payment pending prompt
                             document.getElementById('cartBarTitle').textContent = "Pay Now (Accepted)";
                         }
                     }
                 } else {
-                    // No running active order
                     orderPlacedBar.classList.remove('visible');
                     activeOrder = null;
-                    lastReportedStatus = null;
                     document.getElementById('cartBarTitle').textContent = "View Cart";
                     updateCartUI(cartCodeCached, cartTotalCached);
                 }
-            } catch (err) {
-                console.error("Status check error:", err);
-            }
+            } catch (err) {}
         }
 
         function openOrderProgressModal() {
@@ -380,10 +488,7 @@
             updateStepperDots(activeOrder.status);
             document.getElementById('orderProgressModal').classList.add('open');
         }
-
-        function closeOrderProgressModal() {
-            document.getElementById('orderProgressModal').classList.remove('open');
-        }
+        function closeOrderProgressModal() { document.getElementById('orderProgressModal').classList.remove('open'); }
 
         function updateStepperDots(status) {
             const stages = ['accepted', 'preparing', 'prepared', 'delivered'];
@@ -405,12 +510,6 @@
             });
         }
 
-        async function init() {
-            await loadMenuAndCart();
-            await checkOrderStatus();
-            setInterval(checkOrderStatus, 2000);
-        }
-
         let cartCodeCached = "";
         let cartTotalCached = 0.0;
 
@@ -425,9 +524,7 @@
                 cartTotalCached = data.total_price || 0.0;
                 updateCartUI(cartCodeCached, cartTotalCached);
                 renderMenu();
-            } catch (err) {
-                console.error("Failed loading menu:", err);
-            }
+            } catch (err) {}
         }
 
         function filterCategory(category, buttonEl) {
@@ -456,12 +553,6 @@
                 const qty = cartData[item.id] !== undefined ? cartData[item.id] : (cartData[String(item.id)] || 0);
                 const card = document.createElement('div');
                 card.className = 'item-card';
-                card.addEventListener('click', function(e) {
-                    if (e.target.closest('.action-ctrl')) return;
-                    if (window.innerWidth <= 768) {
-                        openMobileItemDetails(item);
-                    }
-                });
 
                 let actionHtml = '';
                 if (item.is_active) {
@@ -504,45 +595,30 @@
                     body: JSON.stringify({ itemId, delta })
                 });
                 const data = await res.json();
-
                 if (res.ok && data.success) {
                     cartData = data.cart;
                     cartCodeCached = data.cart_code;
                     cartTotalCached = data.total_price;
                     updateCartUI(data.cart_code, data.total_price);
                     renderMenu();
-                } else {
-                    alert("Cart Update Error: " + (data.error || "Server rejected update"));
                 }
-            } catch (err) {
-                console.error("Cart update request failed:", err);
-            }
+            } catch (err) {}
         }
 
         function updateCartUI(cartCode, totalPrice) {
             const cartBar = document.getElementById('cartBar');
             const orderPlacedBar = document.getElementById('orderPlacedBar');
-
-            // Paid order -> cart must stay hidden
             if (orderPlacedBar.classList.contains('visible')) {
                 cartBar.classList.remove('visible');
                 return;
             }
-
-            // Show cart ONLY when at least one item has quantity > 0
             const hasItems = Object.values(cartData || {}).some(qty => Number(qty) > 0);
-
             if (hasItems) {
                 cartBar.classList.add('visible');
-
                 document.getElementById('cartCodeLabel').textContent = cartCode || '';
-                document.getElementById('cartTotalLabel').textContent =
-                    `₹${Number(totalPrice || 0).toFixed(2)}`;
+                document.getElementById('cartTotalLabel').textContent = `₹${Number(totalPrice || 0).toFixed(2)}`;
             } else {
                 cartBar.classList.remove('visible');
-
-                document.getElementById('cartCodeLabel').textContent = '';
-                document.getElementById('cartTotalLabel').textContent = '₹0.00';
             }
         }
 
@@ -551,7 +627,6 @@
             document.getElementById('sidebarOverlay').classList.add('active');
             fetchOrderHistory();
         }
-
         function closeProfileSidebar() {
             document.getElementById('profileSidebar').classList.remove('open');
             document.getElementById('sidebarOverlay').classList.remove('active');
@@ -567,194 +642,45 @@
             });
             const data = await res.json();
             if (data.success) {
-                document.getElementById('navUsernameDisplay').textContent = data.username;
+                window.location.reload();
             }
         }
 
         async function fetchOrderHistory() {
             const listEl = document.getElementById('ordersHistoryList');
-            listEl.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">Loading...</div>';
+            listEl.innerHTML = '<div style="color:var(--brown-light); padding:1rem;">Loading...</div>';
             const res = await fetch('/api/profile/orders');
             const data = await res.json();
-
             if (!data.orders || data.orders.length === 0) {
-                listEl.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">No past orders.</div>';
+                listEl.innerHTML = '<div style="color:var(--brown-light); padding:1rem;">No past orders.</div>';
                 return;
             }
-
             listEl.innerHTML = '';
             data.orders.forEach(order => {
                 const card = document.createElement('div');
                 card.className = 'order-card';
-                const itemsHtml = order.items.map(i => `<div>• ${i}</div>`).join('');
-                const reasonHtml = order.cancellation_reason ? `<div style="color:#fca5a5; font-size:0.8rem;">Reason: ${order.cancellation_reason}</div>` : '';
-
                 card.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <strong>Token #${order.daily_order_number}</strong>
-                            <div style="font-size:0.75rem; color:var(--text-muted);">${order.date} at ${order.time}</div>
-                        </div>
-                        <span class="order-status-pill pill-${order.order_status}">${order.order_status}</span>
+                    <div style="display:flex; justify-content:space-between;">
+                        <strong>Token #${order.daily_order_number}</strong>
+                        <span style="font-weight:700; text-transform:uppercase; font-size:0.8rem;">${order.order_status}</span>
                     </div>
-                    <div style="font-size:0.85rem; color:#cbd5e1; border-top:1px dashed var(--card-border); padding-top:0.4rem;">${itemsHtml}</div>
-                    ${reasonHtml}
-                    <div style="display:flex; justify-content:space-between; font-weight:700; margin-top:0.3rem;">
+                    <div style="font-size:0.85rem; color:var(--brown-light); margin:0.4rem 0;">${order.items.join(', ')}</div>
+                    ${order.cancellation_reason ? `<div style="color:#c94b45; font-size:0.8rem;">Reason: ${order.cancellation_reason}</div>` : ''}
+                    <div style="display:flex; justify-content:space-between; font-weight:800; color:var(--gold-dark); margin-top:0.3rem;">
                         <span>Total (${order.payment_status.toUpperCase()})</span>
-                        <span style="color:#38bdf8;">₹${order.total_amount.toFixed(2)}</span>
+                        <span>₹${order.total_amount.toFixed(2)}</span>
                     </div>
                 `;
                 listEl.appendChild(card);
             });
         }
 
+        async function init() {
+            await loadMenuAndCart();
+            await checkOrderStatus();
+            setInterval(checkOrderStatus, 2000);
+        }
         init();
     </script>
-
-<!-- MOBILE FOOD ITEM DETAILS -->
-<div id="mobileItemDetails" class="mobile-item-details">
-    <div class="mobile-item-details-box">
-        <button class="mobile-details-close" onclick="closeMobileItemDetails()">×</button>
-
-        <img id="mobileDetailsImage" src="" alt="">
-
-        <div class="mobile-details-content">
-            <h2 id="mobileDetailsName"></h2>
-            <div id="mobileDetailsCategory"></div>
-            <div id="mobileDetailsPrice"></div>
-            <div id="mobileDetailsStatus"></div>
-        </div>
-    </div>
-</div>
-
-<style>
-/* MOBILE ITEM DETAILS ONLY */
-.mobile-item-details {
-    display: none;
-}
-
-@media (max-width: 768px) {
-    .mobile-item-details {
-        position: fixed;
-        inset: 0;
-        z-index: 99999;
-        background: rgba(0,0,0,0.55);
-        align-items: flex-end;
-        justify-content: center;
-    }
-
-    .mobile-item-details.open {
-        display: flex;
-    }
-
-    .mobile-item-details-box {
-        position: relative;
-        width: 100%;
-        max-height: 88vh;
-        overflow: hidden;
-        background: #fffdf7;
-        border-radius: 24px 24px 0 0;
-        border-top: 2px solid #b8953f;
-        box-shadow: 0 -10px 35px rgba(0,0,0,0.25);
-    }
-
-    .mobile-item-details-box img {
-        display: block;
-        width: 100%;
-        height: 240px;
-        object-fit: cover;
-    }
-
-    .mobile-details-close {
-        position: absolute;
-        top: 12px;
-        right: 12px;
-        z-index: 2;
-
-        width: 38px;
-        height: 38px;
-
-        border: none;
-        border-radius: 50%;
-
-        background: rgba(255,253,247,0.95);
-        color: #927326;
-
-        font-size: 28px;
-        line-height: 35px;
-        font-weight: 700;
-    }
-
-    .mobile-details-content {
-        padding: 20px;
-    }
-
-    .mobile-details-content h2 {
-        margin: 0 0 6px;
-        color: #29251d;
-        font-size: 1.45rem;
-    }
-
-    #mobileDetailsCategory {
-        color: #756f63;
-        font-size: 0.9rem;
-        text-transform: capitalize;
-        margin-bottom: 12px;
-    }
-
-    #mobileDetailsPrice {
-        color: #927326;
-        font-size: 1.35rem;
-        font-weight: 800;
-        margin-bottom: 10px;
-    }
-
-    #mobileDetailsStatus {
-        color: #756f63;
-        font-size: 0.9rem;
-    }
-}
-</style>
-
-<script>
-function openMobileItemDetails(item) {
-    if (window.innerWidth > 768) return;
-
-    document.getElementById('mobileDetailsImage').src =
-        item.photo_url || 'https://via.placeholder.com/600x400';
-
-    document.getElementById('mobileDetailsImage').alt =
-        item.item_name || 'Food item';
-
-    document.getElementById('mobileDetailsName').textContent =
-        item.item_name || '';
-
-    document.getElementById('mobileDetailsCategory').textContent =
-        item.category || '';
-
-    document.getElementById('mobileDetailsPrice').textContent =
-        '₹' + Number(item.price || 0).toFixed(2);
-
-    document.getElementById('mobileDetailsStatus').textContent =
-        item.is_active ? 'Available' : 'Currently unavailable';
-
-    document.getElementById('mobileItemDetails').classList.add('open');
-
-    document.body.style.overflow = 'hidden';
-}
-
-function closeMobileItemDetails() {
-    document.getElementById('mobileItemDetails').classList.remove('open');
-    document.body.style.overflow = '';
-}
-
-document.getElementById('mobileItemDetails').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeMobileItemDetails();
-    }
-});
-</script>
-
-
 </body>
 </html>

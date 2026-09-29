@@ -6,960 +6,150 @@
     <title>Hotel Kitchen Operations</title>
     <style>
         :root {
-            --bg: #0b1329;
-            --card-bg: #1e293b;
-            --card-border: #334155;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --primary: #0284c7;
-            --success: #10b981;
-            --danger: #ef4444;
-            --amber: #f59e0b;
+            --bg: #f8f5ec;
+            --card-bg: #fffdf7;
+            --card-border: #ded3b8;
+            --text-main: #302a20;
+            --text-muted: #766d5d;
+            --primary: #b8953f;
+            --primary-dark: #927326;
+            --success: #18a878;
+            --danger: #d94b4b;
+            --amber: #c49a3a;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
-        body { background: var(--bg); color: var(--text-main); min-height: 100vh; padding-bottom: 3rem; }
+        body {
+            background: linear-gradient(180deg, #fffdf8 0%, #f8f5ec 55%, #f4efe2 100%);
+            color: var(--text-main); min-height: 100vh; padding-bottom: 3rem;
+        }
 
         header {
-            background: rgba(11, 19, 41, 0.95); border-bottom: 1px solid var(--card-border);
-            padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center;
-            position: sticky; top: 0; z-index: 100;
+            background: rgba(255, 253, 247, 0.96); border-bottom: 1px solid var(--card-border);
+            padding: 0.85rem 1.5rem; display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100; box-shadow: 0 3px 14px rgba(100, 75, 25, 0.08);
+            backdrop-filter: blur(12px);
         }
 
-        .header-title { display: flex; align-items: center; gap: 0.75rem; font-size: 1.25rem; font-weight: 700; }
-        .header-actions { display: flex; align-items: center; gap: 1rem; }
+        .header-title { display: flex; align-items: center; gap: 0.75rem; font-size: 1.18rem; font-weight: 800; color: #302a20; }
+        .header-actions { display: flex; align-items: center; gap: 0.65rem; }
 
-        /* Kitchen Status Toggle */
         .kitchen-toggle-btn {
-            padding: 0.5rem 1.2rem; border-radius: 9999px; font-weight: 800; font-size: 0.85rem;
-            cursor: pointer; border: 2px solid transparent; transition: 0.2s;
+            padding: 0.6rem 1rem; border-radius: 999px; font-weight: 800; font-size: 0.85rem;
+            cursor: pointer; border: 1px solid; box-shadow: 0 3px 9px rgba(80,60,25,0.10);
         }
-        .kitchen-open { background: rgba(16, 185, 129, 0.2); color: #10b981; border-color: #10b981; }
-        .kitchen-closed { background: rgba(239, 68, 68, 0.2); color: #ef4444; border-color: #ef4444; }
+        .kitchen-open { background: #e8f7ef; color: #13845e; border-color: #9bd7ba; }
+        .kitchen-closed { background: #fff0ee; color: #c53d3d; border-color: #e7aaa5; }
 
         .admin-profile-btn {
-            background: var(--card-bg); border: 1px solid var(--card-border);
-            padding: 0.5rem 1.2rem; border-radius: 9999px; color: #fff; cursor: pointer;
-            display: flex; align-items: center; gap: 0.5rem; font-weight: 600;
+            background: linear-gradient(135deg, #d8bd70, #b8953f); color: #30240f;
+            border: 1px solid #927326; padding: 0.62rem 1rem; border-radius: 999px; font-weight: 600; cursor: pointer;
+            box-shadow: 0 4px 12px rgba(100,75,25,0.16);
         }
 
         .profile-dropdown-menu {
-            position: absolute; top: 65px; right: 2rem; background: var(--card-bg);
-            border: 1px solid var(--card-border); border-radius: 12px; width: 230px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: none; flex-direction: column; z-index: 110;
+            position: absolute; top: 70px; right: 1.5rem; background: #fffdf7;
+            border: 1px solid #ded3b8; border-radius: 16px; width: 230px;
+            box-shadow: 0 15px 35px rgba(70,55,25,0.16); display: none; flex-direction: column; z-index: 110;
         }
         .profile-dropdown-menu.show { display: flex; }
         .dropdown-item {
-            padding: 0.85rem 1.25rem; color: #fff; border: none; background: none; text-align: left;
+            padding: 0.9rem 1.1rem; color: #40382c; border: none; background: none; text-align: left;
             font-size: 0.9rem; cursor: pointer; transition: 0.2s;
         }
-        .dropdown-item:hover { background: #283548; }
+        .dropdown-item:hover { background: #f5efdf; color: #927326; }
 
-        .container { max-width: 1400px; margin: 2rem auto; padding: 0 1.5rem; }
-
-        .tab-controls { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+        .container { max-width: 1450px; margin: 1.5rem auto; padding: 0 1.25rem; }
+        .tab-controls { display: flex; gap: 0.7rem; margin-bottom: 1.4rem; }
         .tab-btn {
-            background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-muted);
-            padding: 0.7rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 700; display: flex; align-items: center; gap: 0.6rem;
+            background: #fffdf7; border: 1px solid #ded3b8; color: var(--text-muted);
+            padding: 0.72rem 1.25rem; border-radius: 999px; cursor: pointer; font-weight: 700; display: flex; align-items: center; gap: 0.6rem;
+            box-shadow: 0 3px 10px rgba(90,70,30,0.06);
         }
-        .tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-        .count-badge { background: #0f172a; padding: 0.15rem 0.6rem; border-radius: 9999px; font-size: 0.8rem; }
+        .tab-btn.active {
+            background: linear-gradient(135deg, #d8bd70, #b8953f); color: #fffdf7; border-color: #927326;
+            box-shadow: 0 5px 13px rgba(120,90,30,0.18);
+        }
 
-        /* Separate Boxes */
         .section-box {
-            background: rgba(30, 41, 59, 0.4); border: 1px solid var(--card-border);
-            border-radius: 14px; padding: 1.5rem; margin-bottom: 2rem;
+            background: rgba(255,253,247,0.92); border: 1px solid #ded3b8;
+            border-radius: 18px; padding: 1.25rem; margin-bottom: 2rem;
+            box-shadow: 0 5px 18px rgba(90,70,30,0.07);
         }
-        .section-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--card-border);
-        }
-        .section-title { font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 0.6rem; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid #e7dfcd; }
+        .section-title { font-size: 1.15rem; font-weight: 700; color: #40382c; }
 
-        .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 1.25rem; }
+        .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
         .order-card {
-            background: var(--card-bg); border: 1px solid var(--card-border);
-            border-radius: 12px; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; position: relative;
+            background: #fffdf7; border: 1px solid #ded3b8; border-radius: 16px; padding: 1rem;
+            display: flex; flex-direction: column; gap: 0.75rem; position: relative;
+            box-shadow: 0 5px 15px rgba(90,70,30,0.07);
         }
 
-        .payment-dot {
-            width: 14px; height: 14px; border-radius: 50%; display: inline-block;
-            box-shadow: 0 0 8px rgba(0,0,0,0.5);
+        /* SOLID RED CARD FOR UNPAID ORDERS */
+        .order-card.order-card-unpaid {
+            background: #fff0ee !important;
+            border: 2px solid #d94b4b !important;
+            box-shadow: 0 6px 18px rgba(217, 75, 75, 0.25) !important;
         }
+        .order-card.order-card-unpaid .order-items-box {
+            background: #ffe3e0 !important;
+            border-color: #f5b8b5 !important;
+            color: #721c24 !important;
+        }
+        .order-card.order-card-unpaid .order-total-line {
+            color: #b92c2c !important;
+        }
+
+        .payment-dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
         .dot-paid { background-color: var(--success); box-shadow: 0 0 8px var(--success); }
         .dot-pending { background-color: var(--danger); box-shadow: 0 0 8px var(--danger); }
 
         .order-head { display: flex; justify-content: space-between; align-items: flex-start; }
-        .token-tag { background: #0284c7; color: white; padding: 0.2rem 0.6rem; border-radius: 6px; font-weight: 800; font-size: 0.9rem; }
-        .order-user { font-size: 1.05rem; font-weight: 700; margin-top: 0.2rem; }
-        .order-time { font-size: 0.8rem; color: var(--text-muted); }
-
+        .token-tag {
+            background: linear-gradient(135deg, #d8bd70, #b8953f); color: #fffdf7;
+            padding: 0.3rem 0.7rem; border-radius: 999px; font-weight: 800; font-size: 0.9rem;
+        }
         .order-items-box {
-            background: #0f172a; border-radius: 8px; padding: 0.75rem; font-size: 0.85rem;
-            display: flex; flex-direction: column; gap: 0.4rem; max-height: 180px; overflow-y: auto;
+            background: #f7f2e7; border: 1px solid #e6dcc7; border-radius: 12px;
+            padding: 0.75rem; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.4rem; max-height: 180px; overflow-y: auto;
         }
         .order-item-line { display: flex; justify-content: space-between; }
-        .order-total-line { display: flex; justify-content: space-between; font-weight: 800; font-size: 1.1rem; color: #38bdf8; }
+        .order-total-line { display: flex; justify-content: space-between; font-weight: 800; font-size: 1.1rem; color: #927326; }
 
         .btn-action {
-            border: none; padding: 0.65rem 0.5rem; border-radius: 6px; font-weight: 700; font-size: 0.8rem;
+            border: none; padding: 0.65rem 0.5rem; border-radius: 999px; font-weight: 700; font-size: 0.8rem;
             cursor: pointer; text-transform: uppercase; transition: 0.2s; text-align: center;
         }
-        .btn-accept { background: #0284c7; color: white; }
-        .btn-cancel { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
-        .btn-prep { background: #f59e0b; color: #000; }
-        .btn-ready { background: #38bdf8; color: #000; }
-        .btn-deliver { background: #10b981; color: white; }
-        .btn-action.active { outline: 3px solid #fff; }
+        .btn-accept { background: linear-gradient(135deg,#d8bd70,#b8953f); color: #fffdf7; }
+        .btn-cancel { background: #fff1ef; color: #c53d3d; border: 1px solid #e3aaa4; }
+        .btn-prep { background: #f2dfad; color: #70551c; }
+        .btn-ready { background: #e2f1f5; color: #226879; }
+        .btn-deliver { background: #e5f6ed; color: #137951; }
 
-        .menu-table-container { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; overflow: hidden; }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th, td { padding: 1rem; border-bottom: 1px solid var(--card-border); }
-        th { background: #162032; font-size: 0.85rem; text-transform: uppercase; color: var(--text-muted); }
-        .dish-thumb { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; }
-
-        /* Modals */
+        /* Themed Dialog Modal */
         .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7);
-            display: none; align-items: center; justify-content: center; z-index: 1000;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(55,43,20,0.5);
+            backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 1000;
         }
         .modal-overlay.open { display: flex; }
-        .modal-box { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; width: 100%; max-width: 520px; padding: 2rem; max-height: 85vh; overflow-y: auto; }
-        .modal-box h3 { margin-bottom: 1rem; }
-        .form-group { margin-bottom: 1rem; }
-        .form-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; }
-        .form-group input, .form-group select {
-            width: 100%; padding: 0.75rem; background: #0f172a; border: 1px solid var(--card-border);
-            border-radius: 8px; color: #fff; font-size: 0.95rem; outline: none;
+        .modal-box {
+            background: #fffdf7; border: 1px solid #ded3b8; border-radius: 20px;
+            width: 100%; max-width: 520px; padding: 2rem; max-height: 85vh; overflow-y: auto;
+            box-shadow: 0 20px 55px rgba(55,43,20,0.20);
         }
         .modal-buttons { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; }
-        .btn-secondary { background: #334155; color: #fff; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; }
-        .btn-primary { background: var(--primary); color: #fff; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; font-weight: 700; }
+        .btn-secondary { background: #fffdf7; color: #665b48; border: 1px solid #d7cbb0; padding: 0.6rem 1.2rem; border-radius: 999px; cursor: pointer; }
+        .btn-primary { background: linear-gradient(135deg,#d8bd70,#b8953f); color: #fffdf7; border: 1px solid #927326; padding: 0.6rem 1.2rem; border-radius: 999px; cursor: pointer; font-weight: 700; }
 
-        /* Photo Manager Grid */
-        .photos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 0.75rem; margin-top: 1rem; }
-        .photo-card { background: #0f172a; border-radius: 8px; overflow: hidden; position: relative; border: 1px solid var(--card-border); }
-        .photo-card img { width: 100%; height: 90px; object-fit: cover; }
-        .photo-delete-btn {
-            position: absolute; top: 4px; right: 4px; background: rgba(239,68,68,0.85); color: white;
-            border: none; width: 22px; height: 22px; border-radius: 50%; font-size: 0.8rem; cursor: pointer;
+        .dialog-icon { font-size: 2.2rem; margin-bottom: 0.5rem; text-align: center; }
+        .dialog-title { font-size: 1.25rem; font-weight: 800; color: #302a20; text-align: center; margin-bottom: 0.5rem; }
+        .dialog-message { font-size: 0.95rem; color: #665b48; text-align: center; margin-bottom: 1.25rem; }
+        .dialog-textarea {
+            width: 100%; padding: 0.75rem; background: #fffaf0; border: 1px solid #d9ccb0;
+            border-radius: 12px; font-size: 0.95rem; color: #302a20; outline: none; margin-bottom: 1rem;
         }
     </style>
-
-<style id="premium-admin-theme">
-
-/* =========================================================
-   PREMIUM GOLD ADMIN THEME
-   ========================================================= */
-
-:root {
-    --bg: #f8f5ec !important;
-    --card-bg: #fffdf7 !important;
-    --card-border: #ded3b8 !important;
-    --text-main: #302a20 !important;
-    --text-muted: #766d5d !important;
-    --primary: #b8953f !important;
-    --primary-dark: #927326 !important;
-    --success: #18a878 !important;
-    --danger: #d94b4b !important;
-    --amber: #c49a3a !important;
-}
-
-* {
-    box-sizing: border-box !important;
-}
-
-html {
-    background: #f8f5ec !important;
-}
-
-body {
-    background:
-        linear-gradient(
-            180deg,
-            #fffdf8 0%,
-            #f8f5ec 55%,
-            #f4efe2 100%
-        ) !important;
-
-    color: #302a20 !important;
-    min-height: 100vh !important;
-    padding-bottom: 4rem !important;
-}
-
-/* =========================================================
-   HEADER
-   ========================================================= */
-
-header {
-    background: rgba(255, 253, 247, 0.96) !important;
-    border-bottom: 1px solid #ded3b8 !important;
-    padding: 0.85rem 1.5rem !important;
-
-    box-shadow:
-        0 3px 14px rgba(100, 75, 25, 0.08) !important;
-
-    backdrop-filter: blur(12px);
-}
-
-.header-title {
-    color: #302a20 !important;
-    font-size: 1.18rem !important;
-    font-weight: 800 !important;
-}
-
-.header-title span:first-child {
-    background: linear-gradient(135deg, #d8bd70, #b8953f);
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    display: inline-flex !important;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 10px rgba(100,75,25,0.18);
-}
-
-/* =========================================================
-   HEADER BUTTONS
-   ========================================================= */
-
-.header-actions {
-    gap: 0.65rem !important;
-}
-
-.kitchen-toggle-btn {
-    padding: 0.6rem 1rem !important;
-    border-radius: 999px !important;
-    font-weight: 800 !important;
-    border: 1px solid !important;
-    box-shadow: 0 3px 9px rgba(80,60,25,0.10);
-}
-
-.kitchen-open {
-    background: #e8f7ef !important;
-    color: #13845e !important;
-    border-color: #9bd7ba !important;
-}
-
-.kitchen-closed {
-    background: #fff0ee !important;
-    color: #c53d3d !important;
-    border-color: #e7aaa5 !important;
-}
-
-.admin-profile-btn {
-    background: linear-gradient(135deg, #d8bd70, #b8953f) !important;
-    color: #30240f !important;
-    border: 1px solid #927326 !important;
-    padding: 0.62rem 1rem !important;
-    border-radius: 999px !important;
-    box-shadow: 0 4px 12px rgba(100,75,25,0.16) !important;
-}
-
-/* =========================================================
-   DROPDOWN
-   ========================================================= */
-
-.profile-dropdown-menu {
-    top: 70px !important;
-    right: 1.5rem !important;
-
-    background: #fffdf7 !important;
-    border: 1px solid #ded3b8 !important;
-    border-radius: 16px !important;
-
-    box-shadow:
-        0 15px 35px rgba(70,55,25,0.16) !important;
-
-    overflow: hidden !important;
-}
-
-.dropdown-item {
-    color: #40382c !important;
-    padding: 0.9rem 1.1rem !important;
-}
-
-.dropdown-item:hover {
-    background: #f5efdf !important;
-    color: #927326 !important;
-}
-
-/* =========================================================
-   MAIN CONTAINER
-   ========================================================= */
-
-.container {
-    max-width: 1450px !important;
-    margin: 1.5rem auto !important;
-    padding: 0 1.25rem !important;
-}
-
-/* =========================================================
-   TABS
-   ========================================================= */
-
-.tab-controls {
-    display: flex !important;
-    gap: 0.7rem !important;
-    margin-bottom: 1.4rem !important;
-}
-
-.tab-btn {
-    background: #fffdf7 !important;
-    border: 1px solid #ded3b8 !important;
-    color: #766d5d !important;
-
-    padding: 0.72rem 1.25rem !important;
-    border-radius: 999px !important;
-
-    box-shadow: 0 3px 10px rgba(90,70,30,0.06) !important;
-}
-
-.tab-btn.active {
-    background: linear-gradient(135deg, #d8bd70, #b8953f) !important;
-    color: #fffdf7 !important;
-    border-color: #927326 !important;
-    box-shadow: 0 5px 13px rgba(120,90,30,0.18) !important;
-}
-
-.count-badge {
-    background: rgba(255,255,255,0.55) !important;
-    color: #5c481d !important;
-}
-
-/* =========================================================
-   SECTION BOXES
-   ========================================================= */
-
-.section-box {
-    background: rgba(255,253,247,0.92) !important;
-    border: 1px solid #ded3b8 !important;
-    border-radius: 18px !important;
-    padding: 1.25rem !important;
-
-    box-shadow:
-        0 5px 18px rgba(90,70,30,0.07) !important;
-}
-
-.section-header {
-    border-bottom: 1px solid #e7dfcd !important;
-}
-
-.section-title {
-    color: #40382c !important;
-}
-
-/* Override old colored left borders */
-#ordersTab .section-box {
-    border-left: 4px solid #b8953f !important;
-}
-
-/* =========================================================
-   ORDER GRID
-   ========================================================= */
-
-.orders-grid {
-    grid-template-columns:
-        repeat(auto-fill, minmax(300px, 1fr)) !important;
-    gap: 1rem !important;
-}
-
-/* =========================================================
-   ORDER CARDS
-   ========================================================= */
-
-.order-card {
-    background: #fffdf7 !important;
-    border: 1px solid #ded3b8 !important;
-    border-radius: 16px !important;
-    padding: 1rem !important;
-
-    box-shadow:
-        0 5px 15px rgba(90,70,30,0.07) !important;
-
-    transition: transform 0.18s ease,
-                box-shadow 0.18s ease !important;
-}
-
-.order-card:hover {
-    transform: translateY(-2px);
-    box-shadow:
-        0 9px 22px rgba(90,70,30,0.12) !important;
-}
-
-.order-user {
-    color: #302a20 !important;
-}
-
-.order-time {
-    color: #8a806e !important;
-}
-
-/* =========================================================
-   TOKEN
-   ========================================================= */
-
-.token-tag {
-    background: linear-gradient(135deg, #d8bd70, #b8953f) !important;
-    color: #fffdf7 !important;
-    border-radius: 999px !important;
-    padding: 0.3rem 0.7rem !important;
-    box-shadow: 0 3px 8px rgba(100,75,25,0.14);
-}
-
-/* =========================================================
-   ORDER ITEMS
-   ========================================================= */
-
-.order-items-box {
-    background: #f7f2e7 !important;
-    border: 1px solid #e6dcc7 !important;
-    color: #4d4538 !important;
-    border-radius: 12px !important;
-}
-
-.order-item-line {
-    border-bottom: 1px solid #e8dfcf;
-    padding-bottom: 0.25rem;
-}
-
-.order-item-line:last-child {
-    border-bottom: none;
-}
-
-.order-total-line {
-    color: #927326 !important;
-}
-
-/* =========================================================
-   ACTION BUTTONS
-   ========================================================= */
-
-.btn-action {
-    border-radius: 999px !important;
-    min-height: 38px !important;
-}
-
-.btn-accept {
-    background: linear-gradient(135deg,#d8bd70,#b8953f) !important;
-    color: #fffdf7 !important;
-}
-
-.btn-cancel {
-    background: #fff1ef !important;
-    color: #c53d3d !important;
-    border: 1px solid #e3aaa4 !important;
-}
-
-.btn-prep {
-    background: #f2dfad !important;
-    color: #70551c !important;
-}
-
-.btn-ready {
-    background: #e2f1f5 !important;
-    color: #226879 !important;
-}
-
-.btn-deliver {
-    background: #e5f6ed !important;
-    color: #137951 !important;
-}
-
-.btn-action.active {
-    outline: 2px solid #927326 !important;
-}
-
-/* =========================================================
-   MENU HEADER BUTTONS
-   ========================================================= */
-
-#menuTab h3 {
-    color: #302a20 !important;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg,#d8bd70,#b8953f) !important;
-    color: #fffdf7 !important;
-    border: 1px solid #927326 !important;
-    border-radius: 999px !important;
-    box-shadow: 0 4px 11px rgba(100,75,25,0.14);
-}
-
-.btn-primary:hover {
-    filter: brightness(1.04);
-}
-
-.btn-secondary {
-    background: #fffdf7 !important;
-    color: #665b48 !important;
-    border: 1px solid #d7cbb0 !important;
-    border-radius: 999px !important;
-}
-
-.btn-secondary:hover {
-    background: #f5efdf !important;
-}
-
-/* =========================================================
-   MENU TABLE
-   ========================================================= */
-
-.menu-table-container {
-    background: #fffdf7 !important;
-    border: 1px solid #ded3b8 !important;
-    border-radius: 16px !important;
-    box-shadow: 0 5px 18px rgba(90,70,30,0.07) !important;
-}
-
-table {
-    color: #40382c !important;
-}
-
-th {
-    background: #f2ead9 !important;
-    color: #766d5d !important;
-    border-bottom: 1px solid #ded3b8 !important;
-}
-
-th,
-td {
-    border-bottom: 1px solid #e8dfcf !important;
-}
-
-tr:hover td {
-    background: #fcf8ef !important;
-}
-
-.dish-thumb {
-    border-radius: 10px !important;
-    border: 1px solid #ded3b8;
-}
-
-/* =========================================================
-   MODALS
-   ========================================================= */
-
-.modal-overlay {
-    background: rgba(55,43,20,0.48) !important;
-    backdrop-filter: blur(4px);
-}
-
-.modal-box {
-    background: #fffdf7 !important;
-    border: 1px solid #ded3b8 !important;
-    border-radius: 20px !important;
-
-    box-shadow:
-        0 20px 55px rgba(55,43,20,0.20) !important;
-}
-
-.modal-box h3 {
-    color: #40382c !important;
-}
-
-.form-group label {
-    color: #766d5d !important;
-}
-
-.form-group input,
-.form-group select {
-    background: #fffaf0 !important;
-    color: #302a20 !important;
-    border: 1px solid #d9ccb0 !important;
-    border-radius: 11px !important;
-}
-
-.form-group input:focus,
-.form-group select:focus {
-    border-color: #b8953f !important;
-    box-shadow: 0 0 0 3px rgba(184,149,63,0.13) !important;
-}
-
-/* =========================================================
-   PHOTO MANAGER
-   ========================================================= */
-
-.photo-card {
-    background: #fffdf7 !important;
-    border: 1px solid #ded3b8 !important;
-    border-radius: 12px !important;
-}
-
-.photo-delete-btn {
-    background: #c94c46 !important;
-}
-
-/* =========================================================
-   MOBILE ADMIN
-   ========================================================= */
-
-@media (max-width: 768px) {
-
-    header {
-        padding: 0.75rem 0.85rem !important;
-    }
-
-    .header-title {
-        font-size: 0.95rem !important;
-    }
-
-    .header-title span:first-child {
-        width: 36px;
-        height: 36px;
-    }
-
-    .header-actions {
-        gap: 0.35rem !important;
-    }
-
-    .kitchen-toggle-btn {
-        font-size: 0.7rem !important;
-        padding: 0.48rem 0.65rem !important;
-    }
-
-    .admin-profile-btn {
-        width: 42px !important;
-        height: 42px !important;
-        padding: 0 !important;
-        justify-content: center !important;
-        font-size: 0 !important;
-    }
-
-    .admin-profile-btn span:first-child {
-        font-size: 0 !important;
-    }
-
-    .admin-profile-btn span:first-child::before {
-        content: "⚙️";
-        font-size: 1rem;
-    }
-
-    .admin-profile-btn span:last-child {
-        display: none !important;
-    }
-
-    .profile-dropdown-menu {
-        right: 0.75rem !important;
-        top: 62px !important;
-        width: min(280px, calc(100vw - 1.5rem)) !important;
-    }
-
-    .container {
-        margin: 1rem auto !important;
-        padding: 0 0.7rem !important;
-    }
-
-    .tab-controls {
-        overflow-x: auto !important;
-        padding-bottom: 3px;
-    }
-
-    .tab-btn {
-        white-space: nowrap !important;
-        flex-shrink: 0 !important;
-        padding: 0.65rem 1rem !important;
-    }
-
-    .section-box {
-        padding: 0.85rem !important;
-        border-radius: 15px !important;
-    }
-
-    .section-header {
-        align-items: flex-start !important;
-        gap: 0.5rem !important;
-    }
-
-    .section-title {
-        font-size: 0.95rem !important;
-    }
-
-    .orders-grid {
-        grid-template-columns: 1fr !important;
-    }
-
-    .order-card {
-        border-radius: 15px !important;
-    }
-
-    #menuTab > div:first-child {
-        flex-direction: column !important;
-        align-items: stretch !important;
-        gap: 0.75rem !important;
-    }
-
-    #menuTab > div:first-child > div {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
-    }
-
-    #menuTab > div:first-child button {
-        width: 100% !important;
-        padding: 0.65rem 0.5rem !important;
-    }
-
-    .menu-table-container {
-        overflow-x: auto !important;
-    }
-
-    table {
-        min-width: 720px !important;
-    }
-
-    .modal-box {
-        width: calc(100% - 1.25rem) !important;
-        padding: 1.25rem !important;
-        border-radius: 17px !important;
-        max-height: 90vh !important;
-    }
-
-    .modal-buttons {
-        flex-wrap: wrap !important;
-    }
-
-    .modal-buttons button {
-        flex: 1 !important;
-        min-width: 110px !important;
-    }
-}
-
-</style>
-
-
-<style>
-/* =========================================================
-   GRAND PALACE - UNIVERSAL ADMIN NOTIFICATION
-   Only replaces browser alert appearance.
-   Existing website functionality remains unchanged.
-   ========================================================= */
-
-#grandPalaceNotifications {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 999999;
-    width: min(390px, calc(100vw - 30px));
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    pointer-events: none;
-}
-
-.grand-palace-notification {
-    position: relative;
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-
-    padding: 16px 17px;
-
-    background: rgba(255, 253, 247, 0.98);
-    color: #29251d;
-
-    border: 1px solid #d8c99a;
-    border-left: 5px solid #b8953f;
-    border-radius: 14px;
-
-    box-shadow:
-        0 12px 35px rgba(60, 50, 25, 0.20),
-        0 3px 10px rgba(60, 50, 25, 0.10);
-
-    backdrop-filter: blur(12px);
-
-    pointer-events: auto;
-
-    animation: gpNotificationIn .28s ease forwards;
-}
-
-.grand-palace-notification.gp-hide {
-    animation: gpNotificationOut .28s ease forwards;
-}
-
-.gp-notification-icon {
-    width: 30px;
-    height: 30px;
-    min-width: 30px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 50%;
-
-    background: #b8953f;
-    color: #fffdf7;
-
-    font-size: 16px;
-    font-weight: 800;
-}
-
-.gp-notification-content {
-    flex: 1;
-    min-width: 0;
-}
-
-.gp-notification-title {
-    margin-bottom: 3px;
-
-    color: #927326;
-
-    font-size: 0.95rem;
-    font-weight: 800;
-}
-
-.gp-notification-message {
-    color: #756f63;
-
-    font-size: 0.88rem;
-    line-height: 1.4;
-
-    word-break: break-word;
-}
-
-.gp-notification-close {
-    border: 0;
-    background: transparent;
-
-    color: #927326;
-
-    font-size: 21px;
-    line-height: 1;
-
-    padding: 0;
-    cursor: pointer;
-}
-
-.gp-notification-close:hover {
-    color: #6f571d;
-}
-
-@keyframes gpNotificationIn {
-    from {
-        opacity: 0;
-        transform: translateX(35px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-@keyframes gpNotificationOut {
-    from {
-        opacity: 1;
-        transform: translateX(0);
-    }
-
-    to {
-        opacity: 0;
-        transform: translateX(35px);
-    }
-}
-
-@media (max-width: 600px) {
-    #grandPalaceNotifications {
-        top: 12px;
-        left: 12px;
-        right: 12px;
-        width: auto;
-    }
-}
-</style>
-
-<script>
-/* =========================================================
-   UNIVERSAL ALERT REPLACEMENT
-   Every existing alert() in this admin page uses this.
-   ========================================================= */
-
-(function () {
-
-    function grandPalaceNotification(message) {
-
-        let container =
-            document.getElementById("grandPalaceNotifications");
-
-        if (!container) {
-            container = document.createElement("div");
-            container.id = "grandPalaceNotifications";
-            document.body.appendChild(container);
-        }
-
-        const notification =
-            document.createElement("div");
-
-        notification.className =
-            "grand-palace-notification";
-
-        notification.innerHTML = `
-            <div class="gp-notification-icon">✓</div>
-
-            <div class="gp-notification-content">
-                <div class="gp-notification-title">
-                    Grand Palace
-                </div>
-
-                <div class="gp-notification-message"></div>
-            </div>
-
-            <button
-                class="gp-notification-close"
-                type="button"
-                aria-label="Close"
-            >×</button>
-        `;
-
-        /*
-         * Use textContent instead of innerHTML so that
-         * existing alert messages remain safe.
-         */
-        notification.querySelector(
-            ".gp-notification-message"
-        ).textContent = String(message);
-
-        container.appendChild(notification);
-
-        const close = () => {
-
-            if (
-                notification.classList.contains("gp-hide")
-            ) {
-                return;
-            }
-
-            notification.classList.add("gp-hide");
-
-            setTimeout(() => {
-                notification.remove();
-            }, 300);
-        };
-
-        notification.querySelector(
-            ".gp-notification-close"
-        ).addEventListener("click", close);
-
-        /*
-         * Automatically disappear.
-         */
-        setTimeout(close, 3500);
-    }
-
-    /*
-     * THIS IS THE IMPORTANT PART.
-     *
-     * Existing code can continue doing:
-     *
-     * alert("Kitchen status updated");
-     *
-     * We don't have to modify those existing lines.
-     */
-    window.alert = grandPalaceNotification;
-
-})();
-</script>
-
 </head>
 <body>
 
@@ -970,7 +160,6 @@ tr:hover td {
         </div>
 
         <div class="header-actions">
-            <!-- Kitchen Master Toggle -->
             <button class="kitchen-toggle-btn kitchen-open" id="kitchenToggleBtn" onclick="toggleKitchenStatus()">Kitchen: OPEN</button>
 
             <button class="admin-profile-btn" onclick="toggleDropdown()">
@@ -998,7 +187,6 @@ tr:hover td {
             </button>
         </div>
 
-        <!-- TAB 1: Kitchen Orders (Distinct Boxes) -->
         <section id="ordersTab">
             <!-- BOX 1: NEW INCOMING ORDERS -->
             <div class="section-box" style="border-left: 4px solid var(--amber);">
@@ -1014,14 +202,14 @@ tr:hover td {
                 </div>
             </div>
 
-            <!-- BOX 2: ACTIVE PREPARATION ORDERS -->
+            <!-- BOX 2: ACTIVE IN-PROGRESS ORDERS -->
             <div class="section-box" style="border-left: 4px solid var(--primary);">
                 <div class="section-header">
                     <div class="section-title">
                         <span>🍳 Active In-Progress Orders</span>
                         <span class="count-badge" style="background:var(--primary); color:#fff;" id="activeOrdersBadge">0</span>
                     </div>
-                    <span style="font-size:0.85rem; color:var(--text-muted);">🟢 Green = Paid | 🔴 Red = Payment Pending</span>
+                    <span style="font-size:0.85rem; color:var(--text-muted);">🟢 Green = Paid | 🔴 Red Card = Payment Pending</span>
                 </div>
                 <div class="orders-grid" id="activeOrdersGrid">
                     <div style="color:var(--text-muted); padding:1rem;">No active orders in kitchen.</div>
@@ -1029,7 +217,6 @@ tr:hover td {
             </div>
         </section>
 
-        <!-- TAB 2: Menu Editing -->
         <section id="menuTab" style="display:none;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
                 <h3>Live Restaurant Menu</h3>
@@ -1038,16 +225,16 @@ tr:hover td {
                     <button class="btn-primary" onclick="openItemModal()">+ Add New Food Item</button>
                 </div>
             </div>
-            <div class="menu-table-container">
-                <table>
+            <div style="background:#fffdf7; border:1px solid #ded3b8; border-radius:14px; overflow:hidden;">
+                <table style="width:100%; border-collapse:collapse;">
                     <thead>
-                        <tr>
-                            <th>Photo</th>
-                            <th>Dish Name</th>
-                            <th>Category</th>
-                            <th>Price (₹)</th>
-                            <th>Status</th>
-                            <th>Actions</th>
+                        <tr style="border-bottom:1px solid #ded3b8; background:#f7f2e7;">
+                            <th style="padding:0.75rem; text-align:left;">Photo</th>
+                            <th style="padding:0.75rem; text-align:left;">Dish Name</th>
+                            <th style="padding:0.75rem; text-align:left;">Category</th>
+                            <th style="padding:0.75rem; text-align:left;">Price (₹)</th>
+                            <th style="padding:0.75rem; text-align:left;">Status</th>
+                            <th style="padding:0.75rem; text-align:left;">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="menuTableBody"></tbody>
@@ -1056,55 +243,78 @@ tr:hover td {
         </section>
     </div>
 
-    <!-- Password Modal -->
-    <div class="modal-overlay" id="passwordModal">
-        <div class="modal-box">
-            <h3>Update Admin Password</h3>
-            <div class="form-group">
-                <label>New Secret Password</label>
-                <input type="password" id="newAdminPasswordInput" placeholder="Min 6 characters" />
-            </div>
-            <div class="modal-buttons">
-                <button class="btn-secondary" onclick="closePasswordModal()">Cancel</button>
-                <button class="btn-primary" onclick="saveAdminPassword()">Save</button>
+    <!-- THEMED CONFIRMATION MODAL -->
+    <div class="modal-overlay" id="adminConfirmModal">
+        <div class="modal-box" style="max-width: 420px; text-align:center;">
+            <div class="dialog-icon" id="confirmDialogIcon">⚠️</div>
+            <h3 class="dialog-title" id="confirmDialogTitle">Confirm Action</h3>
+            <p class="dialog-message" id="confirmDialogMessage">Are you sure you want to proceed?</p>
+            <div class="modal-buttons" style="justify-content:center;">
+                <button class="btn-secondary" onclick="closeAdminConfirm(false)">Cancel</button>
+                <button class="btn-primary" id="confirmDialogSubmitBtn" onclick="closeAdminConfirm(true)">Confirm</button>
             </div>
         </div>
     </div>
 
-    <!-- Menu Item Modal -->
+    <!-- THEMED CANCEL PROMPT MODAL -->
+    <div class="modal-overlay" id="adminCancelPromptModal">
+        <div class="modal-box" style="max-width: 440px;">
+            <div class="dialog-icon">❌</div>
+            <h3 class="dialog-title">Cancel Order Reason</h3>
+            <p class="dialog-message">Please enter reason for cancellation. This will be shown directly to the user.</p>
+            <textarea class="dialog-textarea" id="cancelReasonInput" rows="3" placeholder="e.g. Kitchen is busy, Out of stock"></textarea>
+            <div class="modal-buttons">
+                <button class="btn-secondary" onclick="closeCancelPrompt(false)">Abort</button>
+                <button class="btn-primary" style="background:#c53d3d; border-color:#922626;" onclick="closeCancelPrompt(true)">Confirm Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Photos Manager Modal -->
+    <div class="modal-overlay" id="photosModal">
+        <div class="modal-box">
+            <h3>Static Uploaded Photos</h3>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">Manage stored files inside /static/uploads/</p>
+            <div id="photosContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(100px, 1fr)); gap:0.75rem;"></div>
+            <div class="modal-buttons">
+                <button class="btn-secondary" onclick="closePhotosModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Menu Item Modal -->
     <div class="modal-overlay" id="itemModal">
         <div class="modal-box">
             <h3 id="itemModalTitle">Menu Dish</h3>
             <form id="menuItemForm" onsubmit="handleSaveMenuItem(event)" enctype="multipart/form-data">
                 <input type="hidden" id="editItemId" name="id" />
-
-                <div class="form-group">
-                    <label>Dish Name</label>
-                    <input type="text" id="dishNameInput" name="item_name" required />
+                <div style="margin-bottom:1rem;">
+                    <label style="display:block; margin-bottom:0.3rem;">Dish Name</label>
+                    <input type="text" id="dishNameInput" name="item_name" required style="width:100%; padding:0.6rem; border:1px solid #ded3b8; border-radius:8px;" />
                 </div>
-                <div class="form-group">
-                    <label>Category</label>
-                    <select id="dishCategorySelect" name="category">
+                <div style="margin-bottom:1rem;">
+                    <label style="display:block; margin-bottom:0.3rem;">Category</label>
+                    <select id="dishCategorySelect" name="category" style="width:100%; padding:0.6rem; border:1px solid #ded3b8; border-radius:8px;">
                         <option value="tiffins">Tiffins</option>
                         <option value="fast food">Fast Food</option>
                         <option value="meals">Meals</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Price (₹)</label>
-                    <input type="number" step="0.01" id="dishPriceInput" name="price" required />
+                <div style="margin-bottom:1rem;">
+                    <label style="display:block; margin-bottom:0.3rem;">Price (₹)</label>
+                    <input type="number" step="0.01" id="dishPriceInput" name="price" required style="width:100%; padding:0.6rem; border:1px solid #ded3b8; border-radius:8px;" />
                 </div>
-                <div class="form-group">
-                    <label>Upload Photo</label>
+                <div style="margin-bottom:1rem;">
+                    <label style="display:block; margin-bottom:0.3rem;">Upload Photo</label>
                     <input type="file" id="dishFileInput" name="image_file" accept="image/*" />
                 </div>
-                <div class="form-group">
-                    <label>Photo URL / Local Path</label>
-                    <input type="text" id="dishUrlInput" name="image_url" />
+                <div style="margin-bottom:1rem;">
+                    <label style="display:block; margin-bottom:0.3rem;">Photo URL</label>
+                    <input type="text" id="dishUrlInput" name="image_url" style="width:100%; padding:0.6rem; border:1px solid #ded3b8; border-radius:8px;" />
                 </div>
-                <div class="form-group">
-                    <label>Active</label>
-                    <select id="dishActiveSelect" name="is_active">
+                <div style="margin-bottom:1rem;">
+                    <label style="display:block; margin-bottom:0.3rem;">Active</label>
+                    <select id="dishActiveSelect" name="is_active" style="width:100%; padding:0.6rem; border:1px solid #ded3b8; border-radius:8px;">
                         <option value="true">Active (Green Dot)</option>
                         <option value="false">Inactive (Red Dot)</option>
                     </select>
@@ -1117,30 +327,21 @@ tr:hover td {
         </div>
     </div>
 
-    <!-- Photos Manager Modal -->
-    <div class="modal-overlay" id="photosModal">
-        <div class="modal-box">
-            <h3>Static Uploaded Photos</h3>
-            <p style="font-size:0.8rem; color:var(--text-muted);">Manage or delete stored images inside /static/uploads/</p>
-            <div class="photos-grid" id="photosContainer">
-                <div style="color:var(--text-muted); padding:1rem;">Loading photos...</div>
-            </div>
+    <!-- Password Modal -->
+    <div class="modal-overlay" id="passwordModal">
+        <div class="modal-box" style="max-width:400px;">
+            <h3>Update Admin Password</h3>
+            <input type="password" id="newAdminPasswordInput" placeholder="Min 6 characters" style="width:100%; padding:0.75rem; margin-top:1rem; border:1px solid #ded3b8; border-radius:8px;" />
             <div class="modal-buttons">
-                <button class="btn-secondary" onclick="closePhotosModal()">Close</button>
+                <button class="btn-secondary" onclick="closePasswordModal()">Cancel</button>
+                <button class="btn-primary" onclick="saveAdminPassword()">Save</button>
             </div>
         </div>
     </div>
 
     <script>
-        function toggleDropdown() {
-            document.getElementById("profileDropdown").classList.toggle("show");
-        }
-
-        window.onclick = function(e) {
-            if (!e.target.closest('.admin-profile-btn')) {
-                document.getElementById("profileDropdown").classList.remove("show");
-            }
-        }
+        function toggleDropdown() { document.getElementById("profileDropdown").classList.toggle("show"); }
+        window.onclick = function(e) { if (!e.target.closest('.admin-profile-btn')) document.getElementById("profileDropdown").classList.remove("show"); };
 
         function switchTab(tabId) {
             document.getElementById("ordersTab").style.display = tabId === 'ordersTab' ? 'block' : 'none';
@@ -1152,11 +353,37 @@ tr:hover td {
             if (tabId === 'menuTab') loadAdminMenu();
         }
 
+        let confirmResolve = null;
+        function showAdminConfirm(title, message, icon="⚠️") {
+            document.getElementById("confirmDialogTitle").textContent = title;
+            document.getElementById("confirmDialogMessage").textContent = message;
+            document.getElementById("confirmDialogIcon").textContent = icon;
+            document.getElementById("adminConfirmModal").classList.add("open");
+            return new Promise(resolve => { confirmResolve = resolve; });
+        }
+        function closeAdminConfirm(result) {
+            document.getElementById("adminConfirmModal").classList.remove("open");
+            if (confirmResolve) confirmResolve(result);
+        }
+
+        let cancelPromptResolve = null;
+        function showCancelPrompt() {
+            document.getElementById("cancelReasonInput").value = "";
+            document.getElementById("adminCancelPromptModal").classList.add("open");
+            return new Promise(resolve => { cancelPromptResolve = resolve; });
+        }
+        function closeCancelPrompt(confirmed) {
+            document.getElementById("adminCancelPromptModal").classList.remove("open");
+            const reason = document.getElementById("cancelReasonInput").value.trim();
+            if (cancelPromptResolve) cancelPromptResolve(confirmed ? (reason || "Kitchen busy") : null);
+        }
+
         async function toggleKitchenStatus() {
+            const confirmed = await showAdminConfirm("Toggle Kitchen", "Change the kitchen operational status?");
+            if (!confirmed) return;
             const res = await fetch("/api/admin/kitchen-toggle", { method: "POST" });
             const data = await res.json();
             if (data.success) {
-                alert(`Kitchen status updated: ${data.kitchen_open ? 'OPEN' : 'CLOSED'}`);
                 updateKitchenUI(data.kitchen_open);
             }
         }
@@ -1174,17 +401,13 @@ tr:hover td {
 
         async function syncMenuToUsers() {
             const res = await fetch("/api/admin/menu/sync", { method: "POST" });
-            const data = await res.json();
-            if (data.success) {
-                alert("⚡ Menu sync command sent! All customer screens are updating automatically.");
-            }
+            await res.json();
         }
 
         async function loadAdminOrders() {
             try {
                 const res = await fetch("/api/admin/orders");
                 const data = await res.json();
-
                 updateKitchenUI(data.kitchen_open);
 
                 document.getElementById("newOrdersBadge").textContent = data.new_count || 0;
@@ -1207,15 +430,15 @@ tr:hover td {
                             <div class="order-head">
                                 <div>
                                     <span class="token-tag">Token #${order.daily_order_number}</span>
-                                    <div class="order-user">${order.username}</div>
+                                    <div class="order-user" style="font-weight:700; margin-top:0.2rem;">${order.username}</div>
                                 </div>
-                                <div class="order-time">${order.time}</div>
+                                <div class="order-time" style="font-size:0.8rem; color:var(--text-muted);">${order.time}</div>
                             </div>
                             <div class="order-items-box">${itemsHtml}</div>
                             <div class="order-total-line"><span>Total</span><span>₹${order.total_amount.toFixed(2)}</span></div>
                             <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.4rem;">
-                                <button class="btn-action btn-accept" onclick="updateOrderStatus(${order.id}, 'accepted')">Accept</button>
-                                <button class="btn-action btn-cancel" onclick="cancelOrderPrompt(${order.id})">Cancel</button>
+                                <button class="btn-action btn-accept" onclick="confirmAndUpdateStatus(${order.id}, 'accepted')">Accept</button>
+                                <button class="btn-action btn-cancel" onclick="cancelOrderWithPrompt(${order.id})">Cancel</button>
                             </div>
                         `;
                         newGrid.appendChild(card);
@@ -1228,62 +451,75 @@ tr:hover td {
                     activeGrid.innerHTML = "";
                     data.active_orders.forEach(order => {
                         const card = document.createElement("div");
-                        card.className = "order-card";
-                        const itemsHtml = order.items.map(i => `<div class="order-item-line"><span>${i.name} × ${i.quantity}</span><span>₹${i.subtotal.toFixed(2)}</span></div>`).join('');
                         const isPaid = order.payment_status === 'paid';
+                        card.className = "order-card" + (isPaid ? "" : " order-card-unpaid");
+
+                        const itemsHtml = order.items.map(i => `<div class="order-item-line"><span>${i.name} × ${i.quantity}</span><span>₹${i.subtotal.toFixed(2)}</span></div>`).join('');
                         const dotClass = isPaid ? 'dot-paid' : 'dot-pending';
 
                         card.innerHTML = `
                             <div class="order-head">
                                 <div>
                                     <span class="token-tag" style="background:#10b981;">Token #${order.daily_order_number}</span>
-                                    <div class="order-user">${order.username}</div>
+                                    <div class="order-user" style="font-weight:700; margin-top:0.2rem;">${order.username}</div>
                                 </div>
                                 <div style="display:flex; align-items:center; gap:0.6rem;">
                                     <span class="payment-dot ${dotClass}"></span>
-                                    <span style="font-size:0.8rem; font-weight:700;">${isPaid ? 'PAID' : 'PENDING'}</span>
+                                    <span style="font-size:0.8rem; font-weight:800; color:${isPaid ? 'var(--success)' : 'var(--danger)'};">
+                                        ${isPaid ? 'PAID' : 'PAYMENT PENDING'}
+                                    </span>
                                 </div>
                             </div>
                             <div class="order-items-box">${itemsHtml}</div>
                             <div class="order-total-line"><span>Total</span><span>₹${order.total_amount.toFixed(2)}</span></div>
                             <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:0.4rem; margin-top:0.4rem;">
-                                <button class="btn-action btn-prep ${order.order_status === 'preparing' ? 'active' : ''}" onclick="updateOrderStatus(${order.id}, 'preparing')">Preparing</button>
-                                <button class="btn-action btn-ready ${order.order_status === 'prepared' ? 'active' : ''}" onclick="updateOrderStatus(${order.id}, 'prepared')">Prepared</button>
-                                <button class="btn-action btn-deliver" onclick="updateOrderStatus(${order.id}, 'delivered')">Delivered</button>
+                                <button class="btn-action btn-prep ${order.order_status === 'preparing' ? 'active' : ''}" onclick="confirmAndUpdateStatus(${order.id}, 'preparing')">Preparing</button>
+                                <button class="btn-action btn-ready ${order.order_status === 'prepared' ? 'active' : ''}" onclick="confirmAndUpdateStatus(${order.id}, 'prepared')">Prepared</button>
+                                <button class="btn-action btn-deliver" onclick="confirmAndUpdateStatus(${order.id}, 'delivered')">Delivered</button>
                             </div>
                         `;
                         activeGrid.appendChild(card);
                     });
                 }
-            } catch (err) {
-                console.error("Orders load failure:", err);
-            }
+            } catch (err) {}
         }
 
-        async function updateOrderStatus(orderId, status, reason = "") {
+        // CONFIRMATION POPUP FOR STATUS CHANGE (Single popup only)
+        async function confirmAndUpdateStatus(orderId, status) {
+            const confirmed = await showAdminConfirm(
+                "Update Order Status",
+                `Transition Order #${orderId} to ${status.toUpperCase()}?`
+            );
+            if (!confirmed) return;
+
             try {
                 const res = await fetch("/api/admin/order/update-status", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ order_id: orderId, status: status, reason: reason })
+                    body: JSON.stringify({ order_id: orderId, status: status })
                 });
                 const data = await res.json();
                 if (data.success) {
-                    alert(`✅ Order #${orderId} updated to: ${status.toUpperCase()}`);
-                    loadAdminOrders();
-                } else {
-                    alert("❌ Failed updating status");
+                    loadAdminOrders(); // Silently updates, no second popup!
                 }
-            } catch (err) {
-                alert("Network error");
-            }
+            } catch (err) {}
         }
 
-        function cancelOrderPrompt(orderId) {
-            if (!confirm("Are you sure you want to cancel this order?")) return;
-            const reason = prompt("Enter cancellation reason for customer:", "Kitchen busy");
+        async function cancelOrderWithPrompt(orderId) {
+            const reason = await showCancelPrompt();
             if (reason === null) return;
-            updateOrderStatus(orderId, "cancelled", reason.trim());
+
+            try {
+                const res = await fetch("/api/admin/order/update-status", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ order_id: orderId, status: "cancelled", reason: reason })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    loadAdminOrders();
+                }
+            } catch (err) {}
         }
 
         let currentMenuItems = [];
@@ -1296,14 +532,14 @@ tr:hover td {
             data.items.forEach(item => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
-                    <td><img src="${item.photo_url}" class="dish-thumb" onerror="this.src='https://via.placeholder.com/50'"/></td>
-                    <td><strong>${item.item_name}</strong></td>
-                    <td style="text-transform:capitalize;">${item.category}</td>
-                    <td>₹${item.price.toFixed(2)}</td>
-                    <td>${item.is_active ? '🟢 Active' : '🔴 Inactive'}</td>
-                    <td>
+                    <td style="padding:0.75rem;"><img src="${item.photo_url}" style="width:50px; height:50px; border-radius:8px; object-fit:cover;" onerror="this.src='https://via.placeholder.com/50'"/></td>
+                    <td style="padding:0.75rem;"><strong>${item.item_name}</strong></td>
+                    <td style="padding:0.75rem; text-transform:capitalize;">${item.category}</td>
+                    <td style="padding:0.75rem;">₹${item.price.toFixed(2)}</td>
+                    <td style="padding:0.75rem;">${item.is_active ? '🟢 Active' : '🔴 Inactive'}</td>
+                    <td style="padding:0.75rem;">
                         <button class="btn-secondary" onclick="editMenuItem(${item.id})">Edit</button>
-                        <button class="btn-secondary" style="background:#ef4444;" onclick="deleteMenuItem(${item.id})">Delete</button>
+                        <button class="btn-secondary" style="background:#fff1ef; color:#c53d3d;" onclick="deleteMenuItem(${item.id})">Delete</button>
                     </td>
                 `;
                 tbody.appendChild(row);
@@ -1334,7 +570,6 @@ tr:hover td {
             document.getElementById("dishActiveSelect").value = item.is_active ? "true" : "false";
             document.getElementById("itemModal").classList.add("open");
         }
-
         function closeItemModal() { document.getElementById("itemModal").classList.remove("open"); }
 
         async function handleSaveMenuItem(e) {
@@ -1345,14 +580,14 @@ tr:hover td {
             });
             const data = await res.json();
             if (data.success) {
-                alert("Dish saved & clients updated.");
                 closeItemModal();
                 loadAdminMenu();
             }
         }
 
         async function deleteMenuItem(id) {
-            if (!confirm("Delete this dish?")) return;
+            const confirmed = await showAdminConfirm("Delete Dish", "Delete this food item permanently?");
+            if (!confirmed) return;
             await fetch("/api/admin/menu/delete", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -1361,11 +596,7 @@ tr:hover td {
             loadAdminMenu();
         }
 
-        // --- Photo Storage Manager ---
-        function openPhotosModal() {
-            loadStaticPhotos();
-            document.getElementById("photosModal").classList.add("open");
-        }
+        function openPhotosModal() { loadStaticPhotos(); document.getElementById("photosModal").classList.add("open"); }
         function closePhotosModal() { document.getElementById("photosModal").classList.remove("open"); }
 
         async function loadStaticPhotos() {
@@ -1382,17 +613,21 @@ tr:hover td {
             box.innerHTML = "";
             data.photos.forEach(p => {
                 const card = document.createElement("div");
-                card.className = "photo-card";
+                card.style.position = "relative";
+                card.style.border = "1px solid #ded3b8";
+                card.style.borderRadius = "8px";
+                card.style.overflow = "hidden";
                 card.innerHTML = `
-                    <img src="${p.url}" />
-                    <button class="photo-delete-btn" onclick="deleteStaticPhoto('${p.filename}')">×</button>
+                    <img src="${p.url}" style="width:100%; height:80px; object-fit:cover;" />
+                    <button style="position:absolute; top:4px; right:4px; background:#c53d3d; color:#fff; border:none; border-radius:50%; width:20px; height:20px; font-weight:800; cursor:pointer;" onclick="deleteStaticPhoto('${p.filename}')">×</button>
                 `;
                 box.appendChild(card);
             });
         }
 
         async function deleteStaticPhoto(fname) {
-            if (!confirm(`Delete image: ${fname}?`)) return;
+            const confirmed = await showAdminConfirm("Delete Photo", `Are you sure you want to delete ${fname}?`);
+            if (!confirmed) return;
             const res = await fetch("/api/admin/photos/delete", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -1401,8 +636,6 @@ tr:hover td {
             const data = await res.json();
             if (data.success) {
                 loadStaticPhotos();
-            } else {
-                alert(data.error || "Failed to delete");
             }
         }
 
@@ -1411,7 +644,7 @@ tr:hover td {
 
         async function saveAdminPassword() {
             const newPassword = document.getElementById("newAdminPasswordInput").value.trim();
-            if (newPassword.length < 6) return alert("Min 6 characters");
+            if (newPassword.length < 6) return;
             const res = await fetch("/api/admin/change-password", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -1419,7 +652,6 @@ tr:hover td {
             });
             const data = await res.json();
             if (data.success) {
-                alert("Password updated");
                 closePasswordModal();
             }
         }

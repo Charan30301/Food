@@ -23,16 +23,17 @@ except ModuleNotFoundError:
     razorpay = None
 
 app = Flask(__name__)
-app.secret_key = "hotel_secret_key_12345"
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "hotel_secret_key_12345")
 
+# Test Mode configuration
 TEST_MODE = True
 TEST_USER_EMAIL = "test_customer@gmail.com"
 TEST_USERNAME = "Test Customer"
 
-GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
-RAZORPAY_KEY_ID = "rzp_test_YourKeyIdHere"
-RAZORPAY_KEY_SECRET = "YourKeySecretHere"
-RAZORPAY_WEBHOOK_SECRET = "YourWebhookSecretHere"
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com")
+RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID", "rzp_test_YourKeyIdHere")
+RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET", "YourKeySecretHere")
+RAZORPAY_WEBHOOK_SECRET = os.environ.get("RAZORPAY_WEBHOOK_SECRET", "YourWebhookSecretHere")
 
 client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)) if razorpay else None
 
@@ -115,6 +116,17 @@ def build_cart_code(cart_dict):
             parts.append(f"{item_id}+{qty}a")
     return "".join(parts)
 
+def verify_google_token(token):
+    query = urlencode({"id_token": token})
+    with urlopen(f"https://oauth2.googleapis.com/tokeninfo?{query}", timeout=10) as response:
+        idinfo = json.loads(response.read())
+    if idinfo.get("aud") != GOOGLE_CLIENT_ID:
+        raise ValueError("Invalid Google token audience")
+    return idinfo
+
+# ==========================================
+# Page Routes
+# ==========================================
 @app.route("/")
 def index():
     clean_old_orders()
@@ -164,6 +176,61 @@ def logout():
     session.clear()
     return redirect(url_for("index"))
 
+# ==========================================
+# Authentication Endpoints
+# ==========================================
+@app.route("/api/auth/google", methods=["POST"])
+def verify_google():
+    data = request.get_json() or {}
+    token = data.get("credential")
+    if not token:
+        return jsonify({"error": "Missing Google token"}), 400
+
+    try:
+        idinfo = verify_google_token(token)
+        gmail = idinfo.get("email")
+
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT id, email, username FROM users WHERE email = %s;", (gmail,))
+                user = cur.fetchone()
+
+        if user:
+            session["user_email"] = user["email"]
+            session["username"] = user["username"]
+            return jsonify({"exists": True, "email": user["email"], "username": user["username"], "redirect_url": "/menu"})
+        else:
+            return jsonify({"exists": False, "email": gmail})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 401
+
+@app.route("/api/register", methods=["POST"])
+def register():
+    data = request.get_json() or {}
+    email = data.get("email", "").strip()
+    username = data.get("username", "").strip()
+
+    if not email or not username:
+        return jsonify({"error": "Email and username required"}), 400
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO users (email, username)
+                VALUES (%s, %s)
+                ON CONFLICT (email) DO UPDATE SET username = EXCLUDED.username
+                RETURNING id, email, username;
+            """, (email, username))
+            user = cur.fetchone()
+            conn.commit()
+
+    session["user_email"] = user["email"]
+    session["username"] = user["username"]
+    return jsonify({"success": True, "redirect_url": "/menu"})
+
+# ==========================================
+# Menu & Cart CRUD Endpoints
+# ==========================================
 @app.route("/api/menu", methods=["GET"])
 def get_menu():
     clean_old_orders()
@@ -270,6 +337,9 @@ def get_cart_items():
 
     return jsonify({"items": detailed_items, "total_price": cart_row["total_price"], "cart_code": cart_row["cart_code"]})
 
+# ==========================================
+# Two-Stage Order Execution (Request -> Accept -> Pay)
+# ==========================================
 @app.route("/api/order/submit-request", methods=["POST"])
 def submit_order_request():
     if get_setting("kitchen_open", "true") != "true":
@@ -285,7 +355,7 @@ def submit_order_request():
             if not cart or not cart["cart_code"] or cart["total_price"] <= 0:
                 return jsonify({"error": "Cart is empty"}), 400
 
-            # Cancel lingering unaccepted orders for this customer
+            # Mark lingering unaccepted orders as superseded
             cur.execute("""
                 UPDATE orders 
                 SET order_status = 'cancelled', cancellation_reason = 'Superseded by new request'
@@ -296,8 +366,8 @@ def submit_order_request():
             fake_gw_id = f"test_order_{os.urandom(4).hex()}"
 
             cur.execute("""
-                INSERT INTO orders (user_email, items_code, total_amount, gateway_order_id, payment_status, order_status, daily_order_number, created_at)
-                VALUES (%s, %s, %s, %s, 'pending', 'placed', %s, NOW())
+                INSERT INTO orders (user_email, items_code, total_amount, gateway_order_id, payment_status, order_status, daily_order_number, created_at, updated_at)
+                VALUES (%s, %s, %s, %s, 'pending', 'placed', %s, NOW(), NOW())
                 RETURNING id, daily_order_number;
             """, (user_email, cart["cart_code"], cart["total_price"], fake_gw_id, daily_num))
             new_order = cur.fetchone()
@@ -338,11 +408,11 @@ def confirm_test_payment():
         with conn.cursor() as cur:
             cur.execute("""
                 UPDATE orders
-                SET payment_status = 'paid', payment_id = %s, customer_alert = FALSE, updated_at = NOW()
+                SET payment_status = 'paid', payment_id = %s, updated_at = NOW()
                 WHERE id = %s;
             """, (f"pay_test_{os.urandom(4).hex()}", order_id))
 
-            # Empty active cart after payment succeeds
+            # Empty cart only after successful payment
             cur.execute("UPDATE carts SET cart_code = '', total_price = 0 WHERE user_email = %s;", (user_email,))
             conn.commit()
 
@@ -361,17 +431,16 @@ def acknowledge_order_alert():
         with conn.cursor() as cur:
             cur.execute("""
                 UPDATE orders
-                SET customer_alert = FALSE,
-                    updated_at = NOW()
-                WHERE id = %s
-                  AND user_email = %s;
+                SET customer_alert = FALSE, updated_at = NOW()
+                WHERE id = %s AND user_email = %s;
             """, (order_id, user_email))
-
             conn.commit()
 
     return jsonify({"success": True})
 
-
+# ==========================================
+# Real-Time Customer Status Polling
+# ==========================================
 @app.route("/api/order/active", methods=["GET"])
 def check_active_order():
     clean_old_orders()
@@ -381,42 +450,55 @@ def check_active_order():
 
     with get_db() as conn:
         with conn.cursor() as cur:
+            # 1. Check for terminal cancellation alert
             cur.execute("""
                 SELECT id, order_status, cancellation_reason
                 FROM orders 
-                WHERE user_email = %s AND customer_alert = TRUE
+                WHERE user_email = %s 
+                  AND customer_alert = TRUE
+                  AND order_status = 'cancelled'
                 ORDER BY updated_at DESC LIMIT 1;
             """, (user_email,))
-            alert_order = cur.fetchone()
+            cancelled_order = cur.fetchone()
 
-            if alert_order:
-                # IMPORTANT:
-                # Do NOT clear customer_alert here.
-                # Multiple customer tabs may poll this endpoint.
-                # The customer page will explicitly acknowledge the alert
-                # through /api/order/ack-alert after displaying it.
+            if cancelled_order:
                 return jsonify({
                     "has_active_order": False,
                     "alert": True,
-                    "order_id": alert_order["id"],
-                    "status": alert_order["order_status"],
-                    "reason": alert_order["cancellation_reason"] or "Order cancelled",
+                    "order_id": cancelled_order["id"],
+                    "status": "cancelled",
+                    "reason": cancelled_order["cancellation_reason"] or "Order cancelled by kitchen",
                     "kitchen_open": kitchen_open,
                     "menu_version": menu_version
                 })
 
+            # 2. Check for active or delivered order
             cur.execute("""
-                SELECT id, order_status, payment_status, total_amount::float, daily_order_number,
+                SELECT id, order_status, payment_status, total_amount::float, daily_order_number, 
+                       gateway_order_id, cancellation_reason, customer_alert,
                        EXTRACT(EPOCH FROM (NOW() - created_at))::int AS seconds_elapsed
                 FROM orders 
                 WHERE user_email = %s 
-                  AND order_status IN ('placed', 'accepted', 'preparing', 'prepared')
+                  AND order_status IN ('placed', 'accepted', 'preparing', 'prepared', 'delivered')
                 ORDER BY created_at DESC LIMIT 1;
             """, (user_email,))
             order = cur.fetchone()
 
             if order:
+                # If delivered and alert is pending, notify customer
+                if order["order_status"] == 'delivered' and order["customer_alert"]:
+                    return jsonify({
+                        "has_active_order": False,
+                        "alert": True,
+                        "order_id": order["id"],
+                        "daily_order_number": order["daily_order_number"],
+                        "status": "delivered",
+                        "kitchen_open": kitchen_open,
+                        "menu_version": menu_version
+                    })
+
                 elapsed = order["seconds_elapsed"]
+                # 60s timeout for placed unaccepted orders
                 if order["order_status"] == 'placed' and elapsed >= 60:
                     cur.execute("""
                         UPDATE orders 
@@ -438,13 +520,15 @@ def check_active_order():
                     })
 
                 seconds_remaining = max(0, 60 - elapsed) if order["order_status"] == 'placed' else 0
+
                 return jsonify({
-                    "has_active_order": True,
+                    "has_active_order": order["order_status"] != 'delivered',
                     "order_id": order["id"],
                     "daily_order_number": order["daily_order_number"],
                     "status": order["order_status"],
                     "payment_status": order["payment_status"],
                     "total_amount": order["total_amount"],
+                    "gateway_order_id": order["gateway_order_id"],
                     "seconds_left": seconds_remaining,
                     "kitchen_open": kitchen_open,
                     "menu_version": menu_version
@@ -452,6 +536,9 @@ def check_active_order():
 
     return jsonify({"has_active_order": False, "alert": False, "kitchen_open": kitchen_open, "menu_version": menu_version})
 
+# ==========================================
+# Admin Operations & Dashboard APIs
+# ==========================================
 @app.route("/admin")
 def admin_page():
     if not session.get("is_admin"):
@@ -601,13 +688,10 @@ def admin_update_order_status():
                 UPDATE orders 
                 SET order_status = %s, 
                     cancellation_reason = CASE WHEN %s = 'cancelled' THEN %s ELSE cancellation_reason END,
-                    customer_alert = CASE
-                        WHEN %s IN ('cancelled', 'delivered') THEN TRUE
-                        ELSE FALSE
-                    END,
+                    customer_alert = TRUE,
                     updated_at = NOW()
                 WHERE id = %s;
-            """, (new_status, new_status, reason, new_status, order_id))
+            """, (new_status, new_status, reason, order_id))
             conn.commit()
 
     return jsonify({"success": True})
