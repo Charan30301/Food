@@ -1,5 +1,4 @@
 Flask>=3.0.0
-psycopg2-binary>=2.9.9
-google-auth>=2.28.0
-requests>=2.31.0
-razorpay
+psycopg[binary]>=3.1.18
+werkzeug>=3.0.1
+razorpay>=1.4.1
