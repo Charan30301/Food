@@ -132,6 +132,20 @@
         }
         @keyframes pulse-urgent { 0% { opacity: 0.8; } 100% { opacity: 1; transform: scale(1.03); } }
 
+        /* ==========================================
+           ORDER TYPE BADGE (DINE IN / PARCEL)
+           ========================================== */
+        .order-type-badge {
+            font-size: 0.72rem; font-weight: 800; padding: 0.18rem 0.55rem; border-radius: 6px;
+            display: inline-flex; align-items: center; gap: 0.25rem; text-transform: uppercase;
+        }
+        .order-type-badge.dine_in {
+            background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;
+        }
+        .order-type-badge.parcel {
+            background: #fef3c7; color: #92400e; border: 1px solid #fde68a;
+        }
+
         .order-card.order-card-unpaid {
             background: #fff0ee !important;
             border: 2px solid #d94b4b !important;
@@ -282,7 +296,7 @@
 
     <header>
         <div class="header-title">
-            <span>🛡️</span>
+            <span>🛡</span>
             <span>Kitchen Portal</span>
         </div>
 
@@ -405,7 +419,7 @@
     <!-- THEMED CONFIRMATION MODAL -->
     <div class="modal-overlay" id="adminConfirmModal">
         <div class="modal-box" style="max-width: 400px; text-align:center;">
-            <div class="dialog-icon" id="confirmDialogIcon">⚠️</div>
+            <div class="dialog-icon" id="confirmDialogIcon">⚠</div>
             <h3 class="dialog-title" id="confirmDialogTitle">Confirm Action</h3>
             <p class="dialog-message" id="confirmDialogMessage">Are you sure you want to proceed?</p>
             <div class="modal-buttons" style="justify-content:center;">
@@ -738,11 +752,18 @@
                         card.className = "order-card";
                         const itemsHtml = order.items.map(i => `<div class="order-item-line"><span>${i.name} × ${i.quantity}</span><span>₹${i.subtotal.toFixed(2)}</span></div>`).join('');
                         const isUrgent = countdownTimerMap[order.id] <= 15 ? 'urgent' : '';
+                        const isParcel = order.order_type === 'parcel';
+                        const typeBadge = isParcel 
+                            ? `<span class="order-type-badge parcel">📦 Parcel</span>`
+                            : `<span class="order-type-badge dine_in">🍽️ Dine In</span>`;
 
                         card.innerHTML = `
                             <div class="order-head">
                                 <div>
-                                    <span class="token-tag">Token #${order.daily_order_number}</span>
+                                    <div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.25rem;">
+                                        <span class="token-tag">Token #${order.daily_order_number}</span>
+                                        ${typeBadge}
+                                    </div>
                                     <div style="font-weight:700; margin-top:0.2rem;">${order.username}</div>
                                 </div>
                                 <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.25rem;">
@@ -772,11 +793,18 @@
 
                         const itemsHtml = order.items.map(i => `<div class="order-item-line"><span>${i.name} × ${i.quantity}</span><span>₹${i.subtotal.toFixed(2)}</span></div>`).join('');
                         const dotClass = isPaid ? 'dot-paid' : 'dot-pending';
+                        const isParcel = order.order_type === 'parcel';
+                        const typeBadge = isParcel 
+                            ? `<span class="order-type-badge parcel">📦 Parcel</span>`
+                            : `<span class="order-type-badge dine_in">🍽️ Dine In</span>`;
 
                         card.innerHTML = `
                             <div class="order-head">
                                 <div>
-                                    <span class="token-tag" style="background:#10b981;">Token #${order.daily_order_number}</span>
+                                    <div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.25rem;">
+                                        <span class="token-tag" style="background:#10b981;">Token #${order.daily_order_number}</span>
+                                        ${typeBadge}
+                                    </div>
                                     <div style="font-weight:700; margin-top:0.2rem;">${order.username}</div>
                                 </div>
                                 <div style="display:flex; align-items:center; gap:0.5rem;">

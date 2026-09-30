@@ -57,6 +57,32 @@
         }
         .bill-total span { color: var(--gold-dark); }
 
+        /* ==========================================
+           ORDER TYPE (DINE IN / PARCEL) SELECTOR
+           ========================================== */
+        .order-type-box {
+            margin-top: 1.25rem; padding-top: 1.25rem;
+            border-top: 1px dashed var(--gold-border);
+        }
+        .order-type-label {
+            display: block; font-size: 0.88rem; font-weight: 800; color: var(--espresso);
+            margin-bottom: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .order-type-options {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;
+        }
+        .order-type-btn {
+            background: #fffdf8; border: 2px solid var(--gold-border); border-radius: 12px;
+            padding: 0.85rem 1rem; font-weight: 800; font-size: 0.95rem; color: var(--brown-light);
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+        .order-type-btn.active {
+            background: linear-gradient(135deg, #d8bd70, #b8953f);
+            color: #fffdf7; border-color: #927326;
+            box-shadow: 0 4px 14px rgba(184, 149, 63, 0.35);
+        }
+
         .action-btn {
             width: 100%; background: linear-gradient(135deg, #c4a34d, #a7832f);
             color: #fffdf7; border: 1px solid #a7832f; border-radius: 12px;
@@ -65,7 +91,6 @@
         }
         .action-btn:disabled { background: #b5ac9a !important; border-color: #b5ac9a !important; cursor: not-allowed; }
 
-        /* SOLID GREEN PAY NOW BUTTON (Activated when admin accepts order) */
         .btn-pay-green {
             background: linear-gradient(135deg, #10b981, #059669) !important;
             border: 1px solid #047857 !important;
@@ -85,7 +110,6 @@
         }
         .timer-val { font-size: 2rem; font-weight: 800; letter-spacing: 1px; margin-top: 0.3rem; }
 
-        /* THEMED MODAL */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(48, 41, 31, 0.45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
@@ -126,6 +150,21 @@
             <span id="totalPayableLabel">₹0.00</span>
         </div>
 
+        <!-- ORDER TYPE SELECTION (DINE IN OR PARCEL) -->
+        <div class="order-type-box" id="orderTypeBox">
+            <span class="order-type-label">Select Order Type:</span>
+            <div class="order-type-options">
+                <button type="button" class="order-type-btn active" id="btnDineIn" onclick="selectOrderType('dine_in')">
+                    <span>🍽️</span>
+                    <span>Dine In</span>
+                </button>
+                <button type="button" class="order-type-btn" id="btnParcel" onclick="selectOrderType('parcel')">
+                    <span>📦</span>
+                    <span>Parcel</span>
+                </button>
+            </div>
+        </div>
+
         <button class="action-btn" id="mainActionButton" onclick="handleActionButtonClick()">Place Order & Await Acceptance</button>
 
         <div class="timer-box" id="timerBox">
@@ -135,7 +174,6 @@
     </div>
 </div>
 
-<!-- THEMED CUSTOM DIALOG -->
 <div class="modal-overlay" id="customDialogModal">
     <div class="themed-dialog">
         <div style="font-size: 2.5rem; margin-bottom: 0.5rem;" id="dialogIcon">✨</div>
@@ -160,8 +198,22 @@
     let timerInterval = null;
     let pollInterval = null;
     let secondsLeft = 60;
-    let orderState = "cart"; // "cart" | "awaiting_acceptance" | "accepted_unpaid"
+    let orderState = "cart";
+    let selectedOrderType = "dine_in";
     let dialogCallback = null;
+
+    function selectOrderType(type) {
+        selectedOrderType = type;
+        const btnDine = document.getElementById("btnDineIn");
+        const btnPar = document.getElementById("btnParcel");
+        if (type === 'dine_in') {
+            btnDine.classList.add("active");
+            btnPar.classList.remove("active");
+        } else {
+            btnPar.classList.add("active");
+            btnDine.classList.remove("active");
+        }
+    }
 
     function showThemedPopup({ title, message, icon="✨", confirmText="OK", cancelText=null, onResolve=null }) {
         document.getElementById("dialogTitle").textContent = title;
@@ -226,6 +278,7 @@
             currentActiveOrder = statusData;
             secondsLeft = statusData.seconds_left !== undefined ? statusData.seconds_left : 60;
             orderState = "awaiting_acceptance";
+            if (statusData.order_type) selectOrderType(statusData.order_type);
             await renderCartItems();
             setAwaitingAcceptanceUI();
             return;
@@ -235,6 +288,7 @@
             submittedOrderId = statusData.order_id;
             currentActiveOrder = statusData;
             orderState = "accepted_unpaid";
+            if (statusData.order_type) selectOrderType(statusData.order_type);
             await renderCartItems();
             setPayNowUI();
             return;
@@ -290,7 +344,11 @@
         btn.textContent = "Submitting to Kitchen...";
 
         try {
-            const res = await fetch('/api/order/submit-request', { method: 'POST' });
+            const res = await fetch('/api/order/submit-request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ order_type: selectedOrderType })
+            });
             const data = await res.json();
 
             if (!res.ok) {
@@ -323,6 +381,12 @@
     function setAwaitingAcceptanceUI() {
         const btn = document.getElementById('mainActionButton');
         const timerBox = document.getElementById('timerBox');
+        const typeBox = document.getElementById('orderTypeBox');
+
+        if (typeBox) {
+            document.getElementById('btnDineIn').disabled = true;
+            document.getElementById('btnParcel').disabled = true;
+        }
 
         timerBox.style.display = 'block';
         btn.disabled = true;
@@ -346,6 +410,12 @@
 
         const timerBox = document.getElementById('timerBox');
         if (timerBox) timerBox.style.display = 'none';
+
+        const typeBox = document.getElementById('orderTypeBox');
+        if (typeBox) {
+            document.getElementById('btnDineIn').disabled = true;
+            document.getElementById('btnParcel').disabled = true;
+        }
 
         const btn = document.getElementById('mainActionButton');
         if (btn) {
@@ -383,13 +453,11 @@
                 return;
             }
 
-            // Kitchen accepted the order
             if (data.has_active_order && data.status !== 'placed') {
                 currentActiveOrder = data;
                 orderState = "accepted_unpaid";
                 setPayNowUI();
 
-                // Show Themed Acceptance Popup with "Pay Now" or "Later"
                 showThemedPopup({
                     title: "Kitchen Accepted Your Order!",
                     message: `Chef accepted Token #${data.daily_order_number}! Click 'Pay Now' to complete your order.`,
@@ -398,7 +466,6 @@
                     cancelText: "Later",
                     onResolve: (confirmed) => {
                         if (confirmed) {
-                            // Directly executes payment with NO second "Confirm Pay" popup
                             launchPaymentFlow(data);
                         }
                     }
@@ -425,9 +492,7 @@
         });
     }
 
-    // Direct payment launch without redundant confirm prompts
     async function launchPaymentFlow(orderData) {
-        // 1. TEST MODE: Executes directly without secondary confirm prompt
         if (IS_TEST_MODE) {
             const btn = document.getElementById('mainActionButton');
             if (btn) { btn.disabled = true; btn.textContent = "Processing Test Payment..."; }
@@ -441,7 +506,6 @@
                 const payData = await payRes.json();
                 
                 if (payData.success) {
-                    // Successful payment -> Route immediately to Menu, where it converts into green "Order Placed"
                     window.location.href = "/menu";
                 } else {
                     showThemedPopup({ title: "Payment Error", message: "Failed recording payment.", icon: "❌" });
@@ -454,7 +518,6 @@
             return;
         }
 
-        // 2. LIVE PRODUCTION RAZORPAY
         const options = {
             "key": RZP_KEY_ID,
             "amount": Math.round(orderData.total_amount * 100),
@@ -465,7 +528,6 @@
             "prefill": { "name": USER_NAME, "email": USER_EMAIL },
             "theme": { "color": "#10b981" },
             "handler": async function (response) {
-                // Payment Captured Successfully -> Verify with Server
                 const verifyRes = await fetch('/api/payment/verify', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -477,7 +539,6 @@
                 });
                 const verifyData = await verifyRes.json();
                 if (verifyData.success) {
-                    // Redirects and converts to Order Placed button only on verified payment
                     window.location.href = "/menu";
                 } else {
                     showThemedPopup({ title: "Verification Failed", message: "Gateway signature verification failed.", icon: "❌" });
@@ -485,7 +546,6 @@
             },
             "modal": {
                 "ondismiss": function() {
-                    // User closed the gateway without paying -> DOES NOT convert to Order Placed button
                     setPayNowUI();
                 }
             }

@@ -99,7 +99,6 @@ def get_next_daily_order_number(cur):
     row = cur.fetchone()
     return row["next_num"] if row else 0
 
-
 def parse_cart_code(code_str):
     cart = {}
     if not code_str:
@@ -109,14 +108,12 @@ def parse_cart_code(code_str):
         cart[int(item_id)] = int(qty)
     return cart
 
-
 def build_cart_code(cart_dict):
     parts = []
     for item_id, qty in sorted(cart_dict.items()):
         if qty > 0:
             parts.append(f"{item_id}+{qty}a")
     return "".join(parts)
-
 
 def verify_google_token(token):
     query = urlencode({"id_token": token})
@@ -422,7 +419,7 @@ def get_cart_items():
     return jsonify({"items": detailed_items, "total_price": cart_row["total_price"], "cart_code": cart_row["cart_code"]})
 
 # ==========================================
-# Two-Stage Order Execution
+# Two-Stage Order Execution (With Order Type)
 # ==========================================
 @app.route("/api/order/submit-request", methods=["POST"])
 def submit_order_request():
@@ -430,9 +427,16 @@ def submit_order_request():
         return jsonify({"error": "The kitchen is currently closed and not accepting preorders."}), 403
 
     user_email = session.get("user_email", TEST_USER_EMAIL)
+    data = request.get_json() or {}
+    order_type = str(data.get("order_type", "dine_in")).strip().lower()
+    if order_type not in ["dine_in", "parcel"]:
+        order_type = "dine_in"
 
     with get_db() as conn:
         with conn.cursor() as cur:
+            # Ensure column exists
+            cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_type VARCHAR(20) DEFAULT 'dine_in';")
+
             cur.execute("SELECT cart_code, total_price::float FROM carts WHERE user_email = %s;", (user_email,))
             cart = cur.fetchone()
 
@@ -449,17 +453,18 @@ def submit_order_request():
             fake_gw_id = f"test_order_{os.urandom(4).hex()}"
 
             cur.execute("""
-                INSERT INTO orders (user_email, items_code, total_amount, gateway_order_id, payment_status, order_status, daily_order_number, created_at, updated_at)
-                VALUES (%s, %s, %s, %s, 'pending', 'placed', %s, NOW(), NOW())
+                INSERT INTO orders (user_email, items_code, total_amount, gateway_order_id, payment_status, order_status, daily_order_number, order_type, created_at, updated_at)
+                VALUES (%s, %s, %s, %s, 'pending', 'placed', %s, %s, NOW(), NOW())
                 RETURNING id, daily_order_number;
-            """, (user_email, cart["cart_code"], cart["total_price"], fake_gw_id, daily_num))
+            """, (user_email, cart["cart_code"], cart["total_price"], fake_gw_id, daily_num, order_type))
             new_order = cur.fetchone()
             conn.commit()
 
     return jsonify({
         "success": True,
         "order_id": new_order["id"],
-        "daily_order_number": new_order["daily_order_number"]
+        "daily_order_number": new_order["daily_order_number"],
+        "order_type": order_type
     })
 
 @app.route("/api/order/timeout-cancel", methods=["POST"])
@@ -556,6 +561,7 @@ def check_active_order():
             cur.execute("""
                 SELECT id, order_status, payment_status, total_amount::float, daily_order_number, 
                        gateway_order_id, cancellation_reason, customer_alert,
+                       COALESCE(order_type, 'dine_in') AS order_type,
                        EXTRACT(EPOCH FROM (NOW() - created_at))::int AS seconds_elapsed
                 FROM orders 
                 WHERE user_email = %s 
@@ -572,6 +578,7 @@ def check_active_order():
                         "order_id": order["id"],
                         "daily_order_number": order["daily_order_number"],
                         "status": "delivered",
+                        "order_type": order.get("order_type", "dine_in"),
                         "kitchen_open": kitchen_open,
                         "menu_version": menu_version
                     })
@@ -604,6 +611,7 @@ def check_active_order():
                     "order_id": order["id"],
                     "daily_order_number": order["daily_order_number"],
                     "status": order["order_status"],
+                    "order_type": order.get("order_type", "dine_in"),
                     "payment_status": order["payment_status"],
                     "total_amount": order["total_amount"],
                     "gateway_order_id": order["gateway_order_id"],
@@ -677,6 +685,7 @@ def admin_get_orders():
 
     with get_db() as conn:
         with conn.cursor() as cur:
+            cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_type VARCHAR(20) DEFAULT 'dine_in';")
             cur.execute("SELECT id, item_name, price::float FROM menu_items;")
             menu_map = {row["id"]: row for row in cur.fetchall()}
 
@@ -684,6 +693,7 @@ def admin_get_orders():
                 SELECT o.id, o.user_email, COALESCE(u.username, 'Customer') AS username,
                        o.items_code, o.total_amount::float, o.payment_status,
                        o.order_status, o.daily_order_number, o.created_at,
+                       COALESCE(o.order_type, 'dine_in') AS order_type,
                        EXTRACT(EPOCH FROM (NOW() - o.created_at))::int AS seconds_elapsed
                 FROM orders o
                 LEFT JOIN users u ON o.user_email = u.email
@@ -713,6 +723,7 @@ def admin_get_orders():
             "total_amount": o["total_amount"],
             "payment_status": o["payment_status"],
             "order_status": o["order_status"],
+            "order_type": o.get("order_type", "dine_in"),
             "seconds_left": seconds_remaining,
             "time": o["created_at"].strftime("%I:%M %p") if o["created_at"] else "",
             "items": items_detail
@@ -878,11 +889,14 @@ def get_user_orders():
 
     with get_db() as conn:
         with conn.cursor() as cur:
+            cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_type VARCHAR(20) DEFAULT 'dine_in';")
             cur.execute("SELECT id, item_name FROM menu_items;")
             items_map = {row["id"]: row["item_name"] for row in cur.fetchall()}
 
             cur.execute("""
-                SELECT id, items_code, total_amount::float, payment_status, order_status, cancellation_reason, daily_order_number, created_at
+                SELECT id, items_code, total_amount::float, payment_status, order_status, 
+                       cancellation_reason, daily_order_number, created_at,
+                       COALESCE(order_type, 'dine_in') AS order_type
                 FROM orders
                 WHERE user_email = %s
                 ORDER BY created_at DESC;
@@ -902,6 +916,7 @@ def get_user_orders():
             "items": item_summaries,
             "total_amount": order["total_amount"],
             "order_status": order["order_status"],
+            "order_type": order.get("order_type", "dine_in"),
             "cancellation_reason": order["cancellation_reason"],
             "payment_status": order["payment_status"]
         })

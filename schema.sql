@@ -111,3 +111,5 @@ INSERT INTO categories (name) VALUES
 ('fast food'),
 ('meals')
 ON CONFLICT (name) DO NOTHING;
+
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_type VARCHAR(20) DEFAULT 'dine_in';
