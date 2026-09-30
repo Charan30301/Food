@@ -19,7 +19,7 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
-        
+
         html, body {
             width: 100%; min-height: 100vh; overflow-x: hidden;
             background: linear-gradient(180deg, #fffdf8 0%, #f8f5ec 55%, #f4efe2 100%);
@@ -44,7 +44,6 @@
         .kitchen-open { background: #e8f7ef; color: #13845e; border-color: #9bd7ba; }
         .kitchen-closed { background: #fff0ee; color: #c53d3d; border-color: #e7aaa5; }
 
-        /* Desktop Profile/Options Button */
         .admin-profile-btn {
             background: linear-gradient(135deg, #d8bd70, #b8953f); color: #30240f;
             border: 1px solid #927326; padding: 0.55rem 0.9rem; border-radius: 999px; font-weight: 700; cursor: pointer;
@@ -52,7 +51,6 @@
             display: flex; align-items: center; justify-content: center; gap: 0.35rem;
         }
 
-        /* Mobile View: Round Icon with Settings Symbol Only */
         @media (max-width: 768px) {
             header { padding: 0.75rem 1rem !important; }
             .header-title { font-size: 1.05rem !important; }
@@ -76,7 +74,7 @@
         .dropdown-item:hover { background: #f5efdf; color: #927326; }
 
         .container { max-width: 1450px; margin: 1.25rem auto; padding: 0 1rem; }
-        
+
         .main-tab-controls { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; overflow-x: auto; scrollbar-width: none; }
         .main-tab-controls::-webkit-scrollbar { display: none; }
         .main-tab-btn {
@@ -89,7 +87,6 @@
             box-shadow: 0 5px 13px rgba(120,90,30,0.18);
         }
 
-        /* Sub-navigation buttons for Orders */
         .sub-orders-controls {
             display: flex; gap: 0.5rem; margin-bottom: 1.25rem; overflow-x: auto; scrollbar-width: none;
         }
@@ -109,7 +106,6 @@
             box-shadow: 0 4px 12px rgba(184, 149, 63, 0.2) !important;
         }
 
-        /* Order Sections */
         .section-box {
             background: rgba(255,253,247,0.92); border: 1px solid #ded3b8;
             border-radius: 18px; padding: 1.25rem; margin-bottom: 1.5rem;
@@ -125,7 +121,6 @@
             box-shadow: 0 5px 15px rgba(90,70,30,0.07);
         }
 
-        /* Acceptance Countdown Timer Tag */
         .order-countdown-tag {
             font-size: 0.75rem; font-weight: 800; padding: 0.2rem 0.55rem; border-radius: 999px;
             background: #fef3c7; color: #b45309; border: 1px solid #fde68a;
@@ -175,7 +170,6 @@
         .btn-ready { background: #e2f1f5; color: #226879; }
         .btn-deliver { background: #e5f6ed; color: #137951; }
 
-        /* Menu Display Layouts */
         .desktop-menu-table { width: 100%; border-collapse: collapse; }
         .desktop-menu-table th { padding: 0.75rem 1rem; text-align: left; background: #f7f2e7; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; }
         .desktop-menu-table td { padding: 0.75rem 1rem; border-bottom: 1px solid #ded3b8; vertical-align: middle; }
@@ -206,7 +200,7 @@
             .mobile-dish-meta { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; }
             .mobile-dish-cat { color: var(--text-muted); text-transform: capitalize; }
             .mobile-dish-price { font-size: 1.05rem; font-weight: 800; color: var(--primary-dark); }
-            
+
             .mobile-dish-actions { display: flex; flex-direction: column; gap: 0.4rem; flex-shrink: 0; }
             .btn-mobile-edit {
                 padding: 0.45rem 0.85rem; border-radius: 999px; background: #fffdf7; border: 1px solid #d7cbb0;
@@ -218,7 +212,6 @@
             }
         }
 
-        /* Modal Settings */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(55,43,20,0.55); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
@@ -273,125 +266,151 @@
             width: 100%; padding: 0.75rem; background: #fffaf0; border: 1px solid #d9ccb0;
             border-radius: 12px; font-size: 0.95rem; color: #302a20; outline: none; margin-bottom: 1rem; box-sizing: border-box;
         }
+
+        .category-item-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.65rem 0.85rem; background: #fffaf0; border: 1px solid #e6dcc7;
+            border-radius: 10px; margin-bottom: 0.5rem;
+        }
+        .btn-del-cat {
+            background: #fff1ef; color: #c53d3d; border: 1px solid #e3aaa4;
+            padding: 0.3rem 0.7rem; border-radius: 8px; font-size: 0.78rem; font-weight: 700; cursor: pointer;
+        }
     </style>
 </head>
 <body>
 
     <header>
         <div class="header-title">
-            <span>🛡️</span>
-            <span>Kitchen Portal</span>
+            <span>🛡️</span>[cite: 17]
+            <span>Kitchen Portal</span>[cite: 17]
         </div>
 
         <div class="header-actions">
-            <button class="kitchen-toggle-btn kitchen-open" id="kitchenToggleBtn" onclick="toggleKitchenStatus()">Kitchen: OPEN</button>
+            <button class="kitchen-toggle-btn kitchen-open" id="kitchenToggleBtn" onclick="toggleKitchenStatus()">Kitchen: OPEN</button>[cite: 17]
 
-            <!-- Adaptive Button: Shows "⚙️ Options ▼" on desktop and just "⚙️" icon on mobile -->
             <button class="admin-profile-btn" onclick="toggleDropdown()" title="Options">
-                <span>⚙️</span>
-                <span class="admin-btn-text">Options</span>
-                <span class="admin-btn-caret">▼</span>
+                <span>⚙️</span>[cite: 17]
+                <span class="admin-btn-text">Options</span>[cite: 17]
+                <span class="admin-btn-caret">▼</span>[cite: 17]
             </button>
             <div class="profile-dropdown-menu" id="profileDropdown">
-                <button class="dropdown-item" onclick="openPasswordModal()">🔑 Change Password</button>
-                <button class="dropdown-item" onclick="switchMainTab('menuTab')">📋 Manage Menu Catalog</button>
-                <button class="dropdown-item" onclick="openPhotosModal()">🖼️ Manage Uploaded Photos</button>
-                <button class="dropdown-item" onclick="logoutAdmin()" style="color: #ef4444;">🚪 Sign Out</button>
+                <button class="dropdown-item" onclick="openCategoriesModal()">🏷️ Category List Edit</button>
+                <button class="dropdown-item" onclick="openPasswordModal()">🔑 Change Password</button>[cite: 17]
+                <button class="dropdown-item" onclick="switchMainTab('menuTab')">📋 Manage Menu Catalog</button>[cite: 17]
+                <button class="dropdown-item" onclick="openPhotosModal()">🖼️ Manage Uploaded Photos</button>[cite: 17]
+                <button class="dropdown-item" onclick="logoutAdmin()" style="color: #ef4444;">🚪 Sign Out</button>[cite: 17]
             </div>
         </div>
     </header>
 
     <div class="container">
-        <!-- Main Tab Controls -->
         <div class="main-tab-controls">
             <button class="main-tab-btn active" id="ordersMainTabBtn" onclick="switchMainTab('ordersTab')">
-                <span>Orders Manager</span>
-                <span style="background:#0f172a; color:#fff; padding:0.15rem 0.6rem; border-radius:999px; font-size:0.8rem;" id="totalQueueBadge">0</span>
+                <span>Orders Manager</span>[cite: 17]
+                <span style="background:#0f172a; color:#fff; padding:0.15rem 0.6rem; border-radius:999px; font-size:0.8rem;" id="totalQueueBadge">0</span>[cite: 17]
             </button>
             <button class="main-tab-btn" id="menuMainTabBtn" onclick="switchMainTab('menuTab')">
-                <span>Menu Item Catalog</span>
+                <span>Menu Item Catalog</span>[cite: 17]
             </button>
         </div>
 
         <!-- TAB 1: ORDERS MANAGER -->
         <section id="ordersTab">
-            <!-- Separate Filter Sub-Buttons for Orders -->
             <div class="sub-orders-controls">
                 <button class="sub-order-btn active-new" id="btnSubNew" onclick="switchOrdersSubSection('new')">
-                    <span>⏳ New Requests</span>
-                    <span style="background:var(--amber); color:#000; padding:0.15rem 0.55rem; border-radius:999px; font-size:0.75rem;" id="newOrdersBadge">0</span>
+                    <span>⏳ New Requests</span>[cite: 17]
+                    <span style="background:var(--amber); color:#000; padding:0.15rem 0.55rem; border-radius:999px; font-size:0.75rem;" id="newOrdersBadge">0</span>[cite: 17]
                 </button>
                 <button class="sub-order-btn" id="btnSubInProg" onclick="switchOrdersSubSection('inprog')">
-                    <span>🍳 In-Progress Orders</span>
-                    <span style="background:var(--primary); color:#fff; padding:0.15rem 0.55rem; border-radius:999px; font-size:0.75rem;" id="activeOrdersBadge">0</span>
+                    <span>🍳 In-Progress Orders</span>[cite: 17]
+                    <span style="background:var(--primary); color:#fff; padding:0.15rem 0.55rem; border-radius:999px; font-size:0.75rem;" id="activeOrdersBadge">0</span>[cite: 17]
                 </button>
             </div>
 
-            <!-- SECTION 1: NEW INCOMING ORDERS (WITH 60-SEC COUNTDOWN TIMER) -->
             <div class="section-box" id="newOrdersSection" style="border-left: 4px solid var(--amber);">
                 <div class="section-header">
                     <div class="section-title">
-                        <span>⏳ Incoming Unaccepted Orders</span>
+                        <span>⏳ Incoming Unaccepted Orders</span>[cite: 17]
                     </div>
-                    <span style="font-size:0.8rem; color:var(--text-muted);">60s auto-cancel window</span>
+                    <span style="font-size:0.8rem; color:var(--text-muted);">60s auto-cancel window</span>[cite: 17]
                 </div>
                 <div class="orders-grid" id="newOrdersGrid">
-                    <div style="color:var(--text-muted); padding:1rem;">No new incoming orders.</div>
+                    <div style="color:var(--text-muted); padding:1rem;">No new incoming orders.</div>[cite: 17]
                 </div>
             </div>
 
-            <!-- SECTION 2: ACTIVE IN-PROGRESS ORDERS -->
             <div class="section-box" id="inprogOrdersSection" style="display:none; border-left: 4px solid var(--primary);">
                 <div class="section-header">
                     <div class="section-title">
-                        <span>🍳 Active Kitchen Orders</span>
+                        <span>🍳 Active Kitchen Orders</span>[cite: 17]
                     </div>
-                    <span style="font-size:0.8rem; color:var(--text-muted);">🟢 Green = Paid | 🔴 Red = Unpaid</span>
+                    <span style="font-size:0.8rem; color:var(--text-muted);">🟢 Green = Paid | 🔴 Red = Unpaid</span>[cite: 17]
                 </div>
                 <div class="orders-grid" id="activeOrdersGrid">
-                    <div style="color:var(--text-muted); padding:1rem;">No active orders in kitchen.</div>
+                    <div style="color:var(--text-muted); padding:1rem;">No active orders in kitchen.</div>[cite: 17]
                 </div>
             </div>
         </section>
 
-        <!-- TAB 2: MENU CATALOGUE (DESKTOP TABLE + MOBILE CARDS) -->
+        <!-- TAB 2: MENU CATALOGUE -->
         <section id="menuTab" style="display:none;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
-                <h3 style="font-size:1.2rem; font-weight:800; color:#302a20;">Live Restaurant Menu</h3>
-                <button class="btn-primary" onclick="openItemModal()" style="padding:0.6rem 1.2rem; font-size:0.9rem;">+ Add Food Item</button>
+                <h3 style="font-size:1.2rem; font-weight:800; color:#302a20;">Live Restaurant Menu</h3>[cite: 17]
+                <button class="btn-primary" onclick="openItemModal()" style="padding:0.6rem 1.2rem; font-size:0.9rem;">+ Add Food Item</button>[cite: 17]
             </div>
 
-            <!-- Desktop View: Table -->
             <div class="desktop-menu-table-wrap" style="background:#fffdf7; border:1px solid #ded3b8; border-radius:16px; overflow:hidden;">
                 <table class="desktop-menu-table">
                     <thead>
                         <tr>
-                            <th>Photo</th>
-                            <th>Dish Name</th>
-                            <th>Category</th>
-                            <th>Price (₹)</th>
-                            <th>Status</th>
-                            <th>Actions</th>
+                            <th>Photo</th>[cite: 17]
+                            <th>Dish Name</th>[cite: 17]
+                            <th>Category</th>[cite: 17]
+                            <th>Price (₹)</th>[cite: 17]
+                            <th>Status</th>[cite: 17]
+                            <th>Actions</th>[cite: 17]
                         </tr>
                     </thead>
-                    <tbody id="menuTableBody"></tbody>
+                    <tbody id="menuTableBody"></tbody>[cite: 17]
                 </table>
             </div>
 
-            <!-- Mobile View: Touch-Friendly Responsive Cards -->
-            <div class="mobile-menu-grid" id="mobileMenuGrid"></div>
+            <div class="mobile-menu-grid" id="mobileMenuGrid"></div>[cite: 17]
         </section>
+    </div>
+
+    <!-- CATEGORY LIST EDIT MODAL -->
+    <div class="modal-overlay" id="categoriesModal">
+        <div class="modal-box" style="max-width: 480px;">
+            <div class="modal-header-row">
+                <h3>Manage Category List</h3>
+                <button class="modal-close-icon" onclick="closeCategoriesModal()">&times;</button>
+            </div>
+            
+            <form onsubmit="handleAddCategory(event)" style="display:flex; gap:0.5rem; margin-bottom:1.25rem;">
+                <input type="text" id="newCategoryInput" class="form-input" style="flex:1;" placeholder="New category (e.g. Desserts)" required />
+                <button type="submit" class="btn-primary" style="padding:0.7rem 1.1rem; white-space:nowrap;">+ Add</button>
+            </form>
+
+            <label style="display:block; font-size:0.85rem; font-weight:700; color:var(--text-muted); margin-bottom:0.5rem;">Existing Categories</label>
+            <div id="categoriesListContainer" style="max-height: 250px; overflow-y: auto; padding-right: 4px;"></div>
+
+            <div class="modal-buttons" style="margin-top:1.25rem;">
+                <button class="btn-secondary" onclick="closeCategoriesModal()">Close</button>
+            </div>
+        </div>
     </div>
 
     <!-- THEMED CONFIRMATION MODAL -->
     <div class="modal-overlay" id="adminConfirmModal">
         <div class="modal-box" style="max-width: 400px; text-align:center;">
-            <div class="dialog-icon" id="confirmDialogIcon">⚠️</div>
-            <h3 class="dialog-title" id="confirmDialogTitle">Confirm Action</h3>
-            <p class="dialog-message" id="confirmDialogMessage">Are you sure you want to proceed?</p>
+            <div class="dialog-icon" id="confirmDialogIcon">⚠️</div>[cite: 17]
+            <h3 class="dialog-title" id="confirmDialogTitle">Confirm Action</h3>[cite: 17]
+            <p class="dialog-message" id="confirmDialogMessage">Are you sure you want to proceed?</p>[cite: 17]
             <div class="modal-buttons" style="justify-content:center;">
-                <button class="btn-secondary" onclick="closeAdminConfirm(false)">Cancel</button>
-                <button class="btn-primary" id="confirmDialogSubmitBtn" onclick="closeAdminConfirm(true)">Confirm</button>
+                <button class="btn-secondary" onclick="closeAdminConfirm(false)">Cancel</button>[cite: 17]
+                <button class="btn-primary" id="confirmDialogSubmitBtn" onclick="closeAdminConfirm(true)">Confirm</button>[cite: 17]
             </div>
         </div>
     </div>
@@ -400,14 +419,14 @@
     <div class="modal-overlay" id="adminCancelPromptModal">
         <div class="modal-box" style="max-width: 440px;">
             <div class="modal-header-row">
-                <h3>Cancel Order</h3>
-                <button class="modal-close-icon" onclick="closeCancelPrompt(false)">&times;</button>
+                <h3>Cancel Order</h3>[cite: 17]
+                <button class="modal-close-icon" onclick="closeCancelPrompt(false)">&times;</button>[cite: 17]
             </div>
-            <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1rem;">Enter cancellation reason for the customer:</p>
-            <textarea class="dialog-textarea" id="cancelReasonInput" rows="3" placeholder="e.g. Kitchen is busy, Out of stock"></textarea>
+            <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1rem;">Enter cancellation reason for the customer:</p>[cite: 17]
+            <textarea class="dialog-textarea" id="cancelReasonInput" rows="3" placeholder="e.g. Kitchen is busy, Out of stock"></textarea>[cite: 17]
             <div class="modal-buttons">
-                <button class="btn-secondary" onclick="closeCancelPrompt(false)">Abort</button>
-                <button class="btn-primary" style="background:#c53d3d; border-color:#922626;" onclick="closeCancelPrompt(true)">Confirm Cancel</button>
+                <button class="btn-secondary" onclick="closeCancelPrompt(false)">Abort</button>[cite: 17]
+                <button class="btn-primary" style="background:#c53d3d; border-color:#922626;" onclick="closeCancelPrompt(true)">Confirm Cancel</button>[cite: 17]
             </div>
         </div>
     </div>
@@ -416,53 +435,49 @@
     <div class="modal-overlay" id="itemModal">
         <div class="modal-box">
             <div class="modal-header-row">
-                <h3 id="itemModalTitle">Menu Dish</h3>
-                <button class="modal-close-icon" onclick="closeItemModal()">&times;</button>
+                <h3 id="itemModalTitle">Menu Dish</h3>[cite: 17]
+                <button class="modal-close-icon" onclick="closeItemModal()">&times;</button>[cite: 17]
             </div>
 
-            <form id="menuItemForm" onsubmit="handleSaveMenuItem(event)" enctype="multipart/form-data">
-                <input type="hidden" id="editItemId" name="id" />
+            <form id="menuItemForm" onsubmit="handleSaveMenuItem(event)" enctype="multipart/form-data">[cite: 17]
+                <input type="hidden" id="editItemId" name="id" />[cite: 17]
                 
                 <div class="form-field">
-                    <label>Dish Name</label>
-                    <input type="text" id="dishNameInput" name="item_name" class="form-input" required placeholder="e.g. Special Dosa" />
+                    <label>Dish Name</label>[cite: 17]
+                    <input type="text" id="dishNameInput" name="item_name" class="form-input" required placeholder="e.g. Special Dosa" />[cite: 17]
                 </div>
                 
                 <div class="form-field">
-                    <label>Category</label>
-                    <select id="dishCategorySelect" name="category" class="form-input">
-                        <option value="tiffins">Tiffins</option>
-                        <option value="fast food">Fast Food</option>
-                        <option value="meals">Meals</option>
-                    </select>
+                    <label>Category</label>[cite: 17]
+                    <select id="dishCategorySelect" name="category" class="form-input" style="text-transform:capitalize;"></select>
                 </div>
                 
                 <div class="form-field">
-                    <label>Price (₹)</label>
-                    <input type="number" step="0.01" id="dishPriceInput" name="price" class="form-input" required placeholder="0.00" />
+                    <label>Price (₹)</label>[cite: 17]
+                    <input type="number" step="0.01" id="dishPriceInput" name="price" class="form-input" required placeholder="0.00" />[cite: 17]
                 </div>
                 
                 <div class="form-field">
-                    <label>Photo File Upload</label>
-                    <input type="file" id="dishFileInput" name="image_file" accept="image/*" class="form-input" style="background:#fff;" />
+                    <label>Photo File Upload</label>[cite: 17]
+                    <input type="file" id="dishFileInput" name="image_file" accept="image/*" class="form-input" style="background:#fff;" />[cite: 17]
                 </div>
                 
                 <div class="form-field">
-                    <label>Or Web Photo URL</label>
-                    <input type="text" id="dishUrlInput" name="image_url" class="form-input" placeholder="https://..." />
+                    <label>Or Web Photo URL</label>[cite: 17]
+                    <input type="text" id="dishUrlInput" name="image_url" class="form-input" placeholder="https://..." />[cite: 17]
                 </div>
                 
                 <div class="form-field">
-                    <label>Availability Status</label>
-                    <select id="dishActiveSelect" name="is_active" class="form-input">
-                        <option value="true">🟢 Active (Available for orders)</option>
-                        <option value="false">🔴 Inactive (Marked unavailable)</option>
+                    <label>Availability Status</label>[cite: 17]
+                    <select id="dishActiveSelect" name="is_active" class="form-input">[cite: 17]
+                        <option value="true">🟢 Active (Available for orders)</option>[cite: 17]
+                        <option value="false">🔴 Inactive (Marked unavailable)</option>[cite: 17]
                     </select>
                 </div>
                 
                 <div class="modal-buttons">
-                    <button type="button" class="btn-secondary" onclick="closeItemModal()">Cancel</button>
-                    <button type="submit" class="btn-primary">Save Dish</button>
+                    <button type="button" class="btn-secondary" onclick="closeItemModal()">Cancel</button>[cite: 17]
+                    <button type="submit" class="btn-primary">Save Dish</button>[cite: 17]
                 </div>
             </form>
         </div>
@@ -472,13 +487,13 @@
     <div class="modal-overlay" id="photosModal">
         <div class="modal-box">
             <div class="modal-header-row">
-                <h3>Static Uploaded Photos</h3>
-                <button class="modal-close-icon" onclick="closePhotosModal()">&times;</button>
+                <h3>Static Uploaded Photos</h3>[cite: 17]
+                <button class="modal-close-icon" onclick="closePhotosModal()">&times;</button>[cite: 17]
             </div>
-            <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">Stored asset files inside /static/uploads/</p>
-            <div id="photosContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(85px, 1fr)); gap:0.65rem;"></div>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">Stored asset files inside /static/uploads/</p>[cite: 17]
+            <div id="photosContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(85px, 1fr)); gap:0.65rem;"></div>[cite: 17]
             <div class="modal-buttons">
-                <button class="btn-secondary" onclick="closePhotosModal()">Close</button>
+                <button class="btn-secondary" onclick="closePhotosModal()">Close</button>[cite: 17]
             </div>
         </div>
     </div>
@@ -487,20 +502,29 @@
     <div class="modal-overlay" id="passwordModal">
         <div class="modal-box" style="max-width:380px;">
             <div class="modal-header-row">
-                <h3>Admin Password</h3>
-                <button class="modal-close-icon" onclick="closePasswordModal()">&times;</button>
+                <h3>Admin Password</h3>[cite: 17]
+                <button class="modal-close-icon" onclick="closePasswordModal()">&times;</button>[cite: 17]
             </div>
-            <input type="password" id="newAdminPasswordInput" class="form-input" placeholder="Min 6 characters" />
+            <input type="password" id="newAdminPasswordInput" class="form-input" placeholder="Min 6 characters" />[cite: 17]
             <div class="modal-buttons">
-                <button class="btn-secondary" onclick="closePasswordModal()">Cancel</button>
-                <button class="btn-primary" onclick="saveAdminPassword()">Save</button>
+                <button class="btn-secondary" onclick="closePasswordModal()">Cancel</button>[cite: 17]
+                <button class="btn-primary" onclick="saveAdminPassword()">Save</button>[cite: 17]
             </div>
         </div>
     </div>
 
     <script>
-        function toggleDropdown() { document.getElementById("profileDropdown").classList.toggle("show"); }
-        window.onclick = function(e) { if (!e.target.closest('.admin-profile-btn')) document.getElementById("profileDropdown").classList.remove("show"); };
+        let adminCategories = [];
+
+        function toggleDropdown() {
+            document.getElementById("profileDropdown").classList.toggle("show");
+        }
+
+        window.onclick = function(e) {
+            if (!e.target.closest('.admin-profile-btn')) {
+                document.getElementById("profileDropdown").classList.remove("show");
+            }
+        };
 
         function switchMainTab(tabId) {
             document.getElementById("ordersTab").style.display = tabId === 'ordersTab' ? 'block' : 'none';
@@ -512,7 +536,6 @@
             if (tabId === 'menuTab') loadAdminMenu();
         }
 
-        // Sub-Tab Switcher between New Requests & In-Progress Orders
         let currentSubSection = 'new';
         function switchOrdersSubSection(sub) {
             currentSubSection = sub;
@@ -534,9 +557,8 @@
             }
         }
 
-        // Custom Confirm and Cancel Prompts
         let confirmResolve = null;
-        function showAdminConfirm(title, message, icon="⚠️") {
+        function showAdminConfirm(title, message, icon = "⚠️") {
             document.getElementById("confirmDialogTitle").textContent = title;
             document.getElementById("confirmDialogMessage").textContent = message;
             document.getElementById("confirmDialogIcon").textContent = icon;
@@ -581,7 +603,99 @@
             }
         }
 
-        // Real-Time Local Tick for Countdown Badges
+        // ==========================================
+        // Category Management Functions
+        // ==========================================
+        async function loadAdminCategories() {
+            try {
+                const res = await fetch("/api/categories");
+                const data = await res.json();
+                adminCategories = data.categories || [];
+                renderCategoriesModalList();
+                populateDishCategorySelect();
+            } catch (err) {}
+        }
+
+        function renderCategoriesModalList() {
+            const box = document.getElementById("categoriesListContainer");
+            box.innerHTML = "";
+            if (adminCategories.length === 0) {
+                box.innerHTML = `<div style="color:var(--text-muted); font-size:0.85rem; padding:0.5rem 0;">No categories found in database.</div>`;
+                return;
+            }
+            adminCategories.forEach(cat => {
+                const row = document.createElement("div");
+                row.className = "category-item-row";
+                row.innerHTML = `
+                    <span style="font-weight:700; text-transform:capitalize;">${cat.name}</span>
+                    <button class="btn-del-cat" onclick="deleteCategory(${cat.id}, '${cat.name}')">Delete</button>
+                `;
+                box.appendChild(row);
+            });
+        }
+
+        function populateDishCategorySelect(selectedCategory = "") {
+            const selectEl = document.getElementById("dishCategorySelect");
+            selectEl.innerHTML = "";
+            adminCategories.forEach(cat => {
+                const opt = document.createElement("option");
+                opt.value = cat.name.toLowerCase();
+                opt.textContent = cat.name.charAt(0).toUpperCase() + cat.name.slice(1);
+                if (selectedCategory && selectedCategory.toLowerCase() === cat.name.toLowerCase()) {
+                    opt.selected = true;
+                }
+                selectEl.appendChild(opt);
+            });
+        }
+
+        function openCategoriesModal() {
+            document.getElementById("profileDropdown").classList.remove("show");
+            document.getElementById("categoriesModal").classList.add("open");
+            loadAdminCategories();
+        }
+
+        function closeCategoriesModal() {
+            document.getElementById("categoriesModal").classList.remove("open");
+        }
+
+        async function handleAddCategory(e) {
+            e.preventDefault();
+            const input = document.getElementById("newCategoryInput");
+            const name = input.value.trim();
+            if (!name) return;
+
+            const res = await fetch("/api/admin/categories/add", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name })
+            });
+            const data = await res.json();
+            if (data.success) {
+                input.value = "";
+                await loadAdminCategories();
+            } else {
+                alert(data.error || "Failed to add category");
+            }
+        }
+
+        async function deleteCategory(id, name) {
+            const confirmed = await showAdminConfirm("Delete Category", `Delete '${name}' from categories? Existing items with this category will retain their label.`);
+            if (!confirmed) return;
+
+            const res = await fetch("/api/admin/categories/delete", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id, name })
+            });
+            const data = await res.json();
+            if (data.success) {
+                await loadAdminCategories();
+            }
+        }
+
+        // ==========================================
+        // Orders & Timers
+        // ==========================================
         let countdownTimerMap = {};
         function startLocalTimers() {
             setInterval(() => {
@@ -614,7 +728,6 @@
                 const newGrid = document.getElementById("newOrdersGrid");
                 const activeGrid = document.getElementById("activeOrdersGrid");
 
-                // 1. Render New Incoming Orders (With Acceptance Timers)
                 if (!data.new_orders || data.new_orders.length === 0) {
                     newGrid.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">No new incoming orders.</div>';
                 } else {
@@ -648,7 +761,6 @@
                     });
                 }
 
-                // 2. Render In-Progress Orders (Unpaid highlighted in Solid Red)
                 if (!data.active_orders || data.active_orders.length === 0) {
                     activeGrid.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">No active orders in kitchen.</div>';
                 } else {
@@ -729,16 +841,17 @@
         async function loadAdminMenu() {
             const tbody = document.getElementById("menuTableBody");
             const mobileGrid = document.getElementById("mobileMenuGrid");
-            
+
+            await loadAdminCategories();
+
             const res = await fetch("/api/admin/menu/items");
             const data = await res.json();
             currentMenuItems = data.items || [];
-            
+
             tbody.innerHTML = "";
             mobileGrid.innerHTML = "";
 
             currentMenuItems.forEach(item => {
-                // Desktop row
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td><img src="${item.photo_url || 'https://via.placeholder.com/50'}" style="width:50px; height:50px; border-radius:8px; object-fit:cover;" onerror="this.src='https://via.placeholder.com/50'"/></td>
@@ -753,7 +866,6 @@
                 `;
                 tbody.appendChild(row);
 
-                // Mobile touch card
                 const card = document.createElement("div");
                 card.className = "mobile-menu-card";
                 card.innerHTML = `
@@ -784,6 +896,7 @@
             document.getElementById("dishUrlInput").value = "";
             document.getElementById("dishFileInput").value = "";
             document.getElementById("dishActiveSelect").value = "true";
+            populateDishCategorySelect();
             document.getElementById("itemModal").classList.add("open");
         }
 
@@ -793,14 +906,17 @@
             document.getElementById("itemModalTitle").textContent = "Edit Menu Dish";
             document.getElementById("editItemId").value = item.id;
             document.getElementById("dishNameInput").value = item.item_name;
-            document.getElementById("dishCategorySelect").value = item.category;
+            populateDishCategorySelect(item.category);
             document.getElementById("dishPriceInput").value = item.price;
             document.getElementById("dishUrlInput").value = item.photo_url || "";
             document.getElementById("dishFileInput").value = "";
             document.getElementById("dishActiveSelect").value = item.is_active ? "true" : "false";
             document.getElementById("itemModal").classList.add("open");
         }
-        function closeItemModal() { document.getElementById("itemModal").classList.remove("open"); }
+
+        function closeItemModal() {
+            document.getElementById("itemModal").classList.remove("open");
+        }
 
         async function handleSaveMenuItem(e) {
             e.preventDefault();
@@ -903,6 +1019,7 @@
             window.location.reload();
         }
 
+        loadAdminCategories();
         loadAdminOrders();
         setInterval(loadAdminOrders, 4000);
     </script>

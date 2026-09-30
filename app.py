@@ -25,7 +25,6 @@ except ModuleNotFoundError:
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "hotel_secret_key_12345")
 
-# Test Mode configuration
 TEST_MODE = False
 TEST_USER_EMAIL = "test_customer@gmail.com"
 TEST_USERNAME = "Test Customer"
@@ -38,11 +37,11 @@ RAZORPAY_WEBHOOK_SECRET = os.environ.get("RAZORPAY_WEBHOOK_SECRET", "YourWebhook
 client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)) if razorpay else None
 
 DB_CONFIG = {
-    "dbname": "hotel_db_aza2",
-    "user": "hotel_db_aza2_user",
-    "password": "NPsOIbUvGQeBdFEzdszeCvtL7zfeSfWS",
-    "host": "dpg-dauafeo93c1s73de82gg-a",
-    "port": 5432
+    "dbname": os.environ.get("DB_NAME", "hotel_db_aza2"),
+    "user": os.environ.get("DB_USER", "hotel_db_aza2_user"),
+    "password": os.environ.get("DB_PASSWORD", "NPsOIbUvGQeBdFEzdszeCvtL7zfeSfWS"),
+    "host": os.environ.get("DB_HOST", "dpg-dauafeo93c1s73de82gg-a"),
+    "port": int(os.environ.get("DB_PORT", 5432))
 }
 
 def get_db():
@@ -100,6 +99,7 @@ def get_next_daily_order_number(cur):
     row = cur.fetchone()
     return row["next_num"] if row else 0
 
+
 def parse_cart_code(code_str):
     cart = {}
     if not code_str:
@@ -109,12 +109,14 @@ def parse_cart_code(code_str):
         cart[int(item_id)] = int(qty)
     return cart
 
+
 def build_cart_code(cart_dict):
     parts = []
     for item_id, qty in sorted(cart_dict.items()):
         if qty > 0:
             parts.append(f"{item_id}+{qty}a")
     return "".join(parts)
+
 
 def verify_google_token(token):
     query = urlencode({"id_token": token})
@@ -123,6 +125,76 @@ def verify_google_token(token):
     if idinfo.get("aud") != GOOGLE_CLIENT_ID:
         raise ValueError("Invalid Google token audience")
     return idinfo
+
+# ==========================================
+# Category Endpoints
+# ==========================================
+@app.route("/api/categories", methods=["GET"])
+def get_categories():
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS categories (
+                    id SERIAL PRIMARY KEY,
+                    name VARCHAR(80) UNIQUE NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
+            cur.execute("SELECT id, name FROM categories ORDER BY name ASC;")
+            categories = cur.fetchall()
+    return jsonify({"categories": categories})
+
+@app.route("/api/admin/categories/add", methods=["POST"])
+def admin_add_category():
+    if not session.get("is_admin"):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json() or {}
+    name = data.get("name", "").strip().lower()
+    if not name:
+        return jsonify({"error": "Category name cannot be empty"}), 400
+
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS categories (
+                        id SERIAL PRIMARY KEY,
+                        name VARCHAR(80) UNIQUE NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                """)
+                cur.execute("INSERT INTO categories (name) VALUES (%s) ON CONFLICT (name) DO NOTHING;", (name,))
+                conn.commit()
+        bump_menu_version()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/admin/categories/delete", methods=["POST"])
+def admin_delete_category():
+    if not session.get("is_admin"):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json() or {}
+    category_id = data.get("id")
+    category_name = data.get("name", "").strip().lower()
+
+    if not category_id and not category_name:
+        return jsonify({"error": "Category ID or name is required"}), 400
+
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                if category_id:
+                    cur.execute("DELETE FROM categories WHERE id = %s;", (int(category_id),))
+                else:
+                    cur.execute("DELETE FROM categories WHERE name = %s;", (category_name,))
+                conn.commit()
+        bump_menu_version()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # ==========================================
 # Page Routes
@@ -164,9 +236,9 @@ def cart_page():
     if "user_email" not in session:
         return redirect(url_for("index"))
     return render_template(
-        "cart.html", 
-        email=session["user_email"], 
-        username=session.get("username", "Guest"), 
+        "cart.html",
+        email=session["user_email"],
+        username=session.get("username", "Guest"),
         rzp_key=RAZORPAY_KEY_ID,
         test_mode=TEST_MODE
     )
@@ -240,6 +312,17 @@ def get_menu():
 
     with get_db() as conn:
         with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS categories (
+                    id SERIAL PRIMARY KEY,
+                    name VARCHAR(80) UNIQUE NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
+            cur.execute("SELECT name FROM categories ORDER BY name ASC;")
+            cat_rows = cur.fetchall()
+            categories = [c["name"] for c in cat_rows]
+
             cur.execute("SELECT id, item_name, category, price::float, photo_url, is_active FROM menu_items ORDER BY id ASC;")
             items = cur.fetchall()
 
@@ -251,6 +334,7 @@ def get_menu():
 
     return jsonify({
         "items": items,
+        "categories": categories,
         "cart": cart_dict,
         "cart_code": cart_row["cart_code"] if cart_row else "",
         "total_price": total_price,
@@ -338,7 +422,7 @@ def get_cart_items():
     return jsonify({"items": detailed_items, "total_price": cart_row["total_price"], "cart_code": cart_row["cart_code"]})
 
 # ==========================================
-# Two-Stage Order Execution (Request -> Accept -> Pay)
+# Two-Stage Order Execution
 # ==========================================
 @app.route("/api/order/submit-request", methods=["POST"])
 def submit_order_request():
@@ -355,7 +439,6 @@ def submit_order_request():
             if not cart or not cart["cart_code"] or cart["total_price"] <= 0:
                 return jsonify({"error": "Cart is empty"}), 400
 
-            # Mark lingering unaccepted orders as superseded
             cur.execute("""
                 UPDATE orders 
                 SET order_status = 'cancelled', cancellation_reason = 'Superseded by new request'
@@ -412,7 +495,6 @@ def confirm_test_payment():
                 WHERE id = %s;
             """, (f"pay_test_{os.urandom(4).hex()}", order_id))
 
-            # Empty cart only after successful payment
             cur.execute("UPDATE carts SET cart_code = '', total_price = 0 WHERE user_email = %s;", (user_email,))
             conn.commit()
 
@@ -450,7 +532,6 @@ def check_active_order():
 
     with get_db() as conn:
         with conn.cursor() as cur:
-            # 1. Check for terminal cancellation alert
             cur.execute("""
                 SELECT id, order_status, cancellation_reason
                 FROM orders 
@@ -472,7 +553,6 @@ def check_active_order():
                     "menu_version": menu_version
                 })
 
-            # 2. Check for active or delivered order
             cur.execute("""
                 SELECT id, order_status, payment_status, total_amount::float, daily_order_number, 
                        gateway_order_id, cancellation_reason, customer_alert,
@@ -485,7 +565,6 @@ def check_active_order():
             order = cur.fetchone()
 
             if order:
-                # If delivered and alert is pending, notify customer
                 if order["order_status"] == 'delivered' and order["customer_alert"]:
                     return jsonify({
                         "has_active_order": False,
@@ -498,7 +577,6 @@ def check_active_order():
                     })
 
                 elapsed = order["seconds_elapsed"]
-                # 60s timeout for placed unaccepted orders
                 if order["order_status"] == 'placed' and elapsed >= 60:
                     cur.execute("""
                         UPDATE orders 
@@ -619,7 +697,11 @@ def admin_get_orders():
 
     for o in orders_rows:
         parsed_code = parse_cart_code(o["items_code"])
-        items_detail = [{"name": menu_map.get(i_id, {"item_name": f"Dish #{i_id}"})["item_name"], "quantity": qty, "subtotal": round(menu_map.get(i_id, {"price": 0.0})["price"] * qty, 2)} for i_id, qty in parsed_code.items()]
+        items_detail = [{
+            "name": menu_map.get(i_id, {"item_name": f"Dish #{i_id}"})["item_name"],
+            "quantity": qty,
+            "subtotal": round(menu_map.get(i_id, {"price": 0.0})["price"] * qty, 2)
+        } for i_id, qty in parsed_code.items()]
 
         seconds_remaining = max(0, 60 - o["seconds_elapsed"]) if o["order_status"] == 'placed' else 0
 
@@ -668,13 +750,6 @@ def admin_toggle_kitchen():
 
     bump_menu_version()
     return jsonify({"success": True, "kitchen_open": new_status == "true"})
-
-@app.route("/api/admin/menu/sync", methods=["POST"])
-def admin_sync_menu():
-    if not session.get("is_admin"):
-        return jsonify({"error": "Unauthorized"}), 401
-    bump_menu_version()
-    return jsonify({"success": True, "message": "Menu update pushed to all clients."})
 
 @app.route("/api/admin/order/update-status", methods=["POST"])
 def admin_update_order_status():

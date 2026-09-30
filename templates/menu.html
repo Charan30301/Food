@@ -24,7 +24,7 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
-        
+
         html { width: 100%; overflow-x: hidden; scroll-behavior: smooth; }
         body {
             width: 100%; min-height: 100vh; margin: 0; padding-bottom: 120px;
@@ -83,7 +83,7 @@
             background: rgba(255, 255, 255, 0.75) !important; color: var(--brown-light) !important;
             border: 1px solid var(--gold-border) !important; border-radius: 999px !important;
             padding: 0.6rem 1.4rem; font-size: 0.9rem; font-weight: 600; cursor: pointer; white-space: nowrap;
-            transition: all 0.25s ease;
+            transition: all 0.25s ease; text-transform: capitalize;
         }
         .cat-btn:hover { background: var(--cream) !important; color: var(--gold-dark) !important; }
         .cat-btn.active {
@@ -170,13 +170,10 @@
         }
         .floating-action-bar.visible { display: flex; }
         
-        /* 1. Normal Cart Bar (Gold) */
         .cart-bar {
             background: linear-gradient(135deg, #c2a45e, #9e7d3e) !important;
             color: #fffdf6 !important;
         }
-
-        /* 2. Red Cart Bar (Activated when Admin accepts and order is unpaid) */
         .cart-bar.cart-bar-unpaid {
             background: linear-gradient(135deg, #ef4444, #b91c1c) !important;
             color: #ffffff !important;
@@ -189,7 +186,6 @@
             100% { transform: scale(1.02); }
         }
 
-        /* 3. Green Order Placed Bar (Activated after User Pays) */
         .order-placed-bar {
             background: linear-gradient(135deg, #10b981, #059669) !important;
             color: #ffffff !important;
@@ -198,8 +194,6 @@
 
         .badge { background: rgba(255, 255, 255, 0.2); padding: 0.35rem 0.75rem; border-radius: 8px; font-weight: 800; }
 
-        /* Responsive Circular Mobile Cart */
-        .mobile-cart-icon { display: none; }
         @media (max-width: 768px) {
             #cartBar.cart-bar {
                 width: 68px !important; height: 68px !important; min-width: 68px !important; min-height: 68px !important;
@@ -211,7 +205,6 @@
             #cartBar #cartTotalLabel { font-size: 0.72rem !important; background: transparent !important; padding: 0 !important; }
         }
 
-        /* 4-Stage Stepper Live Progress Modal */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(48, 41, 31, 0.45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
@@ -231,7 +224,6 @@
             width: 24px; height: 24px; border-radius: 50%; background: #e4dfd1; border: 3px solid #fbf9f2;
             transition: all 0.3s ease;
         }
-        /* PURE VIBRANT GREEN LIVE TRACKING DOTS */
         .step-dot.green {
             background: #10b981 !important;
             box-shadow: 0 0 12px rgba(16, 185, 129, 0.6) !important;
@@ -239,7 +231,6 @@
         }
         .step-name { font-size: 0.75rem; color: var(--brown-light); font-weight: 700; text-transform: uppercase; }
 
-        /* Themed Notification Popup */
         .themed-popup-box {
             background: #fffdf7; border: 1px solid var(--gold-border); border-radius: 20px;
             padding: 2rem; width: 90%; max-width: 460px; text-align: center;
@@ -257,7 +248,6 @@
             color: #fffdf7; border: 1px solid #927326; border-radius: 999px; font-weight: 800; cursor: pointer; font-size: 1rem;
         }
 
-        /* Profile Sidebar with Fixed Pinned Footer */
         .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(48, 41, 31, 0.40); z-index: 1100; opacity: 0; pointer-events: none; transition: 0.3s; }
         .sidebar-overlay.active { opacity: 1; pointer-events: auto; }
         .profile-sidebar {
@@ -307,7 +297,6 @@
             border: none; padding: 0.65rem 1rem; border-radius: 8px; font-weight: 700; cursor: pointer;
         }
 
-        /* Mobile Food Item Details Sheet */
         .mobile-item-details { display: none; }
         @media (max-width: 768px) {
             .mobile-item-details {
@@ -339,116 +328,108 @@
 </head>
 <body>
 
-    <div class="kitchen-banner" id="kitchenClosedBanner">⚠️ The Kitchen is currently CLOSED. Preorders are temporarily paused.</div>
+    <div class="kitchen-banner" id="kitchenClosedBanner">⚠️ The Kitchen is currently CLOSED. Preorders are temporarily paused.</div>[cite: 19]
 
     <header>
         <div class="top-bar">
             <div class="search-container">
-                <span class="search-icon">🔍</span>
-                <input type="text" id="searchInput" class="search-input" placeholder="Search dishes or items...">
+                <span class="search-icon">🔍</span>[cite: 19]
+                <input type="text" id="searchInput" class="search-input" placeholder="Search dishes or items...">[cite: 19]
             </div>
-            <div class="profile-btn" onclick="openProfileSidebar()" title="{{ email }}" data-initial="{{ username[0]|upper if username else 'A' }}"></div>
+            <div class="profile-btn" onclick="openProfileSidebar()" title="{{ email }}" data-initial="{{ username[0]|upper if username else 'A' }}"></div>[cite: 19]
         </div>
     </header>
 
-    <div class="categories-container">
-        <button class="cat-btn active" onclick="filterCategory('all', this)">All</button>
-        <button class="cat-btn" onclick="filterCategory('tiffins', this)">Tiffins</button>
-        <button class="cat-btn" onclick="filterCategory('fast food', this)">Fast Food</button>
-        <button class="cat-btn" onclick="filterCategory('meals', this)">Meals</button>
+    <!-- DYNAMIC CATEGORY BUTTON CONTAINER -->
+    <div class="categories-container" id="categoriesContainer">
+        <button class="cat-btn active" onclick="filterCategory('all', this)">All</button>[cite: 19]
     </div>
 
-    <main class="menu-list" id="menuContainer"></main>
+    <main class="menu-list" id="menuContainer"></main>[cite: 19]
 
-    <!-- Floating Cart Button -->
     <a href="/cart" class="floating-action-bar cart-bar" id="cartBar">
-        <div class="mobile-cart-icon">🛒</div>
+        <div class="mobile-cart-icon">🛒</div>[cite: 19]
         <div class="cart-text-area">
-            <h4 style="font-size:0.95rem; margin:0;" id="cartBarTitle">View Cart</h4>
+            <h4 style="font-size:0.95rem; margin:0;" id="cartBarTitle">View Cart</h4>[cite: 19]
         </div>
-        <div class="badge" id="cartTotalLabel">₹0.00</div>
+        <div class="badge" id="cartTotalLabel">₹0.00</div>[cite: 19]
     </a>
 
-    <!-- Floating Order Placed Button (Active ONLY when paid) -->
     <div class="floating-action-bar order-placed-bar" id="orderPlacedBar" onclick="openOrderProgressModal()">
         <div>
-            <h4 style="font-size:0.95rem; margin:0;">Order Placed!</h4>
-            <div style="font-size:0.75rem; color:#fef3c7;" id="orderStatusText">Kitchen is preparing your food</div>
+            <h4 style="font-size:0.95rem; margin:0;">Order Placed!</h4>[cite: 19]
+            <div style="font-size:0.75rem; color:#fef3c7;" id="orderStatusText">Kitchen is preparing your food</div>[cite: 19]
         </div>
-        <div class="badge">Token #<span id="activeTokenId">0</span></div>
+        <div class="badge">Token #<span id="activeTokenId">0</span></div>[cite: 19]
     </div>
 
-    <!-- 4-Stage Stepper Live Progress Modal -->
     <div class="modal-overlay" id="orderProgressModal">
         <div class="progress-box">
-            <h3 style="color:var(--gold-dark); font-size:1.35rem; font-weight:800;">Token #<span id="modalOrderId">0</span> Status</h3>
-            <p style="color:var(--brown-light); font-size:0.9rem; margin-top:0.3rem;" id="modalPaymentInfo">Payment Verified • Preparing</p>
+            <h3 style="color:var(--gold-dark); font-size:1.35rem; font-weight:800;">Token #<span id="modalOrderId">0</span> Status</h3>[cite: 19]
+            <p style="color:var(--brown-light); font-size:0.9rem; margin-top:0.3rem;" id="modalPaymentInfo">Payment Verified • Preparing</p>[cite: 19]
 
             <div class="stepper-row">
                 <div class="step-col">
-                    <div class="step-dot" id="dotAccepted"></div>
-                    <span class="step-name">Accepted</span>
+                    <div class="step-dot" id="dotAccepted"></div>[cite: 19]
+                    <span class="step-name">Accepted</span>[cite: 19]
                 </div>
                 <div class="step-col">
-                    <div class="step-dot" id="dotPreparing"></div>
-                    <span class="step-name">Preparing</span>
+                    <div class="step-dot" id="dotPreparing"></div>[cite: 19]
+                    <span class="step-name">Preparing</span>[cite: 19]
                 </div>
                 <div class="step-col">
-                    <div class="step-dot" id="dotPrepared"></div>
-                    <span class="step-name">Prepared</span>
+                    <div class="step-dot" id="dotPrepared"></div>[cite: 19]
+                    <span class="step-name">Prepared</span>[cite: 19]
                 </div>
                 <div class="step-col">
-                    <div class="step-dot" id="dotDelivered"></div>
-                    <span class="step-name">Delivered</span>
+                    <div class="step-dot" id="dotDelivered"></div>[cite: 19]
+                    <span class="step-name">Delivered</span>[cite: 19]
                 </div>
             </div>
 
-            <button class="btn-themed-ack" onclick="closeOrderProgressModal()">Close Status</button>
+            <button class="btn-themed-ack" onclick="closeOrderProgressModal()">Close Status</button>[cite: 19]
         </div>
     </div>
 
-    <!-- Themed Notification Popup -->
     <div class="modal-overlay" id="themedPopupModal">
         <div class="themed-popup-box">
-            <div class="themed-popup-icon" id="themedPopupIcon">✨</div>
-            <h3 class="themed-popup-title" id="themedPopupTitle">Update</h3>
-            <p class="themed-popup-msg" id="themedPopupMsg"></p>
-            <div class="themed-popup-reason" id="themedPopupReason" style="display:none;"></div>
-            <button class="btn-themed-ack" id="themedPopupAckBtn" onclick="closeThemedPopup()">Understood</button>
+            <div class="themed-popup-icon" id="themedPopupIcon">✨</div>[cite: 19]
+            <h3 class="themed-popup-title" id="themedPopupTitle">Update</h3>[cite: 19]
+            <p class="themed-popup-msg" id="themedPopupMsg"></p>[cite: 19]
+            <div class="themed-popup-reason" id="themedPopupReason" style="display:none;"></div>[cite: 19]
+            <button class="btn-themed-ack" id="themedPopupAckBtn" onclick="closeThemedPopup()">Understood</button>[cite: 19]
         </div>
     </div>
 
-    <!-- Mobile Food Item Details Sheet -->
     <div id="mobileItemDetails" class="mobile-item-details">
         <div class="mobile-item-details-box">
-            <button class="mobile-details-close" onclick="closeMobileItemDetails()">×</button>
-            <img id="mobileDetailsImage" src="" alt="Dish">
+            <button class="mobile-details-close" onclick="closeMobileItemDetails()">×</button>[cite: 19]
+            <img id="mobileDetailsImage" src="" alt="Dish">[cite: 19]
             <div class="mobile-details-content">
-                <h2 id="mobileDetailsName"></h2>
-                <div id="mobileDetailsCategory"></div>
-                <div id="mobileDetailsPrice"></div>
-                <div id="mobileDetailsStatus"></div>
+                <h2 id="mobileDetailsName"></h2>[cite: 19]
+                <div id="mobileDetailsCategory"></div>[cite: 19]
+                <div id="mobileDetailsPrice"></div>[cite: 19]
+                <div id="mobileDetailsStatus"></div>[cite: 19]
             </div>
         </div>
     </div>
 
-    <!-- Profile Sidebar with FIXED PINNED LOGOUT FOOTER -->
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeProfileSidebar()"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeProfileSidebar()"></div>[cite: 19]
     <aside class="profile-sidebar" id="profileSidebar">
         <div class="sidebar-header">
-            <h3 style="color:var(--gold-dark); margin:0;">My Profile</h3>
-            <button class="sidebar-close-btn" onclick="closeProfileSidebar()">&times;</button>
+            <h3 style="color:var(--gold-dark); margin:0;">My Profile</h3>[cite: 19]
+            <button class="sidebar-close-btn" onclick="closeProfileSidebar()">&times;</button>[cite: 19]
         </div>
         
         <div class="sidebar-body">
             <div class="profile-card">
-                <label style="font-size:0.8rem; color:var(--brown-light);">Verified Gmail</label>
-                <div style="font-size:0.9rem; color:var(--gold-dark); margin-bottom:0.75rem;">{{ email }}</div>
+                <label style="font-size:0.8rem; color:var(--brown-light);">Verified Gmail</label>[cite: 19]
+                <div style="font-size:0.9rem; color:var(--gold-dark); margin-bottom:0.75rem;">{{ email }}</div>[cite: 19]
 
-                <label style="font-size:0.8rem; color:var(--brown-light);">Display Name</label>
+                <label style="font-size:0.8rem; color:var(--brown-light);">Display Name</label>[cite: 19]
                 <div style="display:flex; gap:0.5rem; margin-top:0.4rem;">
-                    <input type="text" id="profileUsernameInput" class="username-input" value="{{ username }}">
-                    <button class="save-username-btn" onclick="saveNewUsername()">Save</button>
+                    <input type="text" id="profileUsernameInput" class="username-input" value="{{ username }}">[cite: 19]
+                    <button class="save-username-btn" onclick="saveNewUsername()">Save</button>[cite: 19]
                 </div>
             </div>
 
@@ -459,12 +440,13 @@
         </div>
 
         <div class="sidebar-footer">
-            <a href="/logout" class="sidebar-logout-btn">Log Out</a>
+            <a href="/logout" class="sidebar-logout-btn">Log Out</a>[cite: 19]
         </div>
     </aside>
 
     <script>
         let menuItems = [];
+        let categoriesList = [];
         let cartData = {};
         let currentCategory = 'all';
         let searchQuery = '';
@@ -506,7 +488,6 @@
                 const orderPlacedBar = document.getElementById('orderPlacedBar');
                 const cartBar = document.getElementById('cartBar');
 
-                // Kitchen toggle banner
                 const closedBanner = document.getElementById('kitchenClosedBanner');
                 if (!data.kitchen_open) closedBanner.classList.add('show');
                 else closedBanner.classList.remove('show');
@@ -518,7 +499,6 @@
                     localMenuVersion = data.menu_version;
                 }
 
-                // 1. Cancellation notice
                 if (data.alert && data.status === 'cancelled') {
                     showThemedPopup({
                         title: "Order Cancelled by Kitchen",
@@ -545,7 +525,6 @@
                     return;
                 }
 
-                // 2. Delivered notice
                 if (data.alert && data.status === 'delivered') {
                     showThemedPopup({
                         title: "Order Delivered!",
@@ -571,7 +550,6 @@
                     return;
                 }
 
-                // 3. Active order state & color management
                 if (data.has_active_order) {
                     activeOrder = data;
 
@@ -602,7 +580,6 @@
                     lastReportedStatus = data.status;
 
                     if (data.payment_status === 'paid') {
-                        // PAID: Hide cart, show Order Placed bar in green
                         cartBar.classList.remove('visible');
                         cartBar.classList.remove('cart-bar-unpaid');
                         orderPlacedBar.classList.add('visible');
@@ -616,16 +593,13 @@
                         document.getElementById('orderStatusText').textContent = statusMap[data.status] || data.status.toUpperCase();
                         updateStepperDots(data.status);
                     } else {
-                        // UNPAID: Keep cart bar visible
                         orderPlacedBar.classList.remove('visible');
                         cartBar.classList.add('visible');
 
-                        // COLOR RULE: If accepted by admin but unpaid, TURN CART BAR RED
                         if (data.status !== 'placed') {
                             cartBar.classList.add('cart-bar-unpaid');
                             document.getElementById('cartBarTitle').textContent = "Pay Now (Accepted)";
                         } else {
-                            // Still awaiting kitchen acceptance (normal color)
                             cartBar.classList.remove('cart-bar-unpaid');
                             const secs = data.seconds_left !== undefined ? data.seconds_left : 60;
                             document.getElementById('cartBarTitle').textContent = `Awaiting Kitchen (${secs}s)`;
@@ -649,7 +623,6 @@
         }
         function closeOrderProgressModal() { document.getElementById('orderProgressModal').classList.remove('open'); }
 
-        // Green tracking dots
         function updateStepperDots(status) {
             const stages = ['accepted', 'preparing', 'prepared', 'delivered'];
             const currentIndex = stages.indexOf(status);
@@ -677,12 +650,33 @@
                 const res = await fetch('/api/menu');
                 const data = await res.json();
                 menuItems = data.items || [];
+                categoriesList = data.categories || [];
                 cartData = data.cart || {};
                 localMenuVersion = data.menu_version;
                 cartTotalCached = data.total_price || 0.0;
+                renderCategoryButtons();
                 updateCartUI(cartTotalCached);
                 renderMenu();
             } catch (err) {}
+        }
+
+        function renderCategoryButtons() {
+            const container = document.getElementById('categoriesContainer');
+            container.innerHTML = '';
+
+            const allBtn = document.createElement('button');
+            allBtn.className = `cat-btn ${currentCategory === 'all' ? 'active' : ''}`;
+            allBtn.textContent = 'All';
+            allBtn.onclick = function() { filterCategory('all', this); };
+            container.appendChild(allBtn);
+
+            categoriesList.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = `cat-btn ${currentCategory === cat.toLowerCase() ? 'active' : ''}`;
+                btn.textContent = cat;
+                btn.onclick = function() { filterCategory(cat.toLowerCase(), this); };
+                container.appendChild(btn);
+            });
         }
 
         function filterCategory(category, buttonEl) {

@@ -96,3 +96,18 @@ VALUES
     ('kitchen_open', 'true'),
     ('menu_version', '1')
 ON CONFLICT (key) DO NOTHING;
+
+-- ==========================================
+-- 6. Dynamic Categories Table
+-- ==========================================
+CREATE TABLE IF NOT EXISTS categories (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(80) UNIQUE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO categories (name) VALUES
+('tiffins'),
+('fast food'),
+('meals')
+ON CONFLICT (name) DO NOTHING;
