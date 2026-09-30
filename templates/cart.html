@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Review Order & Cart - Grand Palace Hotel</title>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <style>
@@ -65,11 +65,11 @@
         }
         .action-btn:disabled { background: #b5ac9a !important; border-color: #b5ac9a !important; cursor: not-allowed; }
 
-        /* SOLID GREEN PAY NOW BUTTON */
+        /* SOLID GREEN PAY NOW BUTTON (Activated when admin accepts order) */
         .btn-pay-green {
-            background: linear-gradient(135deg, #22a878, #13845e) !important;
-            border: 1px solid #0f684a !important;
-            box-shadow: 0 6px 20px rgba(24, 168, 120, 0.45) !important;
+            background: linear-gradient(135deg, #10b981, #059669) !important;
+            border: 1px solid #047857 !important;
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45) !important;
             color: #ffffff !important;
             animation: pulse-green 1.5s infinite alternate;
         }
@@ -85,10 +85,10 @@
         }
         .timer-val { font-size: 2rem; font-weight: 800; letter-spacing: 1px; margin-top: 0.3rem; }
 
-        /* THEMED MODAL (Replaces all browser alert() and confirm()) */
+        /* THEMED MODAL */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(48, 41, 31, 0.45); backdrop-filter: blur(6px);
+            background: rgba(48, 41, 31, 0.45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
             display: none; align-items: center; justify-content: center; z-index: 2000;
         }
         .modal-overlay.open { display: flex; }
@@ -101,8 +101,8 @@
         .themed-dialog-msg { font-size: 0.95rem; color: var(--brown-light); line-height: 1.5; margin-bottom: 1.4rem; }
         .dialog-buttons-row { display: flex; gap: 0.75rem; justify-content: center; }
         .btn-dialog-primary {
-            flex: 1; padding: 0.8rem; background: linear-gradient(135deg, #d8bd70, #b8953f);
-            color: #fffdf7; border: 1px solid #927326; border-radius: 999px; font-weight: 800; cursor: pointer;
+            flex: 1; padding: 0.8rem; background: linear-gradient(135deg, #10b981, #059669);
+            color: #fffdf7; border: 1px solid #047857; border-radius: 999px; font-weight: 800; cursor: pointer;
         }
         .btn-dialog-secondary {
             flex: 1; padding: 0.8rem; background: #fffdf7; color: #665b48;
@@ -160,10 +160,9 @@
     let timerInterval = null;
     let pollInterval = null;
     let secondsLeft = 60;
-    let orderState = "cart";
+    let orderState = "cart"; // "cart" | "awaiting_acceptance" | "accepted_unpaid"
     let dialogCallback = null;
 
-    // Themed Dialog Popup Function
     function showThemedPopup({ title, message, icon="✨", confirmText="OK", cancelText=null, onResolve=null }) {
         document.getElementById("dialogTitle").textContent = title;
         document.getElementById("dialogMsg").textContent = message;
@@ -351,7 +350,6 @@
         const btn = document.getElementById('mainActionButton');
         if (btn) {
             btn.disabled = false;
-            // VIBRANT GREEN BUTTON
             btn.className = "action-btn btn-pay-green";
             const amt = currentActiveOrder ? currentActiveOrder.total_amount.toFixed(2) : cartTotal.toFixed(2);
             btn.textContent = `Pay Now (Accepted) - ₹${amt}`;
@@ -391,7 +389,7 @@
                 orderState = "accepted_unpaid";
                 setPayNowUI();
 
-                // Show Themed Acceptance Popup
+                // Show Themed Acceptance Popup with "Pay Now" or "Later"
                 showThemedPopup({
                     title: "Kitchen Accepted Your Order!",
                     message: `Chef accepted Token #${data.daily_order_number}! Click 'Pay Now' to complete your order.`,
@@ -400,6 +398,7 @@
                     cancelText: "Later",
                     onResolve: (confirmed) => {
                         if (confirmed) {
+                            // Directly executes payment with NO second "Confirm Pay" popup
                             launchPaymentFlow(data);
                         }
                     }
@@ -426,44 +425,36 @@
         });
     }
 
+    // Direct payment launch without redundant confirm prompts
     async function launchPaymentFlow(orderData) {
+        // 1. TEST MODE: Executes directly without secondary confirm prompt
         if (IS_TEST_MODE) {
-            showThemedPopup({
-                title: "Confirm Test Payment",
-                message: `Pay ₹${orderData.total_amount.toFixed(2)} for Token #${orderData.daily_order_number}?`,
-                icon: "💳",
-                confirmText: "Confirm Pay",
-                cancelText: "Cancel",
-                onResolve: async (confirmed) => {
-                    if (confirmed) {
-                        try {
-                            const payRes = await fetch('/api/payment/confirm-test', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ order_id: orderData.order_id })
-                            });
-                            const payData = await payRes.json();
-                            if (payData.success) {
-                                showThemedPopup({
-                                    title: "Payment Successful!",
-                                    message: "Your preorder has been placed and sent to the kitchen!",
-                                    icon: "✅",
-                                    confirmText: "View Menu Status",
-                                    onResolve: () => {
-                                        window.location.href = "/menu";
-                                    }
-                                });
-                            }
-                        } catch (err) {
-                            showThemedPopup({ title: "Error", message: "Network error recording payment.", icon: "❌" });
-                        }
-                    }
+            const btn = document.getElementById('mainActionButton');
+            if (btn) { btn.disabled = true; btn.textContent = "Processing Test Payment..."; }
+
+            try {
+                const payRes = await fetch('/api/payment/confirm-test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ order_id: orderData.order_id })
+                });
+                const payData = await payRes.json();
+                
+                if (payData.success) {
+                    // Successful payment -> Route immediately to Menu, where it converts into green "Order Placed"
+                    window.location.href = "/menu";
+                } else {
+                    showThemedPopup({ title: "Payment Error", message: "Failed recording payment.", icon: "❌" });
+                    setPayNowUI();
                 }
-            });
+            } catch (err) {
+                showThemedPopup({ title: "Network Error", message: "Could not communicate with server.", icon: "⚠️" });
+                setPayNowUI();
+            }
             return;
         }
 
-        // Live Razorpay
+        // 2. LIVE PRODUCTION RAZORPAY
         const options = {
             "key": RZP_KEY_ID,
             "amount": Math.round(orderData.total_amount * 100),
@@ -472,8 +463,9 @@
             "description": `Token #${orderData.daily_order_number}`,
             "order_id": orderData.gateway_order_id,
             "prefill": { "name": USER_NAME, "email": USER_EMAIL },
-            "theme": { "color": "#b8953f" },
+            "theme": { "color": "#10b981" },
             "handler": async function (response) {
+                // Payment Captured Successfully -> Verify with Server
                 const verifyRes = await fetch('/api/payment/verify', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -485,15 +477,16 @@
                 });
                 const verifyData = await verifyRes.json();
                 if (verifyData.success) {
-                    showThemedPopup({
-                        title: "Payment Verified!",
-                        message: "Your order is placed and the kitchen is preparing your food!",
-                        icon: "✅",
-                        confirmText: "View Status",
-                        onResolve: () => {
-                            window.location.href = "/menu";
-                        }
-                    });
+                    // Redirects and converts to Order Placed button only on verified payment
+                    window.location.href = "/menu";
+                } else {
+                    showThemedPopup({ title: "Verification Failed", message: "Gateway signature verification failed.", icon: "❌" });
+                }
+            },
+            "modal": {
+                "ondismiss": function() {
+                    // User closed the gateway without paying -> DOES NOT convert to Order Placed button
+                    setPayNowUI();
                 }
             }
         };

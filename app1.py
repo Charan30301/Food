@@ -605,7 +605,8 @@ def admin_get_orders():
             cur.execute("""
                 SELECT o.id, o.user_email, COALESCE(u.username, 'Customer') AS username,
                        o.items_code, o.total_amount::float, o.payment_status,
-                       o.order_status, o.daily_order_number, o.created_at
+                       o.order_status, o.daily_order_number, o.created_at,
+                       EXTRACT(EPOCH FROM (NOW() - o.created_at))::int AS seconds_elapsed
                 FROM orders o
                 LEFT JOIN users u ON o.user_email = u.email
                 WHERE o.order_status NOT IN ('delivered', 'cancelled')
@@ -620,6 +621,8 @@ def admin_get_orders():
         parsed_code = parse_cart_code(o["items_code"])
         items_detail = [{"name": menu_map.get(i_id, {"item_name": f"Dish #{i_id}"})["item_name"], "quantity": qty, "subtotal": round(menu_map.get(i_id, {"price": 0.0})["price"] * qty, 2)} for i_id, qty in parsed_code.items()]
 
+        seconds_remaining = max(0, 60 - o["seconds_elapsed"]) if o["order_status"] == 'placed' else 0
+
         order_dict = {
             "id": o["id"],
             "daily_order_number": o["daily_order_number"],
@@ -628,6 +631,7 @@ def admin_get_orders():
             "total_amount": o["total_amount"],
             "payment_status": o["payment_status"],
             "order_status": o["order_status"],
+            "seconds_left": seconds_remaining,
             "time": o["created_at"].strftime("%I:%M %p") if o["created_at"] else "",
             "items": items_detail
         }

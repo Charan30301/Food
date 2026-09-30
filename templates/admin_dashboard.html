@@ -44,10 +44,23 @@
         .kitchen-open { background: #e8f7ef; color: #13845e; border-color: #9bd7ba; }
         .kitchen-closed { background: #fff0ee; color: #c53d3d; border-color: #e7aaa5; }
 
+        /* Desktop Profile/Options Button */
         .admin-profile-btn {
             background: linear-gradient(135deg, #d8bd70, #b8953f); color: #30240f;
             border: 1px solid #927326; padding: 0.55rem 0.9rem; border-radius: 999px; font-weight: 700; cursor: pointer;
             box-shadow: 0 4px 12px rgba(100,75,25,0.16); white-space: nowrap; font-size: 0.85rem;
+            display: flex; align-items: center; justify-content: center; gap: 0.35rem;
+        }
+
+        /* Mobile View: Round Icon with Settings Symbol Only */
+        @media (max-width: 768px) {
+            header { padding: 0.75rem 1rem !important; }
+            .header-title { font-size: 1.05rem !important; }
+            .admin-profile-btn {
+                width: 40px !important; height: 40px !important; min-width: 40px !important; min-height: 40px !important;
+                padding: 0 !important; border-radius: 50% !important; font-size: 1.15rem !important;
+            }
+            .admin-btn-text, .admin-btn-caret { display: none !important; }
         }
 
         .profile-dropdown-menu {
@@ -64,16 +77,36 @@
 
         .container { max-width: 1450px; margin: 1.25rem auto; padding: 0 1rem; }
         
-        .tab-controls { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; overflow-x: auto; scrollbar-width: none; }
-        .tab-controls::-webkit-scrollbar { display: none; }
-        .tab-btn {
+        .main-tab-controls { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; overflow-x: auto; scrollbar-width: none; }
+        .main-tab-controls::-webkit-scrollbar { display: none; }
+        .main-tab-btn {
             background: #fffdf7; border: 1px solid #ded3b8; color: var(--text-muted);
             padding: 0.65rem 1.1rem; border-radius: 999px; cursor: pointer; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;
             box-shadow: 0 3px 10px rgba(90,70,30,0.06); white-space: nowrap; font-size: 0.88rem;
         }
-        .tab-btn.active {
+        .main-tab-btn.active {
             background: linear-gradient(135deg, #d8bd70, #b8953f); color: #fffdf7; border-color: #927326;
             box-shadow: 0 5px 13px rgba(120,90,30,0.18);
+        }
+
+        /* Sub-navigation buttons for Orders */
+        .sub-orders-controls {
+            display: flex; gap: 0.5rem; margin-bottom: 1.25rem; overflow-x: auto; scrollbar-width: none;
+        }
+        .sub-orders-controls::-webkit-scrollbar { display: none; }
+        .sub-order-btn {
+            flex: 1; padding: 0.6rem 0.9rem; border-radius: 12px; cursor: pointer; font-weight: 800; font-size: 0.85rem;
+            background: #fffdf7; border: 1px solid #ded3b8; color: var(--text-muted); text-align: center;
+            display: flex; align-items: center; justify-content: center; gap: 0.4rem; transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(90,70,30,0.05); white-space: nowrap;
+        }
+        .sub-order-btn.active-new {
+            background: #fffbeb !important; border-color: var(--amber) !important; color: #b45309 !important;
+            box-shadow: 0 4px 12px rgba(196, 154, 58, 0.2) !important;
+        }
+        .sub-order-btn.active-inprog {
+            background: #eff6ff !important; border-color: var(--primary) !important; color: #1d4ed8 !important;
+            box-shadow: 0 4px 12px rgba(184, 149, 63, 0.2) !important;
         }
 
         /* Order Sections */
@@ -91,6 +124,18 @@
             display: flex; flex-direction: column; gap: 0.75rem; position: relative;
             box-shadow: 0 5px 15px rgba(90,70,30,0.07);
         }
+
+        /* Acceptance Countdown Timer Tag */
+        .order-countdown-tag {
+            font-size: 0.75rem; font-weight: 800; padding: 0.2rem 0.55rem; border-radius: 999px;
+            background: #fef3c7; color: #b45309; border: 1px solid #fde68a;
+            display: flex; align-items: center; gap: 0.25rem;
+        }
+        .order-countdown-tag.urgent {
+            background: #fee2e2; color: #dc2626; border-color: #fecaca;
+            animation: pulse-urgent 1s infinite alternate;
+        }
+        @keyframes pulse-urgent { 0% { opacity: 0.8; } 100% { opacity: 1; transform: scale(1.03); } }
 
         .order-card.order-card-unpaid {
             background: #fff0ee !important;
@@ -173,9 +218,7 @@
             }
         }
 
-        /* =========================================================
-           MODAL Z-INDEX LAYER FIX (Alerts always on top of modals)
-           ========================================================= */
+        /* Modal Settings */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(55,43,20,0.55); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
@@ -183,10 +226,7 @@
         }
         .modal-overlay.open { display: flex; }
 
-        /* Confirmation and prompt modals placed on TOP of other active dialogs */
-        #adminConfirmModal, #adminCancelPromptModal {
-            z-index: 2500 !important;
-        }
+        #adminConfirmModal, #adminCancelPromptModal { z-index: 2500 !important; }
 
         .modal-box {
             background: #fffdf7; border: 1px solid #ded3b8; border-radius: 20px;
@@ -206,9 +246,7 @@
 
         .modal-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
         .modal-header-row h3 { font-size: 1.25rem; font-weight: 800; color: #302a20; }
-        .modal-close-icon {
-            background: none; border: none; font-size: 1.75rem; color: var(--text-muted); cursor: pointer; line-height: 1;
-        }
+        .modal-close-icon { background: none; border: none; font-size: 1.75rem; color: var(--text-muted); cursor: pointer; line-height: 1; }
 
         .form-field { margin-bottom: 1rem; }
         .form-field label { display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem; }
@@ -248,48 +286,65 @@
         <div class="header-actions">
             <button class="kitchen-toggle-btn kitchen-open" id="kitchenToggleBtn" onclick="toggleKitchenStatus()">Kitchen: OPEN</button>
 
-            <button class="admin-profile-btn" onclick="toggleDropdown()">⚙️ Options ▼</button>
+            <!-- Adaptive Button: Shows "⚙️ Options ▼" on desktop and just "⚙️" icon on mobile -->
+            <button class="admin-profile-btn" onclick="toggleDropdown()" title="Options">
+                <span>⚙️</span>
+                <span class="admin-btn-text">Options</span>
+                <span class="admin-btn-caret">▼</span>
+            </button>
             <div class="profile-dropdown-menu" id="profileDropdown">
                 <button class="dropdown-item" onclick="openPasswordModal()">🔑 Change Password</button>
-                <button class="dropdown-item" onclick="switchTab('menuTab')">📋 Manage Menu Catalog</button>
+                <button class="dropdown-item" onclick="switchMainTab('menuTab')">📋 Manage Menu Catalog</button>
                 <button class="dropdown-item" onclick="openPhotosModal()">🖼️ Manage Uploaded Photos</button>
-                <button class="dropdown-item" onclick="syncMenuToUsers()">⚡ Sync Menu to Users</button>
                 <button class="dropdown-item" onclick="logoutAdmin()" style="color: #ef4444;">🚪 Sign Out</button>
             </div>
         </div>
     </header>
 
     <div class="container">
-        <div class="tab-controls">
-            <button class="tab-btn active" id="ordersTabBtn" onclick="switchTab('ordersTab')">
+        <!-- Main Tab Controls -->
+        <div class="main-tab-controls">
+            <button class="main-tab-btn active" id="ordersMainTabBtn" onclick="switchMainTab('ordersTab')">
                 <span>Orders Manager</span>
                 <span style="background:#0f172a; color:#fff; padding:0.15rem 0.6rem; border-radius:999px; font-size:0.8rem;" id="totalQueueBadge">0</span>
             </button>
-            <button class="tab-btn" id="menuTabBtn" onclick="switchTab('menuTab')">
+            <button class="main-tab-btn" id="menuMainTabBtn" onclick="switchMainTab('menuTab')">
                 <span>Menu Item Catalog</span>
             </button>
         </div>
 
         <!-- TAB 1: ORDERS MANAGER -->
         <section id="ordersTab">
-            <div class="section-box" style="border-left: 4px solid var(--amber);">
+            <!-- Separate Filter Sub-Buttons for Orders -->
+            <div class="sub-orders-controls">
+                <button class="sub-order-btn active-new" id="btnSubNew" onclick="switchOrdersSubSection('new')">
+                    <span>⏳ New Requests</span>
+                    <span style="background:var(--amber); color:#000; padding:0.15rem 0.55rem; border-radius:999px; font-size:0.75rem;" id="newOrdersBadge">0</span>
+                </button>
+                <button class="sub-order-btn" id="btnSubInProg" onclick="switchOrdersSubSection('inprog')">
+                    <span>🍳 In-Progress Orders</span>
+                    <span style="background:var(--primary); color:#fff; padding:0.15rem 0.55rem; border-radius:999px; font-size:0.75rem;" id="activeOrdersBadge">0</span>
+                </button>
+            </div>
+
+            <!-- SECTION 1: NEW INCOMING ORDERS (WITH 60-SEC COUNTDOWN TIMER) -->
+            <div class="section-box" id="newOrdersSection" style="border-left: 4px solid var(--amber);">
                 <div class="section-header">
                     <div class="section-title">
-                        <span>⏳ New Unaccepted Requests</span>
-                        <span style="background:var(--amber); color:#000; padding:0.15rem 0.6rem; border-radius:999px; font-size:0.8rem;" id="newOrdersBadge">0</span>
+                        <span>⏳ Incoming Unaccepted Orders</span>
                     </div>
-                    <span style="font-size:0.8rem; color:var(--text-muted);">60s auto-cancel</span>
+                    <span style="font-size:0.8rem; color:var(--text-muted);">60s auto-cancel window</span>
                 </div>
                 <div class="orders-grid" id="newOrdersGrid">
                     <div style="color:var(--text-muted); padding:1rem;">No new incoming orders.</div>
                 </div>
             </div>
 
-            <div class="section-box" style="border-left: 4px solid var(--primary);">
+            <!-- SECTION 2: ACTIVE IN-PROGRESS ORDERS -->
+            <div class="section-box" id="inprogOrdersSection" style="display:none; border-left: 4px solid var(--primary);">
                 <div class="section-header">
                     <div class="section-title">
-                        <span>🍳 Active In-Progress Orders</span>
-                        <span style="background:var(--primary); color:#fff; padding:0.15rem 0.6rem; border-radius:999px; font-size:0.8rem;" id="activeOrdersBadge">0</span>
+                        <span>🍳 Active Kitchen Orders</span>
                     </div>
                     <span style="font-size:0.8rem; color:var(--text-muted);">🟢 Green = Paid | 🔴 Red = Unpaid</span>
                 </div>
@@ -299,14 +354,11 @@
             </div>
         </section>
 
-        <!-- TAB 2: MENU CATALOGUE -->
+        <!-- TAB 2: MENU CATALOGUE (DESKTOP TABLE + MOBILE CARDS) -->
         <section id="menuTab" style="display:none;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
                 <h3 style="font-size:1.2rem; font-weight:800; color:#302a20;">Live Restaurant Menu</h3>
-                <div style="display:flex; gap:0.5rem;">
-                    <button class="btn-secondary" onclick="syncMenuToUsers()" style="padding:0.55rem 0.9rem; font-size:0.85rem;">⚡ Sync to Users</button>
-                    <button class="btn-primary" onclick="openItemModal()" style="padding:0.55rem 1rem; font-size:0.85rem;">+ Add Food Item</button>
-                </div>
+                <button class="btn-primary" onclick="openItemModal()" style="padding:0.6rem 1.2rem; font-size:0.9rem;">+ Add Food Item</button>
             </div>
 
             <!-- Desktop View: Table -->
@@ -326,12 +378,12 @@
                 </table>
             </div>
 
-            <!-- Mobile View: Cards -->
+            <!-- Mobile View: Touch-Friendly Responsive Cards -->
             <div class="mobile-menu-grid" id="mobileMenuGrid"></div>
         </section>
     </div>
 
-    <!-- THEMED CONFIRMATION MODAL (z-index: 2500) -->
+    <!-- THEMED CONFIRMATION MODAL -->
     <div class="modal-overlay" id="adminConfirmModal">
         <div class="modal-box" style="max-width: 400px; text-align:center;">
             <div class="dialog-icon" id="confirmDialogIcon">⚠️</div>
@@ -344,7 +396,7 @@
         </div>
     </div>
 
-    <!-- THEMED CANCEL PROMPT MODAL (z-index: 2500) -->
+    <!-- THEMED CANCEL PROMPT MODAL -->
     <div class="modal-overlay" id="adminCancelPromptModal">
         <div class="modal-box" style="max-width: 440px;">
             <div class="modal-header-row">
@@ -450,17 +502,39 @@
         function toggleDropdown() { document.getElementById("profileDropdown").classList.toggle("show"); }
         window.onclick = function(e) { if (!e.target.closest('.admin-profile-btn')) document.getElementById("profileDropdown").classList.remove("show"); };
 
-        function switchTab(tabId) {
+        function switchMainTab(tabId) {
             document.getElementById("ordersTab").style.display = tabId === 'ordersTab' ? 'block' : 'none';
             document.getElementById("menuTab").style.display = tabId === 'menuTab' ? 'block' : 'none';
-            document.getElementById("ordersTabBtn").classList.toggle("active", tabId === 'ordersTab');
-            document.getElementById("menuTabBtn").classList.toggle("active", tabId === 'menuTab');
+            document.getElementById("ordersMainTabBtn").classList.toggle("active", tabId === 'ordersMainTabBtn');
+            document.getElementById("menuMainTabBtn").classList.toggle("active", tabId === 'menuMainTabBtn');
             document.getElementById("profileDropdown").classList.remove("show");
             if (tabId === 'ordersTab') loadAdminOrders();
             if (tabId === 'menuTab') loadAdminMenu();
         }
 
-        // Custom Confirm and Cancel Prompts with Promise Resolvers
+        // Sub-Tab Switcher between New Requests & In-Progress Orders
+        let currentSubSection = 'new';
+        function switchOrdersSubSection(sub) {
+            currentSubSection = sub;
+            const newSec = document.getElementById("newOrdersSection");
+            const inprogSec = document.getElementById("inprogOrdersSection");
+            const btnNew = document.getElementById("btnSubNew");
+            const btnInprog = document.getElementById("btnSubInProg");
+
+            if (sub === 'new') {
+                newSec.style.display = "block";
+                inprogSec.style.display = "none";
+                btnNew.className = "sub-order-btn active-new";
+                btnInprog.className = "sub-order-btn";
+            } else {
+                newSec.style.display = "none";
+                inprogSec.style.display = "block";
+                btnNew.className = "sub-order-btn";
+                btnInprog.className = "sub-order-btn active-inprog";
+            }
+        }
+
+        // Custom Confirm and Cancel Prompts
         let confirmResolve = null;
         function showAdminConfirm(title, message, icon="⚠️") {
             document.getElementById("confirmDialogTitle").textContent = title;
@@ -507,14 +581,25 @@
             }
         }
 
-        async function syncMenuToUsers() {
-            const res = await fetch("/api/admin/menu/sync", { method: "POST" });
-            await res.json();
-            const btn = event.target;
-            const originalText = btn.textContent;
-            btn.textContent = "✓ Synced!";
-            setTimeout(() => { btn.textContent = originalText; }, 1500);
+        // Real-Time Local Tick for Countdown Badges
+        let countdownTimerMap = {};
+        function startLocalTimers() {
+            setInterval(() => {
+                for (let orderId in countdownTimerMap) {
+                    if (countdownTimerMap[orderId] > 0) {
+                        countdownTimerMap[orderId]--;
+                        const badge = document.getElementById(`orderTimer_${orderId}`);
+                        if (badge) {
+                            badge.textContent = `⏳ ${countdownTimerMap[orderId]}s left`;
+                            if (countdownTimerMap[orderId] <= 15) {
+                                badge.classList.add('urgent');
+                            }
+                        }
+                    }
+                }
+            }, 1000);
         }
+        startLocalTimers();
 
         async function loadAdminOrders() {
             try {
@@ -529,14 +614,17 @@
                 const newGrid = document.getElementById("newOrdersGrid");
                 const activeGrid = document.getElementById("activeOrdersGrid");
 
+                // 1. Render New Incoming Orders (With Acceptance Timers)
                 if (!data.new_orders || data.new_orders.length === 0) {
                     newGrid.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">No new incoming orders.</div>';
                 } else {
                     newGrid.innerHTML = "";
                     data.new_orders.forEach(order => {
+                        countdownTimerMap[order.id] = order.seconds_left !== undefined ? order.seconds_left : 60;
                         const card = document.createElement("div");
                         card.className = "order-card";
                         const itemsHtml = order.items.map(i => `<div class="order-item-line"><span>${i.name} × ${i.quantity}</span><span>₹${i.subtotal.toFixed(2)}</span></div>`).join('');
+                        const isUrgent = countdownTimerMap[order.id] <= 15 ? 'urgent' : '';
 
                         card.innerHTML = `
                             <div class="order-head">
@@ -544,7 +632,10 @@
                                     <span class="token-tag">Token #${order.daily_order_number}</span>
                                     <div style="font-weight:700; margin-top:0.2rem;">${order.username}</div>
                                 </div>
-                                <div style="font-size:0.8rem; color:var(--text-muted);">${order.time}</div>
+                                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.25rem;">
+                                    <span class="order-countdown-tag ${isUrgent}" id="orderTimer_${order.id}">⏳ ${countdownTimerMap[order.id]}s left</span>
+                                    <span style="font-size:0.75rem; color:var(--text-muted);">${order.time}</span>
+                                </div>
                             </div>
                             <div class="order-items-box">${itemsHtml}</div>
                             <div class="order-total-line"><span>Total</span><span>₹${order.total_amount.toFixed(2)}</span></div>
@@ -557,6 +648,7 @@
                     });
                 }
 
+                // 2. Render In-Progress Orders (Unpaid highlighted in Solid Red)
                 if (!data.active_orders || data.active_orders.length === 0) {
                     activeGrid.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">No active orders in kitchen.</div>';
                 } else {
@@ -775,7 +867,6 @@
         }
 
         async function deleteStaticPhoto(fname) {
-            // Confirmation modal pops up in FRONT of photos modal with z-index: 2500
             const confirmed = await showAdminConfirm("Delete Photo", `Are you sure you want to delete ${fname}?`);
             if (!confirmed) return;
             
