@@ -113,3 +113,4 @@ INSERT INTO categories (name) VALUES
 ON CONFLICT (name) DO NOTHING;
 
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_type VARCHAR(20) DEFAULT 'dine_in';
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(30) DEFAULT 'unselected';

@@ -57,9 +57,6 @@
         }
         .bill-total span { color: var(--gold-dark); }
 
-        /* ==========================================
-           ORDER TYPE (DINE IN / PARCEL) SELECTOR
-           ========================================== */
         .order-type-box {
             margin-top: 1.25rem; padding-top: 1.25rem;
             border-top: 1px dashed var(--gold-border);
@@ -132,6 +129,24 @@
             flex: 1; padding: 0.8rem; background: #fffdf7; color: #665b48;
             border: 1px solid #d7cbb0; border-radius: 999px; font-weight: 700; cursor: pointer;
         }
+
+        /* Payment Choice Dialog Cards */
+        .pay-choice-grid {
+            display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.25rem;
+        }
+        .pay-choice-btn {
+            display: flex; align-items: center; gap: 0.85rem; padding: 1rem 1.1rem;
+            background: #fffaf0; border: 2px solid var(--gold-border); border-radius: 14px;
+            cursor: pointer; transition: all 0.2s ease; text-align: left;
+        }
+        .pay-choice-btn:hover {
+            border-color: var(--gold-dark);
+            background: #fff5e0;
+            transform: translateY(-2px);
+        }
+        .pay-choice-icon { font-size: 1.8rem; }
+        .pay-choice-info h4 { margin: 0 0 2px 0; color: var(--espresso); font-size: 1rem; font-weight: 800; }
+        .pay-choice-info span { font-size: 0.8rem; color: var(--brown-light); }
     </style>
 </head>
 <body>
@@ -150,7 +165,6 @@
             <span id="totalPayableLabel">₹0.00</span>
         </div>
 
-        <!-- ORDER TYPE SELECTION (DINE IN OR PARCEL) -->
         <div class="order-type-box" id="orderTypeBox">
             <span class="order-type-label">Select Order Type:</span>
             <div class="order-type-options">
@@ -174,6 +188,35 @@
     </div>
 </div>
 
+<!-- PAYMENT METHOD MODAL (Pay at Counter vs PhonePe/Online) -->
+<div class="modal-overlay" id="paymentMethodModal">
+    <div class="themed-dialog">
+        <div style="font-size: 2.2rem; margin-bottom: 0.4rem;">💳</div>
+        <h3 class="themed-dialog-title">Choose Payment Method</h3>
+        <p class="themed-dialog-msg">Total Bill: <strong id="choiceModalAmountLabel" style="color:var(--gold-dark);">₹0.00</strong><br>Select your payment preference:</p>
+
+        <div class="pay-choice-grid">
+            <button type="button" class="pay-choice-btn" onclick="executePaymentChoice('counter')">
+                <div class="pay-choice-icon">💵</div>
+                <div class="pay-choice-info">
+                    <h4>Pay at Counter / Cash</h4>
+                    <span>Pay in cash at hotel reception counter</span>
+                </div>
+            </button>
+            <button type="button" class="pay-choice-btn" onclick="executePaymentChoice('online')">
+                <div class="pay-choice-icon">📱</div>
+                <div class="pay-choice-info">
+                    <h4>PhonePe / UPI / Cards</h4>
+                    <span>Pay directly via secure online gateway</span>
+                </div>
+            </button>
+        </div>
+
+        <button type="button" class="btn-dialog-secondary" style="width:100%;" onclick="closePaymentMethodModal()">Close</button>
+    </div>
+</div>
+
+<!-- THEMED CUSTOM DIALOG -->
 <div class="modal-overlay" id="customDialogModal">
     <div class="themed-dialog">
         <div style="font-size: 2.5rem; margin-bottom: 0.5rem;" id="dialogIcon">✨</div>
@@ -334,6 +377,46 @@
         if (orderState === "cart") {
             requestOrderAcceptance();
         } else if (orderState === "accepted_unpaid") {
+            openPaymentMethodModal();
+        }
+    }
+
+    function openPaymentMethodModal() {
+        const amt = currentActiveOrder ? currentActiveOrder.total_amount.toFixed(2) : cartTotal.toFixed(2);
+        document.getElementById("choiceModalAmountLabel").textContent = `₹${amt}`;
+        document.getElementById("paymentMethodModal").classList.add("open");
+    }
+
+    function closePaymentMethodModal() {
+        document.getElementById("paymentMethodModal").classList.remove("open");
+    }
+
+    async function executePaymentChoice(method) {
+        closePaymentMethodModal();
+        if (!currentActiveOrder) return;
+
+        try {
+            await fetch('/api/order/select-payment-method', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    order_id: currentActiveOrder.order_id,
+                    payment_method: method
+                })
+            });
+        } catch (e) {}
+
+        if (method === 'counter') {
+            showThemedPopup({
+                title: "Pay at Counter Chosen",
+                message: `Please pay ₹${currentActiveOrder.total_amount.toFixed(2)} at the hotel counter. Once paid, the cashier will verify your payment and start cooking!`,
+                icon: "💵",
+                confirmText: "Understood",
+                onResolve: () => {
+                    window.location.href = "/menu";
+                }
+            });
+        } else {
             launchPaymentFlow(currentActiveOrder);
         }
     }
@@ -460,13 +543,13 @@
 
                 showThemedPopup({
                     title: "Kitchen Accepted Your Order!",
-                    message: `Chef accepted Token #${data.daily_order_number}! Click 'Pay Now' to complete your order.`,
+                    message: `Chef accepted Token #${data.daily_order_number}! Click 'Pay Now' to choose your payment option.`,
                     icon: "🎉",
                     confirmText: "Pay Now",
                     cancelText: "Later",
                     onResolve: (confirmed) => {
                         if (confirmed) {
-                            launchPaymentFlow(data);
+                            openPaymentMethodModal();
                         }
                     }
                 });

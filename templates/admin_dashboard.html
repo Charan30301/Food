@@ -16,6 +16,7 @@
             --success: #18a878;
             --danger: #d94b4b;
             --amber: #c49a3a;
+            --purple: #8b5cf6;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
@@ -87,14 +88,14 @@
             box-shadow: 0 5px 13px rgba(120,90,30,0.18);
         }
 
+        /* 3 Sub-Navigation Tabs */
         .sub-orders-controls {
-            display: flex; gap: 0.5rem; margin-bottom: 1.25rem; overflow-x: auto; scrollbar-width: none;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1.25rem;
         }
-        .sub-orders-controls::-webkit-scrollbar { display: none; }
         .sub-order-btn {
-            flex: 1; padding: 0.6rem 0.9rem; border-radius: 12px; cursor: pointer; font-weight: 800; font-size: 0.85rem;
+            padding: 0.65rem 0.6rem; border-radius: 12px; cursor: pointer; font-weight: 800; font-size: 0.82rem;
             background: #fffdf7; border: 1px solid #ded3b8; color: var(--text-muted); text-align: center;
-            display: flex; align-items: center; justify-content: center; gap: 0.4rem; transition: all 0.2s ease;
+            display: flex; align-items: center; justify-content: center; gap: 0.35rem; transition: all 0.2s ease;
             box-shadow: 0 2px 8px rgba(90,70,30,0.05); white-space: nowrap;
         }
         .sub-order-btn.active-new {
@@ -104,6 +105,10 @@
         .sub-order-btn.active-inprog {
             background: #eff6ff !important; border-color: var(--primary) !important; color: #1d4ed8 !important;
             box-shadow: 0 4px 12px rgba(184, 149, 63, 0.2) !important;
+        }
+        .sub-order-btn.active-counter {
+            background: #f5f3ff !important; border-color: var(--purple) !important; color: #6d28d9 !important;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25) !important;
         }
 
         .section-box {
@@ -132,9 +137,6 @@
         }
         @keyframes pulse-urgent { 0% { opacity: 0.8; } 100% { opacity: 1; transform: scale(1.03); } }
 
-        /* ==========================================
-           ORDER TYPE BADGE (DINE IN / PARCEL)
-           ========================================== */
         .order-type-badge {
             font-size: 0.72rem; font-weight: 800; padding: 0.18rem 0.55rem; border-radius: 6px;
             display: inline-flex; align-items: center; gap: 0.25rem; text-transform: uppercase;
@@ -144,6 +146,17 @@
         }
         .order-type-badge.parcel {
             background: #fef3c7; color: #92400e; border: 1px solid #fde68a;
+        }
+
+        .order-pay-method-badge {
+            font-size: 0.72rem; font-weight: 800; padding: 0.18rem 0.55rem; border-radius: 6px;
+            display: inline-flex; align-items: center; gap: 0.25rem; text-transform: uppercase;
+        }
+        .order-pay-method-badge.counter {
+            background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe;
+        }
+        .order-pay-method-badge.online {
+            background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;
         }
 
         .order-card.order-card-unpaid {
@@ -183,6 +196,11 @@
         .btn-prep { background: #f2dfad; color: #70551c; }
         .btn-ready { background: #e2f1f5; color: #226879; }
         .btn-deliver { background: #e5f6ed; color: #137951; }
+        .btn-counter-complete {
+            background: linear-gradient(135deg, #10b981, #059669); color: #ffffff;
+            border: 1px solid #047857; width: 100%; padding: 0.8rem; border-radius: 10px;
+            font-weight: 800; cursor: pointer; font-size: 0.9rem; text-transform: uppercase;
+        }
 
         .desktop-menu-table { width: 100%; border-collapse: collapse; }
         .desktop-menu-table th { padding: 0.75rem 1rem; text-align: left; background: #f7f2e7; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; }
@@ -337,11 +355,16 @@
                     <span style="background:var(--amber); color:#000; padding:0.15rem 0.55rem; border-radius:999px; font-size:0.75rem;" id="newOrdersBadge">0</span>
                 </button>
                 <button class="sub-order-btn" id="btnSubInProg" onclick="switchOrdersSubSection('inprog')">
-                    <span>🍳 In-Progress Orders</span>
+                    <span>🍳 In-Progress</span>
                     <span style="background:var(--primary); color:#fff; padding:0.15rem 0.55rem; border-radius:999px; font-size:0.75rem;" id="activeOrdersBadge">0</span>
+                </button>
+                <button class="sub-order-btn" id="btnSubCounter" onclick="switchOrdersSubSection('counter')">
+                    <span>🧾 Counter Bills</span>
+                    <span style="background:var(--purple); color:#fff; padding:0.15rem 0.55rem; border-radius:999px; font-size:0.75rem;" id="counterBillsBadge">0</span>
                 </button>
             </div>
 
+            <!-- SECTION 1: NEW INCOMING REQUESTS -->
             <div class="section-box" id="newOrdersSection" style="border-left: 4px solid var(--amber);">
                 <div class="section-header">
                     <div class="section-title">
@@ -354,6 +377,7 @@
                 </div>
             </div>
 
+            <!-- SECTION 2: ACTIVE IN-PROGRESS ORDERS -->
             <div class="section-box" id="inprogOrdersSection" style="display:none; border-left: 4px solid var(--primary);">
                 <div class="section-header">
                     <div class="section-title">
@@ -363,6 +387,19 @@
                 </div>
                 <div class="orders-grid" id="activeOrdersGrid">
                     <div style="color:var(--text-muted); padding:1rem;">No active orders in kitchen.</div>
+                </div>
+            </div>
+
+            <!-- SECTION 3: COUNTER BILLS -->
+            <div class="section-box" id="counterOrdersSection" style="display:none; border-left: 4px solid var(--purple);">
+                <div class="section-header">
+                    <div class="section-title">
+                        <span>🧾 Counter Cash Bills Pending Payment</span>
+                    </div>
+                    <span style="font-size:0.8rem; color:var(--text-muted);">Click 'Payment Completed' once cash is collected</span>
+                </div>
+                <div class="orders-grid" id="counterOrdersGrid">
+                    <div style="color:var(--text-muted); padding:1rem;">No counter cash bills waiting for payment.</div>
                 </div>
             </div>
         </section>
@@ -555,20 +592,19 @@
             currentSubSection = sub;
             const newSec = document.getElementById("newOrdersSection");
             const inprogSec = document.getElementById("inprogOrdersSection");
+            const counterSec = document.getElementById("counterOrdersSection");
+
             const btnNew = document.getElementById("btnSubNew");
             const btnInprog = document.getElementById("btnSubInProg");
+            const btnCounter = document.getElementById("btnSubCounter");
 
-            if (sub === 'new') {
-                newSec.style.display = "block";
-                inprogSec.style.display = "none";
-                btnNew.className = "sub-order-btn active-new";
-                btnInprog.className = "sub-order-btn";
-            } else {
-                newSec.style.display = "none";
-                inprogSec.style.display = "block";
-                btnNew.className = "sub-order-btn";
-                btnInprog.className = "sub-order-btn active-inprog";
-            }
+            newSec.style.display = sub === 'new' ? 'block' : 'none';
+            inprogSec.style.display = sub === 'inprog' ? 'block' : 'none';
+            counterSec.style.display = sub === 'counter' ? 'block' : 'none';
+
+            btnNew.className = "sub-order-btn" + (sub === 'new' ? " active-new" : "");
+            btnInprog.className = "sub-order-btn" + (sub === 'inprog' ? " active-inprog" : "");
+            btnCounter.className = "sub-order-btn" + (sub === 'counter' ? " active-counter" : "");
         }
 
         let confirmResolve = null;
@@ -737,11 +773,14 @@
 
                 document.getElementById("newOrdersBadge").textContent = data.new_count || 0;
                 document.getElementById("activeOrdersBadge").textContent = data.active_count || 0;
+                document.getElementById("counterBillsBadge").textContent = data.counter_count || 0;
                 document.getElementById("totalQueueBadge").textContent = (data.new_count || 0) + (data.active_count || 0);
 
                 const newGrid = document.getElementById("newOrdersGrid");
                 const activeGrid = document.getElementById("activeOrdersGrid");
+                const counterGrid = document.getElementById("counterOrdersGrid");
 
+                // 1. Render New Incoming Orders
                 if (!data.new_orders || data.new_orders.length === 0) {
                     newGrid.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">No new incoming orders.</div>';
                 } else {
@@ -752,8 +791,7 @@
                         card.className = "order-card";
                         const itemsHtml = order.items.map(i => `<div class="order-item-line"><span>${i.name} × ${i.quantity}</span><span>₹${i.subtotal.toFixed(2)}</span></div>`).join('');
                         const isUrgent = countdownTimerMap[order.id] <= 15 ? 'urgent' : '';
-                        const isParcel = order.order_type === 'parcel';
-                        const typeBadge = isParcel 
+                        const typeBadge = order.order_type === 'parcel' 
                             ? `<span class="order-type-badge parcel">📦 Parcel</span>`
                             : `<span class="order-type-badge dine_in">🍽️ Dine In</span>`;
 
@@ -782,6 +820,7 @@
                     });
                 }
 
+                // 2. Render In-Progress Orders
                 if (!data.active_orders || data.active_orders.length === 0) {
                     activeGrid.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">No active orders in kitchen.</div>';
                 } else {
@@ -793,17 +832,24 @@
 
                         const itemsHtml = order.items.map(i => `<div class="order-item-line"><span>${i.name} × ${i.quantity}</span><span>₹${i.subtotal.toFixed(2)}</span></div>`).join('');
                         const dotClass = isPaid ? 'dot-paid' : 'dot-pending';
-                        const isParcel = order.order_type === 'parcel';
-                        const typeBadge = isParcel 
+                        const typeBadge = order.order_type === 'parcel' 
                             ? `<span class="order-type-badge parcel">📦 Parcel</span>`
                             : `<span class="order-type-badge dine_in">🍽️ Dine In</span>`;
+
+                        let payMethodBadge = '';
+                        if (order.payment_method === 'counter') {
+                            payMethodBadge = `<span class="order-pay-method-badge counter">💵 Pay at Counter</span>`;
+                        } else if (order.payment_method === 'online') {
+                            payMethodBadge = `<span class="order-pay-method-badge online">📱 PhonePe/Online</span>`;
+                        }
 
                         card.innerHTML = `
                             <div class="order-head">
                                 <div>
-                                    <div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.25rem;">
+                                    <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.35rem; margin-bottom:0.25rem;">
                                         <span class="token-tag" style="background:#10b981;">Token #${order.daily_order_number}</span>
                                         ${typeBadge}
+                                        ${payMethodBadge}
                                     </div>
                                     <div style="font-weight:700; margin-top:0.2rem;">${order.username}</div>
                                 </div>
@@ -824,6 +870,58 @@
                         `;
                         activeGrid.appendChild(card);
                     });
+                }
+
+                // 3. Render Counter Bills
+                if (!data.counter_bills || data.counter_bills.length === 0) {
+                    counterGrid.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">No counter cash bills waiting for payment.</div>';
+                } else {
+                    counterGrid.innerHTML = "";
+                    data.counter_bills.forEach(order => {
+                        const card = document.createElement("div");
+                        card.className = "order-card order-card-unpaid";
+                        const itemsHtml = order.items.map(i => `<div class="order-item-line"><span>${i.name} × ${i.quantity}</span><span>₹${i.subtotal.toFixed(2)}</span></div>`).join('');
+                        const typeBadge = order.order_type === 'parcel' 
+                            ? `<span class="order-type-badge parcel">📦 Parcel</span>`
+                            : `<span class="order-type-badge dine_in">🍽️️ Dine In</span>`;
+
+                        card.innerHTML = `
+                            <div class="order-head">
+                                <div>
+                                    <div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.25rem;">
+                                        <span class="token-tag" style="background:#8b5cf6;">Token #${order.daily_order_number}</span>
+                                        ${typeBadge}
+                                    </div>
+                                    <div style="font-weight:700; margin-top:0.2rem;">${order.username}</div>
+                                </div>
+                                <span class="order-pay-method-badge counter">💵 Pay at Counter</span>
+                            </div>
+                            <div class="order-items-box">${itemsHtml}</div>
+                            <div class="order-total-line" style="color:#b92c2c;"><span>Collect Cash</span><span>₹${order.total_amount.toFixed(2)}</span></div>
+                            <button class="btn-counter-complete" onclick="markCounterPaymentComplete(${order.id})">✓ Payment Completed</button>
+                        `;
+                        counterGrid.appendChild(card);
+                    });
+                }
+            } catch (err) {}
+        }
+
+        async function markCounterPaymentComplete(orderId) {
+            const confirmed = await showAdminConfirm(
+                "Verify Cash Payment",
+                `Has the customer paid cash at the counter for Order #${orderId}?`
+            );
+            if (!confirmed) return;
+
+            try {
+                const res = await fetch("/api/admin/order/complete-counter-payment", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ order_id: orderId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    loadAdminOrders();
                 }
             } catch (err) {}
         }

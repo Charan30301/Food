@@ -419,7 +419,7 @@ def get_cart_items():
     return jsonify({"items": detailed_items, "total_price": cart_row["total_price"], "cart_code": cart_row["cart_code"]})
 
 # ==========================================
-# Two-Stage Order Execution (With Order Type)
+# Two-Stage Order Execution
 # ==========================================
 @app.route("/api/order/submit-request", methods=["POST"])
 def submit_order_request():
@@ -434,8 +434,8 @@ def submit_order_request():
 
     with get_db() as conn:
         with conn.cursor() as cur:
-            # Ensure column exists
             cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_type VARCHAR(20) DEFAULT 'dine_in';")
+            cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(30) DEFAULT 'unselected';")
 
             cur.execute("SELECT cart_code, total_price::float FROM carts WHERE user_email = %s;", (user_email,))
             cart = cur.fetchone()
@@ -453,8 +453,8 @@ def submit_order_request():
             fake_gw_id = f"test_order_{os.urandom(4).hex()}"
 
             cur.execute("""
-                INSERT INTO orders (user_email, items_code, total_amount, gateway_order_id, payment_status, order_status, daily_order_number, order_type, created_at, updated_at)
-                VALUES (%s, %s, %s, %s, 'pending', 'placed', %s, %s, NOW(), NOW())
+                INSERT INTO orders (user_email, items_code, total_amount, gateway_order_id, payment_status, order_status, daily_order_number, order_type, payment_method, created_at, updated_at)
+                VALUES (%s, %s, %s, %s, 'pending', 'placed', %s, %s, 'unselected', NOW(), NOW())
                 RETURNING id, daily_order_number;
             """, (user_email, cart["cart_code"], cart["total_price"], fake_gw_id, daily_num, order_type))
             new_order = cur.fetchone()
@@ -466,6 +466,27 @@ def submit_order_request():
         "daily_order_number": new_order["daily_order_number"],
         "order_type": order_type
     })
+
+# Select payment method (Counter or PhonePe/Online)
+@app.route("/api/order/select-payment-method", methods=["POST"])
+def select_payment_method():
+    data = request.get_json() or {}
+    order_id = data.get("order_id")
+    method = str(data.get("payment_method", "counter")).strip().lower()
+    if method not in ["counter", "online"]:
+        method = "counter"
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(30) DEFAULT 'unselected';")
+            cur.execute("""
+                UPDATE orders
+                SET payment_method = %s, updated_at = NOW()
+                WHERE id = %s;
+            """, (method, order_id))
+            conn.commit()
+
+    return jsonify({"success": True, "payment_method": method})
 
 @app.route("/api/order/timeout-cancel", methods=["POST"])
 def timeout_cancel_order():
@@ -501,6 +522,34 @@ def confirm_test_payment():
             """, (f"pay_test_{os.urandom(4).hex()}", order_id))
 
             cur.execute("UPDATE carts SET cart_code = '', total_price = 0 WHERE user_email = %s;", (user_email,))
+            conn.commit()
+
+    return jsonify({"success": True})
+
+# Admin Completes Counter Payment
+@app.route("/api/admin/order/complete-counter-payment", methods=["POST"])
+def complete_counter_payment():
+    if not session.get("is_admin"):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json() or {}
+    order_id = data.get("order_id")
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT user_email FROM orders WHERE id = %s;", (order_id,))
+            row = cur.fetchone()
+            user_email = row["user_email"] if row else None
+
+            cur.execute("""
+                UPDATE orders
+                SET payment_status = 'paid', payment_method = 'counter',
+                    payment_id = %s, customer_alert = TRUE, updated_at = NOW()
+                WHERE id = %s;
+            """, (f"cash_counter_{os.urandom(4).hex()}", order_id))
+
+            if user_email:
+                cur.execute("UPDATE carts SET cart_code = '', total_price = 0 WHERE user_email = %s;", (user_email,))
             conn.commit()
 
     return jsonify({"success": True})
@@ -562,6 +611,7 @@ def check_active_order():
                 SELECT id, order_status, payment_status, total_amount::float, daily_order_number, 
                        gateway_order_id, cancellation_reason, customer_alert,
                        COALESCE(order_type, 'dine_in') AS order_type,
+                       COALESCE(payment_method, 'unselected') AS payment_method,
                        EXTRACT(EPOCH FROM (NOW() - created_at))::int AS seconds_elapsed
                 FROM orders 
                 WHERE user_email = %s 
@@ -579,6 +629,7 @@ def check_active_order():
                         "daily_order_number": order["daily_order_number"],
                         "status": "delivered",
                         "order_type": order.get("order_type", "dine_in"),
+                        "payment_method": order.get("payment_method", "unselected"),
                         "kitchen_open": kitchen_open,
                         "menu_version": menu_version
                     })
@@ -612,6 +663,7 @@ def check_active_order():
                     "daily_order_number": order["daily_order_number"],
                     "status": order["order_status"],
                     "order_type": order.get("order_type", "dine_in"),
+                    "payment_method": order.get("payment_method", "unselected"),
                     "payment_status": order["payment_status"],
                     "total_amount": order["total_amount"],
                     "gateway_order_id": order["gateway_order_id"],
@@ -686,6 +738,7 @@ def admin_get_orders():
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_type VARCHAR(20) DEFAULT 'dine_in';")
+            cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(30) DEFAULT 'unselected';")
             cur.execute("SELECT id, item_name, price::float FROM menu_items;")
             menu_map = {row["id"]: row for row in cur.fetchall()}
 
@@ -694,6 +747,7 @@ def admin_get_orders():
                        o.items_code, o.total_amount::float, o.payment_status,
                        o.order_status, o.daily_order_number, o.created_at,
                        COALESCE(o.order_type, 'dine_in') AS order_type,
+                       COALESCE(o.payment_method, 'unselected') AS payment_method,
                        EXTRACT(EPOCH FROM (NOW() - o.created_at))::int AS seconds_elapsed
                 FROM orders o
                 LEFT JOIN users u ON o.user_email = u.email
@@ -704,6 +758,7 @@ def admin_get_orders():
 
     new_orders = []
     active_orders = []
+    counter_bills = []
 
     for o in orders_rows:
         parsed_code = parse_cart_code(o["items_code"])
@@ -724,6 +779,7 @@ def admin_get_orders():
             "payment_status": o["payment_status"],
             "order_status": o["order_status"],
             "order_type": o.get("order_type", "dine_in"),
+            "payment_method": o.get("payment_method", "unselected"),
             "seconds_left": seconds_remaining,
             "time": o["created_at"].strftime("%I:%M %p") if o["created_at"] else "",
             "items": items_detail
@@ -733,12 +789,16 @@ def admin_get_orders():
             new_orders.append(order_dict)
         else:
             active_orders.append(order_dict)
+            if o.get("payment_method") == "counter" and o["payment_status"] != "paid":
+                counter_bills.append(order_dict)
 
     return jsonify({
         "new_orders": new_orders,
         "active_orders": active_orders,
+        "counter_bills": counter_bills,
         "new_count": len(new_orders),
         "active_count": len(active_orders),
+        "counter_count": len(counter_bills),
         "kitchen_open": kitchen_open
     })
 
@@ -890,13 +950,15 @@ def get_user_orders():
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_type VARCHAR(20) DEFAULT 'dine_in';")
+            cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(30) DEFAULT 'unselected';")
             cur.execute("SELECT id, item_name FROM menu_items;")
             items_map = {row["id"]: row["item_name"] for row in cur.fetchall()}
 
             cur.execute("""
                 SELECT id, items_code, total_amount::float, payment_status, order_status, 
                        cancellation_reason, daily_order_number, created_at,
-                       COALESCE(order_type, 'dine_in') AS order_type
+                       COALESCE(order_type, 'dine_in') AS order_type,
+                       COALESCE(payment_method, 'unselected') AS payment_method
                 FROM orders
                 WHERE user_email = %s
                 ORDER BY created_at DESC;
@@ -917,6 +979,7 @@ def get_user_orders():
             "total_amount": order["total_amount"],
             "order_status": order["order_status"],
             "order_type": order.get("order_type", "dine_in"),
+            "payment_method": order.get("payment_method", "unselected"),
             "cancellation_reason": order["cancellation_reason"],
             "payment_status": order["payment_status"]
         })

@@ -340,7 +340,6 @@
         </div>
     </header>
 
-    <!-- DYNAMIC CATEGORY BUTTON CONTAINER -->
     <div class="categories-container" id="categoriesContainer">
         <button class="cat-btn active" onclick="filterCategory('all', this)">All</button>
     </div>
@@ -598,7 +597,11 @@
 
                         if (data.status !== 'placed') {
                             cartBar.classList.add('cart-bar-unpaid');
-                            document.getElementById('cartBarTitle').textContent = "Pay Now (Accepted)";
+                            if (data.payment_method === 'counter') {
+                                document.getElementById('cartBarTitle').textContent = "Pay at Counter (Pending)";
+                            } else {
+                                document.getElementById('cartBarTitle').textContent = "Pay Now (Accepted)";
+                            }
                         } else {
                             cartBar.classList.remove('cart-bar-unpaid');
                             const secs = data.seconds_left !== undefined ? data.seconds_left : 60;
@@ -820,10 +823,20 @@
             data.orders.forEach(order => {
                 const card = document.createElement('div');
                 card.className = 'order-card';
+                
+                const typeText = order.order_type === 'parcel' ? '📦 Parcel' : '🍽️ Dine In';
+                let payMethodText = '💳 Not Selected';
+                if (order.payment_method === 'counter') payMethodText = '💵 Pay at Counter';
+                else if (order.payment_method === 'online') payMethodText = '📱 PhonePe/Online';
+
                 card.innerHTML = `
-                    <div style="display:flex; justify-content:space-between;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
                         <strong>Token #${order.daily_order_number}</strong>
                         <span style="font-weight:700; text-transform:uppercase; font-size:0.8rem;">${order.order_status}</span>
+                    </div>
+                    <div style="display:flex; gap:0.5rem; margin:0.3rem 0; font-size:0.78rem; font-weight:700;">
+                        <span style="background:#f4efe2; padding:0.2rem 0.5rem; border-radius:6px;">${typeText}</span>
+                        <span style="background:#f4efe2; padding:0.2rem 0.5rem; border-radius:6px;">${payMethodText}</span>
                     </div>
                     <div style="font-size:0.85rem; color:var(--brown-light); margin:0.4rem 0;">${order.items.join(', ')}</div>
                     ${order.cancellation_reason ? `<div style="color:#c94b45; font-size:0.8rem;">Reason: ${order.cancellation_reason}</div>` : ''}
