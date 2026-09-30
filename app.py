@@ -38,10 +38,10 @@ RAZORPAY_WEBHOOK_SECRET = os.environ.get("RAZORPAY_WEBHOOK_SECRET", "YourWebhook
 client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)) if razorpay else None
 
 DB_CONFIG = {
-    "dbname": "hotel_db",
-    "user": "postgres",
-    "password": "kerasuchi",
-    "host": "localhost",
+    "dbname": "hotel_db_aza2",
+    "user": "hotel_db_aza2_user",
+    "password": "NPsOIbUvGQeBdFEzdszeCvtL7zfeSfWS",
+    "host": "dpg-dauafeo93c1s73de82gg-a",
     "port": 5432
 }
 
