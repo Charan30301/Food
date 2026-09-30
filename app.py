@@ -26,7 +26,7 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "hotel_secret_key_12345")
 
 # Test Mode configuration
-TEST_MODE = True
+TEST_MODE = False
 TEST_USER_EMAIL = "test_customer@gmail.com"
 TEST_USERNAME = "Test Customer"
 
