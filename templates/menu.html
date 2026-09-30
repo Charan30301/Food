@@ -328,108 +328,108 @@
 </head>
 <body>
 
-    <div class="kitchen-banner" id="kitchenClosedBanner">⚠️ The Kitchen is currently CLOSED. Preorders are temporarily paused.</div>[cite: 19]
+    <div class="kitchen-banner" id="kitchenClosedBanner">⚠️ The Kitchen is currently CLOSED. Preorders are temporarily paused.</div>
 
     <header>
         <div class="top-bar">
             <div class="search-container">
-                <span class="search-icon">🔍</span>[cite: 19]
-                <input type="text" id="searchInput" class="search-input" placeholder="Search dishes or items...">[cite: 19]
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search dishes or items...">
             </div>
-            <div class="profile-btn" onclick="openProfileSidebar()" title="{{ email }}" data-initial="{{ username[0]|upper if username else 'A' }}"></div>[cite: 19]
+            <div class="profile-btn" onclick="openProfileSidebar()" title="{{ email }}" data-initial="{{ username[0]|upper if username else 'A' }}"></div>
         </div>
     </header>
 
     <!-- DYNAMIC CATEGORY BUTTON CONTAINER -->
     <div class="categories-container" id="categoriesContainer">
-        <button class="cat-btn active" onclick="filterCategory('all', this)">All</button>[cite: 19]
+        <button class="cat-btn active" onclick="filterCategory('all', this)">All</button>
     </div>
 
-    <main class="menu-list" id="menuContainer"></main>[cite: 19]
+    <main class="menu-list" id="menuContainer"></main>
 
     <a href="/cart" class="floating-action-bar cart-bar" id="cartBar">
-        <div class="mobile-cart-icon">🛒</div>[cite: 19]
+        <div class="mobile-cart-icon">🛒</div>
         <div class="cart-text-area">
-            <h4 style="font-size:0.95rem; margin:0;" id="cartBarTitle">View Cart</h4>[cite: 19]
+            <h4 style="font-size:0.95rem; margin:0;" id="cartBarTitle">View Cart</h4>
         </div>
-        <div class="badge" id="cartTotalLabel">₹0.00</div>[cite: 19]
+        <div class="badge" id="cartTotalLabel">₹0.00</div>
     </a>
 
     <div class="floating-action-bar order-placed-bar" id="orderPlacedBar" onclick="openOrderProgressModal()">
         <div>
-            <h4 style="font-size:0.95rem; margin:0;">Order Placed!</h4>[cite: 19]
-            <div style="font-size:0.75rem; color:#fef3c7;" id="orderStatusText">Kitchen is preparing your food</div>[cite: 19]
+            <h4 style="font-size:0.95rem; margin:0;">Order Placed!</h4>
+            <div style="font-size:0.75rem; color:#fef3c7;" id="orderStatusText">Kitchen is preparing your food</div>
         </div>
-        <div class="badge">Token #<span id="activeTokenId">0</span></div>[cite: 19]
+        <div class="badge">Token #<span id="activeTokenId">0</span></div>
     </div>
 
     <div class="modal-overlay" id="orderProgressModal">
         <div class="progress-box">
-            <h3 style="color:var(--gold-dark); font-size:1.35rem; font-weight:800;">Token #<span id="modalOrderId">0</span> Status</h3>[cite: 19]
-            <p style="color:var(--brown-light); font-size:0.9rem; margin-top:0.3rem;" id="modalPaymentInfo">Payment Verified • Preparing</p>[cite: 19]
+            <h3 style="color:var(--gold-dark); font-size:1.35rem; font-weight:800;">Token #<span id="modalOrderId">0</span> Status</h3>
+            <p style="color:var(--brown-light); font-size:0.9rem; margin-top:0.3rem;" id="modalPaymentInfo">Payment Verified • Preparing</p>
 
             <div class="stepper-row">
                 <div class="step-col">
-                    <div class="step-dot" id="dotAccepted"></div>[cite: 19]
-                    <span class="step-name">Accepted</span>[cite: 19]
+                    <div class="step-dot" id="dotAccepted"></div>
+                    <span class="step-name">Accepted</span>
                 </div>
                 <div class="step-col">
-                    <div class="step-dot" id="dotPreparing"></div>[cite: 19]
-                    <span class="step-name">Preparing</span>[cite: 19]
+                    <div class="step-dot" id="dotPreparing"></div>
+                    <span class="step-name">Preparing</span>
                 </div>
                 <div class="step-col">
-                    <div class="step-dot" id="dotPrepared"></div>[cite: 19]
-                    <span class="step-name">Prepared</span>[cite: 19]
+                    <div class="step-dot" id="dotPrepared"></div>
+                    <span class="step-name">Prepared</span>
                 </div>
                 <div class="step-col">
-                    <div class="step-dot" id="dotDelivered"></div>[cite: 19]
-                    <span class="step-name">Delivered</span>[cite: 19]
+                    <div class="step-dot" id="dotDelivered"></div>
+                    <span class="step-name">Delivered</span>
                 </div>
             </div>
 
-            <button class="btn-themed-ack" onclick="closeOrderProgressModal()">Close Status</button>[cite: 19]
+            <button class="btn-themed-ack" onclick="closeOrderProgressModal()">Close Status</button>
         </div>
     </div>
 
     <div class="modal-overlay" id="themedPopupModal">
         <div class="themed-popup-box">
-            <div class="themed-popup-icon" id="themedPopupIcon">✨</div>[cite: 19]
-            <h3 class="themed-popup-title" id="themedPopupTitle">Update</h3>[cite: 19]
-            <p class="themed-popup-msg" id="themedPopupMsg"></p>[cite: 19]
-            <div class="themed-popup-reason" id="themedPopupReason" style="display:none;"></div>[cite: 19]
-            <button class="btn-themed-ack" id="themedPopupAckBtn" onclick="closeThemedPopup()">Understood</button>[cite: 19]
+            <div class="themed-popup-icon" id="themedPopupIcon">✨</div>
+            <h3 class="themed-popup-title" id="themedPopupTitle">Update</h3>
+            <p class="themed-popup-msg" id="themedPopupMsg"></p>
+            <div class="themed-popup-reason" id="themedPopupReason" style="display:none;"></div>
+            <button class="btn-themed-ack" id="themedPopupAckBtn" onclick="closeThemedPopup()">Understood</button>
         </div>
     </div>
 
     <div id="mobileItemDetails" class="mobile-item-details">
         <div class="mobile-item-details-box">
-            <button class="mobile-details-close" onclick="closeMobileItemDetails()">×</button>[cite: 19]
-            <img id="mobileDetailsImage" src="" alt="Dish">[cite: 19]
+            <button class="mobile-details-close" onclick="closeMobileItemDetails()">×</button>
+            <img id="mobileDetailsImage" src="" alt="Dish">
             <div class="mobile-details-content">
-                <h2 id="mobileDetailsName"></h2>[cite: 19]
-                <div id="mobileDetailsCategory"></div>[cite: 19]
-                <div id="mobileDetailsPrice"></div>[cite: 19]
-                <div id="mobileDetailsStatus"></div>[cite: 19]
+                <h2 id="mobileDetailsName"></h2>
+                <div id="mobileDetailsCategory"></div>
+                <div id="mobileDetailsPrice"></div>
+                <div id="mobileDetailsStatus"></div>
             </div>
         </div>
     </div>
 
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeProfileSidebar()"></div>[cite: 19]
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeProfileSidebar()"></div>
     <aside class="profile-sidebar" id="profileSidebar">
         <div class="sidebar-header">
-            <h3 style="color:var(--gold-dark); margin:0;">My Profile</h3>[cite: 19]
-            <button class="sidebar-close-btn" onclick="closeProfileSidebar()">&times;</button>[cite: 19]
+            <h3 style="color:var(--gold-dark); margin:0;">My Profile</h3>
+            <button class="sidebar-close-btn" onclick="closeProfileSidebar()">&times;</button>
         </div>
         
         <div class="sidebar-body">
             <div class="profile-card">
-                <label style="font-size:0.8rem; color:var(--brown-light);">Verified Gmail</label>[cite: 19]
-                <div style="font-size:0.9rem; color:var(--gold-dark); margin-bottom:0.75rem;">{{ email }}</div>[cite: 19]
+                <label style="font-size:0.8rem; color:var(--brown-light);">Verified Gmail</label>
+                <div style="font-size:0.9rem; color:var(--gold-dark); margin-bottom:0.75rem;">{{ email }}</div>
 
-                <label style="font-size:0.8rem; color:var(--brown-light);">Display Name</label>[cite: 19]
+                <label style="font-size:0.8rem; color:var(--brown-light);">Display Name</label>
                 <div style="display:flex; gap:0.5rem; margin-top:0.4rem;">
-                    <input type="text" id="profileUsernameInput" class="username-input" value="{{ username }}">[cite: 19]
-                    <button class="save-username-btn" onclick="saveNewUsername()">Save</button>[cite: 19]
+                    <input type="text" id="profileUsernameInput" class="username-input" value="{{ username }}">
+                    <button class="save-username-btn" onclick="saveNewUsername()">Save</button>
                 </div>
             </div>
 
@@ -440,7 +440,7 @@
         </div>
 
         <div class="sidebar-footer">
-            <a href="/logout" class="sidebar-logout-btn">Log Out</a>[cite: 19]
+            <a href="/logout" class="sidebar-logout-btn">Log Out</a>
         </div>
     </aside>
 
