@@ -38,11 +38,11 @@ RAZORPAY_WEBHOOK_SECRET = os.environ.get("RAZORPAY_WEBHOOK_SECRET", "YourWebhook
 client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)) if razorpay else None
 
 DB_CONFIG = {
-    "dbname": os.environ.get("DB_NAME", "hotel_db_aza2"),
-    "user": os.environ.get("DB_USER", "hotel_db_aza2_user"),
-    "password": os.environ.get("DB_PASSWORD", ""),
-    "host": os.environ.get("DB_HOST", "dpg-dauafeo93c1s73de82gg-a"),
-    "port": int(os.environ.get("DB_PORT", 5432))
+    "dbname": os.environ.get("DB_NAME", "hotel_db"),
+    "user": os.environ.get("DB_USER", "charan"),
+    "password": os.environ.get("DB_PASSWORD", "kerasuchi"),
+    "host": os.environ.get("DB_HOST", "postgres"),
+    "port": int(os.environ.get("DB_PORT", 5000))
 }
 
 def get_db():
