@@ -61,10 +61,7 @@ def clean_old_orders():
     try:
         with get_db() as conn:
             with conn.cursor() as cur:
-                # 1. Purge ancient 3-month records
                 cur.execute("DELETE FROM orders WHERE created_at < NOW() - INTERVAL '3 months';")
-                
-                # 2. Automatically cancel accepted/unpaid orders older than 30 minutes (1800 seconds)
                 cur.execute("""
                     UPDATE orders
                     SET order_status = 'cancelled',
@@ -137,7 +134,7 @@ def verify_google_token(token):
     return idinfo
 
 # ==========================================
-# Category Endpoints
+# Category & Settings Endpoints
 # ==========================================
 @app.route("/api/categories", methods=["GET"])
 def get_categories():
@@ -205,6 +202,37 @@ def admin_delete_category():
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+# Settings: Service Tax Percent
+@app.route("/api/admin/settings/service-tax", methods=["GET", "POST"])
+def admin_service_tax_setting():
+    if request.method == "GET":
+        tax_str = get_setting("service_tax_percent", "5.0")
+        try:
+            val = float(tax_str)
+        except Exception:
+            val = 5.0
+        return jsonify({"service_tax_percent": val})
+
+    if not session.get("is_admin"):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json() or {}
+    try:
+        new_val = max(0.0, float(data.get("service_tax_percent", 5.0)))
+    except Exception:
+        return jsonify({"error": "Invalid percentage"}), 400
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO system_settings (key, value)
+                VALUES ('service_tax_percent', %s)
+                ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+            """, (str(new_val),))
+            conn.commit()
+
+    return jsonify({"success": True, "service_tax_percent": new_val})
 
 # ==========================================
 # Page Routes
@@ -480,6 +508,7 @@ def submit_order_request():
         "order_type": order_type
     })
 
+# Select payment method & compute dynamic service tax for online payments
 @app.route("/api/order/select-payment-method", methods=["POST"])
 def select_payment_method():
     data = request.get_json() or {}
@@ -488,17 +517,53 @@ def select_payment_method():
     if method not in ["counter", "online"]:
         method = "counter"
 
+    tax_rate = float(get_setting("service_tax_percent", "5.0"))
+
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(30) DEFAULT 'unselected';")
+            cur.execute("SELECT id, items_code, total_amount::float FROM orders WHERE id = %s;", (order_id,))
+            order = cur.fetchone()
+
+            if not order:
+                return jsonify({"error": "Order not found"}), 404
+
+            parsed = parse_cart_code(order["items_code"])
+            item_ids = list(parsed.keys())
+            base_amount = 0.0
+
+            if item_ids:
+                cur.execute("SELECT id, price::float FROM menu_items WHERE id = ANY(%s::int[]);", (item_ids,))
+                prices = {row["id"]: row["price"] for row in cur.fetchall()}
+                for i_id, qty in parsed.items():
+                    base_amount += prices.get(i_id, 0.0) * qty
+            else:
+                base_amount = order["total_amount"]
+
+            if method == "online":
+                tax_amount = round(base_amount * (tax_rate / 100.0), 2)
+                final_total = round(base_amount + tax_amount, 2)
+            else:
+                tax_amount = 0.0
+                final_total = round(base_amount, 2)
+
             cur.execute("""
                 UPDATE orders
-                SET payment_method = %s, updated_at = NOW()
+                SET payment_method = %s,
+                    total_amount = %s,
+                    updated_at = NOW()
                 WHERE id = %s;
-            """, (method, order_id))
+            """, (method, final_total, order_id))
             conn.commit()
 
-    return jsonify({"success": True, "payment_method": method})
+    return jsonify({
+        "success": True,
+        "payment_method": method,
+        "base_amount": base_amount,
+        "tax_rate": tax_rate if method == "online" else 0.0,
+        "tax_amount": tax_amount,
+        "final_total": final_total
+    })
 
 @app.route("/api/order/timeout-cancel", methods=["POST"])
 def timeout_cancel_order():
@@ -594,10 +659,10 @@ def check_active_order():
     user_email = session.get("user_email", TEST_USER_EMAIL)
     kitchen_open = get_setting("kitchen_open", "true") == "true"
     menu_version = int(get_setting("menu_version", "1"))
+    tax_rate = float(get_setting("service_tax_percent", "5.0"))
 
     with get_db() as conn:
         with conn.cursor() as cur:
-            # 1. Check for cancellation alert
             cur.execute("""
                 SELECT id, order_status, cancellation_reason
                 FROM orders 
@@ -700,13 +765,14 @@ def check_active_order():
                     "payment_method": order.get("payment_method", "unselected"),
                     "payment_status": order["payment_status"],
                     "total_amount": order["total_amount"],
+                    "service_tax_percent": tax_rate,
                     "gateway_order_id": order["gateway_order_id"],
                     "seconds_left": seconds_remaining,
                     "kitchen_open": kitchen_open,
                     "menu_version": menu_version
                 })
 
-    return jsonify({"has_active_order": False, "alert": False, "kitchen_open": kitchen_open, "menu_version": menu_version})
+    return jsonify({"has_active_order": False, "alert": False, "kitchen_open": kitchen_open, "menu_version": menu_version, "service_tax_percent": tax_rate})
 
 # ==========================================
 # Admin Operations & Dashboard APIs

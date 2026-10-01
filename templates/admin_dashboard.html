@@ -28,7 +28,7 @@
             overflow-x: hidden;
             background: linear-gradient(180deg, #fffdf8 0%, #f8f5ec 55%, #f4efe2 100%);
             color: var(--text-main);
-            padding-bottom: 3rem;
+            padding-bottom: 3.5rem;
         }
 
         header {
@@ -116,7 +116,7 @@
             background: #fffdf7;
             border: 1px solid #ded3b8;
             border-radius: 16px;
-            width: 220px;
+            width: 240px;
             box-shadow: 0 15px 35px rgba(70,55,25,0.16);
             display: none;
             flex-direction: column;
@@ -133,6 +133,9 @@
             cursor: pointer;
             transition: 0.2s;
             font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
         .dropdown-item:hover { background: #f5efdf; color: #927326; }
 
@@ -634,11 +637,28 @@
                 <span class="admin-btn-caret">▼</span>
             </button>
             <div class="profile-dropdown-menu" id="profileDropdown">
-                <button class="dropdown-item" onclick="openCategoriesModal()">🏷️ Category List Edit</button>
-                <button class="dropdown-item" onclick="openPasswordModal()">🔑 Change Password</button>
-                <button class="dropdown-item" onclick="switchMainTab('menuTab')">📋 Manage Menu Catalog</button>
-                <button class="dropdown-item" onclick="openPhotosModal()">🖼️ Manage Uploaded Photos</button>
-                <button class="dropdown-item" onclick="logoutAdmin()" style="color: #ef4444;">🚪 Sign Out</button>
+                <button class="dropdown-item" onclick="openCategoriesModal()">
+                    <span>🏷️ Category List</span>
+                </button>
+                <button class="dropdown-item" onclick="openTaxModal()">
+                    <span>💰 Digital Service Tax</span>
+                </button>
+                <button class="dropdown-item" onclick="toggleSoundSetting()">
+                    <span>🔔 Alert Chime</span>
+                    <strong id="soundStatusBadge" style="color:var(--success);">ON</strong>
+                </button>
+                <button class="dropdown-item" onclick="openPasswordModal()">
+                    <span>🔑 Change Password</span>
+                </button>
+                <button class="dropdown-item" onclick="switchMainTab('menuTab')">
+                    <span>📋 Manage Menu Catalog</span>
+                </button>
+                <button class="dropdown-item" onclick="openPhotosModal()">
+                    <span>🖼️ Manage Photos</span>
+                </button>
+                <button class="dropdown-item" onclick="logoutAdmin()" style="color: #ef4444;">
+                    <span>🚪 Sign Out</span>
+                </button>
             </div>
         </div>
     </header>
@@ -736,6 +756,29 @@
 
             <div class="mobile-menu-grid" id="mobileMenuGrid"></div>
         </section>
+    </div>
+
+    <!-- DIGITAL SERVICE TAX MODAL -->
+    <div class="modal-overlay" id="taxModal">
+        <div class="modal-box" style="max-width: 420px;">
+            <div class="modal-header-row">
+                <h3>Digital Service Tax</h3>
+                <button class="modal-close-icon" onclick="closeTaxModal()">&times;</button>
+            </div>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem; line-height:1.45;">
+                Percentage added to PhonePe / Online Gateway orders only. Counter cash orders are exempt.
+            </p>
+            <form onsubmit="handleSaveTax(event)">
+                <div class="form-field">
+                    <label>Online Gateway Tax Rate (%)</label>
+                    <input type="number" step="0.1" min="0" max="50" id="taxRateInput" class="form-input" required placeholder="5.0" />
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-secondary" onclick="closeTaxModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Rate</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- CATEGORY LIST EDIT MODAL -->
@@ -873,6 +916,85 @@
 
     <script>
         let adminCategories = [];
+        let soundEnabled = true;
+        let audioCtx = null;
+        let lastNewCount = null;
+        let lastCounterCount = null;
+
+        // Native Browser Chime Generator (No external MP3 required)
+        function playKitchenChime() {
+            if (!soundEnabled) return;
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                const now = audioCtx.currentTime;
+                
+                // Tone 1: 587 Hz (D5)
+                const osc1 = audioCtx.createOscillator();
+                const gain1 = audioCtx.createGain();
+                osc1.type = 'sine';
+                osc1.frequency.setValueAtTime(587.33, now);
+                gain1.gain.setValueAtTime(0.3, now);
+                gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+                osc1.connect(gain1);
+                gain1.connect(audioCtx.destination);
+                osc1.start(now);
+                osc1.stop(now + 0.5);
+
+                // Tone 2: 880 Hz (A5)
+                const osc2 = audioCtx.createOscillator();
+                const gain2 = audioCtx.createGain();
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(880.00, now + 0.15);
+                gain2.gain.setValueAtTime(0.4, now + 0.15);
+                gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+                osc2.connect(gain2);
+                gain2.connect(audioCtx.destination);
+                osc2.start(now + 0.15);
+                osc2.stop(now + 0.75);
+
+                // Tone 3: 1174 Hz (D6)
+                const osc3 = audioCtx.createOscillator();
+                const gain3 = audioCtx.createGain();
+                osc3.type = 'sine';
+                osc3.frequency.setValueAtTime(1174.66, now + 0.3);
+                gain3.gain.setValueAtTime(0.4, now + 0.3);
+                gain3.gain.exponentialRampToValueAtTime(0.001, now + 1.1);
+                osc3.connect(gain3);
+                gain3.connect(audioCtx.destination);
+                osc3.start(now + 0.3);
+                osc3.stop(now + 1.15);
+            } catch (e) {}
+        }
+
+        function toggleSoundSetting() {
+            soundEnabled = !soundEnabled;
+            const badge = document.getElementById("soundStatusBadge");
+            if (soundEnabled) {
+                badge.textContent = "ON";
+                badge.style.color = "var(--success)";
+                playKitchenChime();
+            } else {
+                badge.textContent = "OFF";
+                badge.style.color = "var(--danger)";
+            }
+        }
+
+        // Unlock Web Audio context on first user touch
+        window.addEventListener('click', function unlockAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            window.removeEventListener('click', unlockAudio);
+        }, { once: true });
 
         function toggleDropdown() {
             document.getElementById("profileDropdown").classList.toggle("show");
@@ -960,6 +1082,48 @@
             }
         }
 
+        // ==========================================
+        // Tax Rate Management
+        // ==========================================
+        async function openTaxModal() {
+            document.getElementById("profileDropdown").classList.remove("show");
+            try {
+                const res = await fetch("/api/admin/settings/service-tax");
+                const data = await res.json();
+                document.getElementById("taxRateInput").value = data.service_tax_percent !== undefined ? data.service_tax_percent : 5.0;
+            } catch (e) {}
+            document.getElementById("taxModal").classList.add("open");
+        }
+
+        function closeTaxModal() {
+            document.getElementById("taxModal").classList.remove("open");
+        }
+
+        async function handleSaveTax(e) {
+            e.preventDefault();
+            const val = parseFloat(document.getElementById("taxRateInput").value);
+            if (isNaN(val) || val < 0) return alert("Please enter a valid rate");
+
+            try {
+                const res = await fetch("/api/admin/settings/service-tax", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ service_tax_percent: val })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeTaxModal();
+                } else {
+                    alert(data.error || "Failed to update tax");
+                }
+            } catch (err) {
+                alert("Network error updating tax");
+            }
+        }
+
+        // ==========================================
+        // Category Management Functions
+        // ==========================================
         async function loadAdminCategories() {
             try {
                 const res = await fetch("/api/categories");
@@ -1047,6 +1211,9 @@
             }
         }
 
+        // ==========================================
+        // Orders & Timers
+        // ==========================================
         let countdownTimerMap = {};
         function startLocalTimers() {
             setInterval(() => {
@@ -1072,10 +1239,23 @@
                 const data = await res.json();
                 updateKitchenUI(data.kitchen_open);
 
-                document.getElementById("newOrdersBadge").textContent = data.new_count || 0;
+                const currentNew = data.new_count || 0;
+                const currentCounter = data.counter_count || 0;
+
+                // Play Audio Alert Chime when a new incoming order or counter payment arrives
+                if (lastNewCount !== null && currentNew > lastNewCount) {
+                    playKitchenChime();
+                } else if (lastCounterCount !== null && currentCounter > lastCounterCount) {
+                    playKitchenChime();
+                }
+
+                lastNewCount = currentNew;
+                lastCounterCount = currentCounter;
+
+                document.getElementById("newOrdersBadge").textContent = currentNew;
                 document.getElementById("activeOrdersBadge").textContent = data.active_count || 0;
-                document.getElementById("counterBillsBadge").textContent = data.counter_count || 0;
-                document.getElementById("totalQueueBadge").textContent = (data.new_count || 0) + (data.active_count || 0);
+                document.getElementById("counterBillsBadge").textContent = currentCounter;
+                document.getElementById("totalQueueBadge").textContent = currentNew + (data.active_count || 0);
 
                 const newGrid = document.getElementById("newOrdersGrid");
                 const activeGrid = document.getElementById("activeOrdersGrid");

@@ -114,3 +114,7 @@ ON CONFLICT (name) DO NOTHING;
 
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_type VARCHAR(20) DEFAULT 'dine_in';
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(30) DEFAULT 'unselected';
+
+INSERT INTO system_settings (key, value)
+VALUES ('service_tax_percent', '5.0')
+ON CONFLICT (key) DO NOTHING;

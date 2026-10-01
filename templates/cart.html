@@ -29,25 +29,24 @@
             background: linear-gradient(135deg, #fbf9f2 0%, #f7f3e8 45%, #eee8d8 100%) !important;
             color: var(--espresso) !important;
             min-height: 100vh;
-            padding: 1.25rem 0.85rem 4rem;
+            padding: 1rem 0.75rem 4.5rem;
         }
 
         .container {
             width: 100%;
-            max-width: 640px;
+            max-width: 620px;
             margin: 0 auto;
-            padding: 0 4px;
         }
 
         .header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 1.25rem;
+            gap: 10px;
+            margin-bottom: 1.15rem;
         }
         .header h2 {
-            font-size: 1.3rem;
+            font-size: 1.25rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -55,44 +54,40 @@
         .back-btn {
             color: var(--gold-dark);
             text-decoration: none;
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             font-weight: 700;
             white-space: nowrap;
         }
-        .back-btn:hover { color: var(--gold); }
 
         .cart-list {
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
-            margin-bottom: 1.25rem;
+            gap: 0.65rem;
+            margin-bottom: 1.15rem;
         }
         .cart-row {
             background: rgba(255, 253, 247, 0.96);
             border: 1px solid var(--gold-border);
             border-radius: 14px;
-            padding: 0.75rem;
+            padding: 0.7rem;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.65rem;
             box-shadow: 0 3px 12px rgba(105, 83, 30, 0.08);
             width: 100%;
         }
         .item-thumb {
-            width: 56px;
-            height: 56px;
-            border-radius: 10px;
+            width: 52px;
+            height: 52px;
+            border-radius: 8px;
             object-fit: cover;
             border: 1px solid #e8dfc5;
             flex-shrink: 0;
         }
-        .item-details {
-            flex: 1;
-            min-width: 0;
-        }
+        .item-details { flex: 1; min-width: 0; }
         .item-details h4 {
             color: var(--espresso);
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             margin-bottom: 0.15rem;
             white-space: nowrap;
             overflow: hidden;
@@ -100,7 +95,7 @@
         }
         .item-details span {
             color: var(--brown-light);
-            font-size: 0.78rem;
+            font-size: 0.75rem;
             text-transform: capitalize;
             display: block;
         }
@@ -108,9 +103,9 @@
             background: #f4efe2;
             color: var(--espresso);
             border: 1px solid var(--gold-border);
-            padding: 0.3rem 0.55rem;
-            border-radius: 8px;
-            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.78rem;
             font-weight: 700;
             white-space: nowrap;
             flex-shrink: 0;
@@ -118,7 +113,7 @@
         .item-line-total {
             font-weight: 800;
             color: var(--gold-dark);
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             text-align: right;
             white-space: nowrap;
             flex-shrink: 0;
@@ -128,7 +123,7 @@
             background: rgba(255, 253, 247, 0.98);
             border: 1px solid var(--gold-border);
             border-radius: 16px;
-            padding: 1.15rem;
+            padding: 1.1rem;
             box-shadow: 0 5px 20px rgba(105, 83, 30, 0.09);
             width: 100%;
         }
@@ -146,8 +141,8 @@
         .bill-total span { color: var(--gold-dark); }
 
         .order-type-box {
-            margin-top: 1.1rem;
-            padding-top: 1.1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
             border-top: 1px dashed var(--gold-border);
         }
         .order-type-label {
@@ -155,36 +150,34 @@
             font-size: 0.82rem;
             font-weight: 800;
             color: var(--espresso);
-            margin-bottom: 0.55rem;
+            margin-bottom: 0.5rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
         .order-type-options {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 0.65rem;
+            gap: 0.6rem;
         }
         .order-type-btn {
             background: #fffdf8;
             border: 2px solid var(--gold-border);
-            border-radius: 12px;
-            padding: 0.75rem 0.65rem;
+            border-radius: 10px;
+            padding: 0.7rem 0.5rem;
             font-weight: 800;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             color: var(--brown-light);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.4rem;
+            gap: 0.35rem;
             transition: all 0.2s ease;
-            white-space: nowrap;
         }
         .order-type-btn.active {
             background: linear-gradient(135deg, #d8bd70, #b8953f);
             color: #fffdf7;
             border-color: #927326;
-            box-shadow: 0 4px 14px rgba(184, 149, 63, 0.35);
+            box-shadow: 0 4px 14px rgba(184, 149, 63, 0.3);
         }
 
         .action-btn {
@@ -199,7 +192,7 @@
             cursor: pointer;
             box-shadow: 0 5px 15px rgba(168, 132, 47, 0.25);
             transition: 0.25s;
-            margin-top: 1.1rem;
+            margin-top: 1rem;
         }
         .action-btn:disabled {
             background: #b5ac9a !important;
@@ -223,7 +216,7 @@
             display: none;
             width: 100%;
             margin-top: 0.85rem;
-            padding: 14px 10px;
+            padding: 12px 10px;
             text-align: center;
             background: linear-gradient(135deg, #d8bd70, #b8953f);
             border: 1px solid #927326;
@@ -231,58 +224,59 @@
             box-sizing: border-box;
             color: #fffdf7;
         }
-        .timer-box h3 { font-size: 0.95rem; }
         .timer-val {
-            font-size: 1.8rem;
+            font-size: 1.7rem;
             font-weight: 800;
             letter-spacing: 1px;
-            margin-top: 0.25rem;
+            margin-top: 0.2rem;
         }
 
+        /* Full Responsive Modals */
         .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(48, 41, 31, 0.45);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
+            background: rgba(48, 41, 31, 0.55);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 2000;
-            padding: 16px;
+            z-index: 99999;
+            padding: 12px;
         }
         .modal-overlay.open { display: flex; }
         
         .themed-dialog {
             background: #fffdf7;
             border: 1px solid var(--gold-border);
-            border-radius: 20px;
-            padding: 1.6rem 1.25rem;
+            border-radius: 18px;
+            padding: 1.4rem 1.15rem;
             width: 100%;
-            max-width: 420px;
+            max-width: 400px;
             max-height: 88vh;
             overflow-y: auto;
             text-align: center;
-            box-shadow: 0 20px 55px rgba(55,43,20,0.22);
+            box-shadow: 0 20px 55px rgba(55,43,20,0.25);
+            position: relative;
         }
         .themed-dialog-title {
-            font-size: 1.2rem;
+            font-size: 1.15rem;
             font-weight: 800;
             color: var(--espresso);
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.45rem;
         }
         .themed-dialog-msg {
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             color: var(--brown-light);
-            line-height: 1.45;
-            margin-bottom: 1.25rem;
+            line-height: 1.4;
+            margin-bottom: 1.1rem;
         }
         .dialog-buttons-row {
             display: flex;
-            gap: 0.6rem;
+            gap: 0.55rem;
             justify-content: center;
         }
         .btn-dialog-primary {
@@ -293,7 +287,7 @@
             border: 1px solid #047857;
             border-radius: 999px;
             font-weight: 800;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             cursor: pointer;
         }
         .btn-dialog-secondary {
@@ -304,7 +298,7 @@
             border: 1px solid #d7cbb0;
             border-radius: 999px;
             font-weight: 700;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             cursor: pointer;
         }
 
@@ -312,13 +306,13 @@
             display: flex;
             flex-direction: column;
             gap: 0.65rem;
-            margin-bottom: 1.15rem;
+            margin-bottom: 1rem;
         }
         .pay-choice-btn {
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            padding: 0.85rem 0.9rem;
+            padding: 0.85rem;
             background: #fffaf0;
             border: 2px solid var(--gold-border);
             border-radius: 12px;
@@ -341,9 +335,23 @@
         .pay-choice-info span {
             font-size: 0.75rem;
             color: var(--brown-light);
-            line-height: 1.25;
+            line-height: 1.3;
             display: block;
         }
+
+        .tax-breakdown-box {
+            background: #f7f2e7;
+            border: 1px solid #e2d7c0;
+            border-radius: 10px;
+            padding: 0.65rem 0.85rem;
+            margin-bottom: 0.85rem;
+            font-size: 0.82rem;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+        .tax-line { display: flex; justify-content: space-between; color: var(--espresso); }
     </style>
 </head>
 <body>
@@ -358,7 +366,7 @@
 
     <div class="bill-card" id="billBox" style="display:none;">
         <div class="bill-total">
-            <span>To Pay</span>
+            <span>Food Total</span>
             <span id="totalPayableLabel">₹0.00</span>
         </div>
 
@@ -379,42 +387,45 @@
         <button class="action-btn" id="mainActionButton" onclick="handleActionButtonClick()">Place Order & Await Acceptance</button>
 
         <div class="timer-box" id="timerBox">
-            <h3>Waiting for Kitchen to Accept</h3>
+            <h3 style="font-size:0.95rem;">Waiting for Kitchen to Accept</h3>
             <div class="timer-val" id="timerDisplay">01:00</div>
         </div>
     </div>
 </div>
 
+<!-- PAYMENT METHOD CHOICE MODAL (Shows Digital Service Tax Breakdown) -->
 <div class="modal-overlay" id="paymentMethodModal">
     <div class="themed-dialog">
-        <div style="font-size: 2rem; margin-bottom: 0.35rem;">💳</div>
-        <h3 class="themed-dialog-title">Payment Method</h3>
-        <p class="themed-dialog-msg">Total Bill: <strong id="choiceModalAmountLabel" style="color:var(--gold-dark);">₹0.00</strong><br>Select your payment preference:</p>
+        <div style="font-size: 2rem; margin-bottom: 0.25rem;">💳</div>
+        <h3 class="themed-dialog-title">Choose Payment Method</h3>
+        <p class="themed-dialog-msg">Base Bill: <strong id="choiceModalAmountLabel" style="color:var(--gold-dark);">₹0.00</strong></p>
 
         <div class="pay-choice-grid">
             <button type="button" class="pay-choice-btn" onclick="executePaymentChoice('counter')">
                 <div class="pay-choice-icon">💵</div>
                 <div class="pay-choice-info">
-                    <h4>Pay at Counter / Cash</h4>
-                    <span>Pay in cash at hotel reception counter</span>
+                    <h4>Pay at Counter (Cash)</h4>
+                    <span>Pay at counter. No extra service tax added.</span>
+                    <strong style="color:var(--gold-dark); display:block; margin-top:2px;" id="counterPayLabel">₹0.00</strong>
                 </div>
             </button>
             <button type="button" class="pay-choice-btn" onclick="executePaymentChoice('online')">
                 <div class="pay-choice-icon">📱</div>
                 <div class="pay-choice-info">
-                    <h4>PhonePe / UPI / Cards</h4>
-                    <span>Pay directly via secure online gateway</span>
+                    <h4>PhonePe / UPI / Gateway</h4>
+                    <span>Online gateway (+<span id="serviceTaxPercentLabel">5.0</span>% Service Tax).</span>
+                    <strong style="color:#047857; display:block; margin-top:2px;" id="onlinePayLabel">₹0.00</strong>
                 </div>
             </button>
         </div>
 
-        <button type="button" class="btn-dialog-secondary" style="width:100%;" onclick="closePaymentMethodModal()">Close</button>
+        <button type="button" class="btn-dialog-secondary" style="width:100%;" onclick="closePaymentMethodModal()">Back</button>
     </div>
 </div>
 
 <div class="modal-overlay" id="customDialogModal">
     <div class="themed-dialog">
-        <div style="font-size: 2.3rem; margin-bottom: 0.35rem;" id="dialogIcon">✨</div>
+        <div style="font-size: 2.2rem; margin-bottom: 0.3rem;" id="dialogIcon">✨</div>
         <h3 class="themed-dialog-title" id="dialogTitle">Notice</h3>
         <p class="themed-dialog-msg" id="dialogMsg"></p>
         <div class="dialog-buttons-row" id="dialogButtonsRow">
@@ -438,6 +449,7 @@
     let secondsLeft = 60;
     let orderState = "cart";
     let selectedOrderType = "dine_in";
+    let serviceTaxPercent = 5.0;
     let dialogCallback = null;
 
     function selectOrderType(type) {
@@ -506,6 +518,10 @@
         const statusRes = await fetch('/api/order/active');
         const statusData = await statusRes.json();
 
+        if (statusData.service_tax_percent !== undefined) {
+            serviceTaxPercent = Number(statusData.service_tax_percent);
+        }
+
         if (statusData.alert && statusData.status === 'cancelled') {
             await handleKitchenCancellation(statusData);
             return;
@@ -553,7 +569,7 @@
         data.items.forEach(item => {
             list.innerHTML += `
                 <div class="cart-row">
-                    <img src="${item.photo_url}" class="item-thumb" alt="${item.item_name}" onerror="this.src='https://via.placeholder.com/64'">
+                    <img src="${item.photo_url}" class="item-thumb" alt="${item.item_name}" onerror="this.src='https://via.placeholder.com/52'">
                     <div class="item-details">
                         <h4>${item.item_name}</h4>
                         <span>${item.category}</span>
@@ -577,8 +593,15 @@
     }
 
     function openPaymentMethodModal() {
-        const amt = currentActiveOrder ? currentActiveOrder.total_amount.toFixed(2) : cartTotal.toFixed(2);
-        document.getElementById("choiceModalAmountLabel").textContent = `₹${amt}`;
+        const baseAmt = currentActiveOrder ? currentActiveOrder.total_amount : cartTotal;
+        const taxVal = Number((baseAmt * (serviceTaxPercent / 100.0)).toFixed(2));
+        const onlineTotal = (baseAmt + taxVal).toFixed(2);
+
+        document.getElementById("choiceModalAmountLabel").textContent = `₹${baseAmt.toFixed(2)}`;
+        document.getElementById("serviceTaxPercentLabel").textContent = serviceTaxPercent;
+        document.getElementById("counterPayLabel").textContent = `Total: ₹${baseAmt.toFixed(2)}`;
+        document.getElementById("onlinePayLabel").textContent = `Total: ₹${onlineTotal}`;
+
         document.getElementById("paymentMethodModal").classList.add("open");
     }
 
@@ -591,7 +614,7 @@
         if (!currentActiveOrder) return;
 
         try {
-            await fetch('/api/order/select-payment-method', {
+            const res = await fetch('/api/order/select-payment-method', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -599,12 +622,16 @@
                     payment_method: method
                 })
             });
+            const data = await res.json();
+            if (data.final_total) {
+                currentActiveOrder.total_amount = data.final_total;
+            }
         } catch (e) {}
 
         if (method === 'counter') {
             showThemedPopup({
                 title: "Pay at Counter Chosen",
-                message: `Please pay ₹${currentActiveOrder.total_amount.toFixed(2)} at the hotel counter. Once paid, the cashier will verify your payment and start cooking!`,
+                message: `Please pay ₹${currentActiveOrder.total_amount.toFixed(2)} cash at the hotel counter. Once paid, the cashier will verify your payment and start cooking!`,
                 icon: "💵",
                 confirmText: "Understood",
                 onResolve: () => {
@@ -726,6 +753,10 @@
             const res = await fetch('/api/order/active');
             const data = await res.json();
 
+            if (data.service_tax_percent !== undefined) {
+                serviceTaxPercent = Number(data.service_tax_percent);
+            }
+
             if (data.alert && data.status === 'cancelled') {
                 await handleKitchenCancellation(data);
                 return;
@@ -790,7 +821,7 @@
                     setPayNowUI();
                 }
             } catch (err) {
-                showThemedPopup({ title: "Network Error", message: "Could not communicate with server.", icon: "⚠️" });
+                showThemedPopup({ title: "Network Error", message: "Could not communicate with server.", icon: "⚠️️" });
                 setPayNowUI();
             }
             return;
