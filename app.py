@@ -61,7 +61,20 @@ def clean_old_orders():
     try:
         with get_db() as conn:
             with conn.cursor() as cur:
+                # 1. Purge ancient 3-month records
                 cur.execute("DELETE FROM orders WHERE created_at < NOW() - INTERVAL '3 months';")
+                
+                # 2. Automatically cancel accepted/unpaid orders older than 30 minutes (1800 seconds)
+                cur.execute("""
+                    UPDATE orders
+                    SET order_status = 'cancelled',
+                        cancellation_reason = 'Order automatically cancelled due to payment timeout (30 minutes).',
+                        customer_alert = TRUE,
+                        updated_at = NOW()
+                    WHERE order_status IN ('accepted', 'preparing')
+                      AND payment_status != 'paid'
+                      AND EXTRACT(EPOCH FROM (NOW() - updated_at)) >= 1800;
+                """)
                 conn.commit()
     except Exception as e:
         print(f"Cleanup error: {e}")
@@ -467,7 +480,6 @@ def submit_order_request():
         "order_type": order_type
     })
 
-# Select payment method (Counter or PhonePe/Online)
 @app.route("/api/order/select-payment-method", methods=["POST"])
 def select_payment_method():
     data = request.get_json() or {}
@@ -526,7 +538,6 @@ def confirm_test_payment():
 
     return jsonify({"success": True})
 
-# Admin Completes Counter Payment
 @app.route("/api/admin/order/complete-counter-payment", methods=["POST"])
 def complete_counter_payment():
     if not session.get("is_admin"):
@@ -586,6 +597,7 @@ def check_active_order():
 
     with get_db() as conn:
         with conn.cursor() as cur:
+            # 1. Check for cancellation alert
             cur.execute("""
                 SELECT id, order_status, cancellation_reason
                 FROM orders 
@@ -612,7 +624,8 @@ def check_active_order():
                        gateway_order_id, cancellation_reason, customer_alert,
                        COALESCE(order_type, 'dine_in') AS order_type,
                        COALESCE(payment_method, 'unselected') AS payment_method,
-                       EXTRACT(EPOCH FROM (NOW() - created_at))::int AS seconds_elapsed
+                       EXTRACT(EPOCH FROM (NOW() - created_at))::int AS seconds_elapsed,
+                       EXTRACT(EPOCH FROM (NOW() - updated_at))::int AS seconds_since_update
                 FROM orders 
                 WHERE user_email = %s 
                   AND order_status IN ('placed', 'accepted', 'preparing', 'prepared', 'delivered')
@@ -621,6 +634,27 @@ def check_active_order():
             order = cur.fetchone()
 
             if order:
+                # 30-Minute Automatic Cancellation for Unpaid Accepted Orders
+                if order["order_status"] in ['accepted', 'preparing'] and order["payment_status"] != 'paid' and order["seconds_since_update"] >= 1800:
+                    cur.execute("""
+                        UPDATE orders
+                        SET order_status = 'cancelled',
+                            cancellation_reason = 'Order automatically cancelled due to payment timeout (30 minutes).',
+                            customer_alert = TRUE,
+                            updated_at = NOW()
+                        WHERE id = %s;
+                    """, (order["id"],))
+                    conn.commit()
+                    return jsonify({
+                        "has_active_order": False,
+                        "alert": True,
+                        "order_id": order["id"],
+                        "status": "cancelled",
+                        "reason": "Order automatically cancelled due to payment timeout (30 minutes).",
+                        "kitchen_open": kitchen_open,
+                        "menu_version": menu_version
+                    })
+
                 if order["order_status"] == 'delivered' and order["customer_alert"]:
                     return jsonify({
                         "has_active_order": False,
@@ -733,6 +767,7 @@ def admin_get_orders():
     if not session.get("is_admin"):
         return jsonify({"error": "Unauthorized"}), 401
 
+    clean_old_orders()
     kitchen_open = get_setting("kitchen_open", "true") == "true"
 
     with get_db() as conn:

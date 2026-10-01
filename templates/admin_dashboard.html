@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Hotel Kitchen Operations</title>
     <style>
         :root {
@@ -22,124 +22,293 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
 
         html, body {
-            width: 100%; min-height: 100vh; overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            min-height: 100vh;
+            overflow-x: hidden;
             background: linear-gradient(180deg, #fffdf8 0%, #f8f5ec 55%, #f4efe2 100%);
-            color: var(--text-main); padding-bottom: 3rem;
+            color: var(--text-main);
+            padding-bottom: 3rem;
         }
 
         header {
-            background: rgba(255, 253, 247, 0.96); border-bottom: 1px solid var(--card-border);
-            padding: 0.85rem 1.25rem; display: flex; justify-content: space-between; align-items: center;
-            position: sticky; top: 0; z-index: 100; box-shadow: 0 3px 14px rgba(100, 75, 25, 0.08);
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            background: rgba(255, 253, 247, 0.96);
+            border-bottom: 1px solid var(--card-border);
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 3px 14px rgba(100, 75, 25, 0.08);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            width: 100%;
         }
 
-        .header-title { display: flex; align-items: center; gap: 0.5rem; font-size: 1.15rem; font-weight: 800; color: #302a20; }
-        .header-actions { display: flex; align-items: center; gap: 0.5rem; }
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #302a20;
+            white-space: nowrap;
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
 
         .kitchen-toggle-btn {
-            padding: 0.55rem 0.9rem; border-radius: 999px; font-weight: 800; font-size: 0.8rem;
-            cursor: pointer; border: 1px solid; box-shadow: 0 3px 9px rgba(80,60,25,0.10);
-            white-space: nowrap; transition: 0.2s;
+            padding: 0.5rem 0.75rem;
+            border-radius: 999px;
+            font-weight: 800;
+            font-size: 0.75rem;
+            cursor: pointer;
+            border: 1px solid;
+            box-shadow: 0 3px 9px rgba(80,60,25,0.10);
+            white-space: nowrap;
+            transition: 0.2s;
         }
         .kitchen-open { background: #e8f7ef; color: #13845e; border-color: #9bd7ba; }
         .kitchen-closed { background: #fff0ee; color: #c53d3d; border-color: #e7aaa5; }
 
         .admin-profile-btn {
-            background: linear-gradient(135deg, #d8bd70, #b8953f); color: #30240f;
-            border: 1px solid #927326; padding: 0.55rem 0.9rem; border-radius: 999px; font-weight: 700; cursor: pointer;
-            box-shadow: 0 4px 12px rgba(100,75,25,0.16); white-space: nowrap; font-size: 0.85rem;
-            display: flex; align-items: center; justify-content: center; gap: 0.35rem;
+            background: linear-gradient(135deg, #d8bd70, #b8953f);
+            color: #30240f;
+            border: 1px solid #927326;
+            padding: 0.5rem 0.85rem;
+            border-radius: 999px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(100,75,25,0.16);
+            white-space: nowrap;
+            font-size: 0.82rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.3rem;
         }
 
         @media (max-width: 768px) {
-            header { padding: 0.75rem 1rem !important; }
-            .header-title { font-size: 1.05rem !important; }
+            header { padding: 0.65rem 0.75rem !important; }
+            .header-title { font-size: 0.98rem !important; }
+            .kitchen-toggle-btn { padding: 0.45rem 0.65rem !important; font-size: 0.72rem !important; }
             .admin-profile-btn {
-                width: 40px !important; height: 40px !important; min-width: 40px !important; min-height: 40px !important;
-                padding: 0 !important; border-radius: 50% !important; font-size: 1.15rem !important;
+                width: 38px !important;
+                height: 38px !important;
+                min-width: 38px !important;
+                min-height: 38px !important;
+                padding: 0 !important;
+                border-radius: 50% !important;
+                font-size: 1.1rem !important;
             }
             .admin-btn-text, .admin-btn-caret { display: none !important; }
         }
 
         .profile-dropdown-menu {
-            position: absolute; top: 65px; right: 1.25rem; background: #fffdf7;
-            border: 1px solid #ded3b8; border-radius: 16px; width: 230px;
-            box-shadow: 0 15px 35px rgba(70,55,25,0.16); display: none; flex-direction: column; z-index: 110;
+            position: absolute;
+            top: 58px;
+            right: 0.75rem;
+            background: #fffdf7;
+            border: 1px solid #ded3b8;
+            border-radius: 16px;
+            width: 220px;
+            box-shadow: 0 15px 35px rgba(70,55,25,0.16);
+            display: none;
+            flex-direction: column;
+            z-index: 110;
         }
         .profile-dropdown-menu.show { display: flex; }
         .dropdown-item {
-            padding: 0.9rem 1.1rem; color: #40382c; border: none; background: none; text-align: left;
-            font-size: 0.9rem; cursor: pointer; transition: 0.2s; font-weight: 600;
+            padding: 0.85rem 1rem;
+            color: #40382c;
+            border: none;
+            background: none;
+            text-align: left;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: 600;
         }
         .dropdown-item:hover { background: #f5efdf; color: #927326; }
 
-        .container { max-width: 1450px; margin: 1.25rem auto; padding: 0 1rem; }
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 1rem auto;
+            padding: 0 0.75rem;
+        }
 
-        .main-tab-controls { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; overflow-x: auto; scrollbar-width: none; }
+        .main-tab-controls {
+            display: flex;
+            gap: 0.45rem;
+            margin-bottom: 1rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
         .main-tab-controls::-webkit-scrollbar { display: none; }
         .main-tab-btn {
-            background: #fffdf7; border: 1px solid #ded3b8; color: var(--text-muted);
-            padding: 0.65rem 1.1rem; border-radius: 999px; cursor: pointer; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;
-            box-shadow: 0 3px 10px rgba(90,70,30,0.06); white-space: nowrap; font-size: 0.88rem;
+            background: #fffdf7;
+            border: 1px solid #ded3b8;
+            color: var(--text-muted);
+            padding: 0.6rem 0.95rem;
+            border-radius: 999px;
+            cursor: pointer;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            box-shadow: 0 3px 10px rgba(90,70,30,0.06);
+            white-space: nowrap;
+            font-size: 0.82rem;
         }
         .main-tab-btn.active {
-            background: linear-gradient(135deg, #d8bd70, #b8953f); color: #fffdf7; border-color: #927326;
+            background: linear-gradient(135deg, #d8bd70, #b8953f);
+            color: #fffdf7;
+            border-color: #927326;
             box-shadow: 0 5px 13px rgba(120,90,30,0.18);
         }
 
-        /* 3 Sub-Navigation Tabs */
         .sub-orders-controls {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1.25rem;
+            display: flex;
+            gap: 0.4rem;
+            margin-bottom: 1rem;
+            overflow-x: auto;
+            scrollbar-width: none;
         }
+        .sub-orders-controls::-webkit-scrollbar { display: none; }
+        
         .sub-order-btn {
-            padding: 0.65rem 0.6rem; border-radius: 12px; cursor: pointer; font-weight: 800; font-size: 0.82rem;
-            background: #fffdf7; border: 1px solid #ded3b8; color: var(--text-muted); text-align: center;
-            display: flex; align-items: center; justify-content: center; gap: 0.35rem; transition: all 0.2s ease;
-            box-shadow: 0 2px 8px rgba(90,70,30,0.05); white-space: nowrap;
+            flex: 1 1 0;
+            min-width: 105px;
+            padding: 0.6rem 0.45rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 800;
+            font-size: 0.76rem;
+            background: #fffdf7;
+            border: 1px solid #ded3b8;
+            color: var(--text-muted);
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(90,70,30,0.05);
+            white-space: nowrap;
         }
         .sub-order-btn.active-new {
-            background: #fffbeb !important; border-color: var(--amber) !important; color: #b45309 !important;
+            background: #fffbeb !important;
+            border-color: var(--amber) !important;
+            color: #b45309 !important;
             box-shadow: 0 4px 12px rgba(196, 154, 58, 0.2) !important;
         }
         .sub-order-btn.active-inprog {
-            background: #eff6ff !important; border-color: var(--primary) !important; color: #1d4ed8 !important;
+            background: #eff6ff !important;
+            border-color: var(--primary) !important;
+            color: #1d4ed8 !important;
             box-shadow: 0 4px 12px rgba(184, 149, 63, 0.2) !important;
         }
         .sub-order-btn.active-counter {
-            background: #f5f3ff !important; border-color: var(--purple) !important; color: #6d28d9 !important;
+            background: #f5f3ff !important;
+            border-color: var(--purple) !important;
+            color: #6d28d9 !important;
             box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25) !important;
         }
 
         .section-box {
-            background: rgba(255,253,247,0.92); border: 1px solid #ded3b8;
-            border-radius: 18px; padding: 1.25rem; margin-bottom: 1.5rem;
+            background: rgba(255,253,247,0.92);
+            border: 1px solid #ded3b8;
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 1.25rem;
             box-shadow: 0 5px 18px rgba(90,70,30,0.07);
+            width: 100%;
         }
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid #e7dfcd; }
-        .section-title { font-size: 1.05rem; font-weight: 800; color: #40382c; display: flex; align-items: center; gap: 0.5rem; }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.85rem;
+            padding-bottom: 0.65rem;
+            border-bottom: 1px solid #e7dfcd;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+        }
+        .section-title {
+            font-size: 0.98rem;
+            font-weight: 800;
+            color: #40382c;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
 
-        .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+        .orders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 0.85rem;
+            width: 100%;
+        }
+        @media (max-width: 480px) {
+            .orders-grid {
+                grid-template-columns: 1fr !important;
+                gap: 0.75rem;
+            }
+            .section-box {
+                padding: 0.85rem 0.65rem;
+            }
+        }
+
         .order-card {
-            background: #fffdf7; border: 1px solid #ded3b8; border-radius: 16px; padding: 1rem;
-            display: flex; flex-direction: column; gap: 0.75rem; position: relative;
-            box-shadow: 0 5px 15px rgba(90,70,30,0.07);
+            background: #fffdf7;
+            border: 1px solid #ded3b8;
+            border-radius: 14px;
+            padding: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(90,70,30,0.06);
+            width: 100%;
         }
 
         .order-countdown-tag {
-            font-size: 0.75rem; font-weight: 800; padding: 0.2rem 0.55rem; border-radius: 999px;
-            background: #fef3c7; color: #b45309; border: 1px solid #fde68a;
-            display: flex; align-items: center; gap: 0.25rem;
+            font-size: 0.72rem;
+            font-weight: 800;
+            padding: 0.15rem 0.45rem;
+            border-radius: 999px;
+            background: #fef3c7;
+            color: #b45309;
+            border: 1px solid #fde68a;
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
+            white-space: nowrap;
         }
         .order-countdown-tag.urgent {
-            background: #fee2e2; color: #dc2626; border-color: #fecaca;
+            background: #fee2e2;
+            color: #dc2626;
+            border-color: #fecaca;
             animation: pulse-urgent 1s infinite alternate;
         }
         @keyframes pulse-urgent { 0% { opacity: 0.8; } 100% { opacity: 1; transform: scale(1.03); } }
 
         .order-type-badge {
-            font-size: 0.72rem; font-weight: 800; padding: 0.18rem 0.55rem; border-radius: 6px;
-            display: inline-flex; align-items: center; gap: 0.25rem; text-transform: uppercase;
+            font-size: 0.68rem;
+            font-weight: 800;
+            padding: 0.15rem 0.45rem;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.2rem;
+            text-transform: uppercase;
+            white-space: nowrap;
         }
         .order-type-badge.dine_in {
             background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;
@@ -149,8 +318,15 @@
         }
 
         .order-pay-method-badge {
-            font-size: 0.72rem; font-weight: 800; padding: 0.18rem 0.55rem; border-radius: 6px;
-            display: inline-flex; align-items: center; gap: 0.25rem; text-transform: uppercase;
+            font-size: 0.68rem;
+            font-weight: 800;
+            padding: 0.15rem 0.45rem;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.2rem;
+            text-transform: uppercase;
+            white-space: nowrap;
         }
         .order-pay-method-badge.counter {
             background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe;
@@ -162,7 +338,7 @@
         .order-card.order-card-unpaid {
             background: #fff0ee !important;
             border: 2px solid #d94b4b !important;
-            box-shadow: 0 6px 18px rgba(217, 75, 75, 0.25) !important;
+            box-shadow: 0 4px 14px rgba(217, 75, 75, 0.2) !important;
         }
         .order-card.order-card-unpaid .order-items-box {
             background: #ffe3e0 !important;
@@ -171,25 +347,46 @@
         }
         .order-card.order-card-unpaid .order-total-line { color: #b92c2c !important; }
 
-        .payment-dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+        .payment-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
         .dot-paid { background-color: var(--success); box-shadow: 0 0 8px var(--success); }
         .dot-pending { background-color: var(--danger); box-shadow: 0 0 8px var(--danger); }
 
-        .order-head { display: flex; justify-content: space-between; align-items: flex-start; }
+        .order-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.4rem; }
         .token-tag {
-            background: linear-gradient(135deg, #d8bd70, #b8953f); color: #fffdf7;
-            padding: 0.25rem 0.65rem; border-radius: 999px; font-weight: 800; font-size: 0.85rem;
+            background: linear-gradient(135deg, #d8bd70, #b8953f);
+            color: #fffdf7;
+            padding: 0.2rem 0.55rem;
+            border-radius: 999px;
+            font-weight: 800;
+            font-size: 0.8rem;
+            white-space: nowrap;
         }
         .order-items-box {
-            background: #f7f2e7; border: 1px solid #e6dcc7; border-radius: 12px;
-            padding: 0.75rem; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.4rem; max-height: 180px; overflow-y: auto;
+            background: #f7f2e7;
+            border: 1px solid #e6dcc7;
+            border-radius: 10px;
+            padding: 0.65rem;
+            font-size: 0.82rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            max-height: 160px;
+            overflow-y: auto;
         }
-        .order-item-line { display: flex; justify-content: space-between; }
-        .order-total-line { display: flex; justify-content: space-between; font-weight: 800; font-size: 1.05rem; color: #927326; }
+        .order-item-line { display: flex; justify-content: space-between; gap: 0.5rem; }
+        .order-total-line { display: flex; justify-content: space-between; font-weight: 800; font-size: 0.98rem; color: #927326; }
 
         .btn-action {
-            border: none; padding: 0.65rem 0.5rem; border-radius: 999px; font-weight: 700; font-size: 0.8rem;
-            cursor: pointer; text-transform: uppercase; transition: 0.2s; text-align: center;
+            border: none;
+            padding: 0.55rem 0.4rem;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.2s;
+            text-align: center;
+            width: 100%;
         }
         .btn-accept { background: linear-gradient(135deg,#d8bd70,#b8953f); color: #fffdf7; }
         .btn-cancel { background: #fff1ef; color: #c53d3d; border: 1px solid #e3aaa4; }
@@ -197,9 +394,16 @@
         .btn-ready { background: #e2f1f5; color: #226879; }
         .btn-deliver { background: #e5f6ed; color: #137951; }
         .btn-counter-complete {
-            background: linear-gradient(135deg, #10b981, #059669); color: #ffffff;
-            border: 1px solid #047857; width: 100%; padding: 0.8rem; border-radius: 10px;
-            font-weight: 800; cursor: pointer; font-size: 0.9rem; text-transform: uppercase;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #ffffff;
+            border: 1px solid #047857;
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 10px;
+            font-weight: 800;
+            cursor: pointer;
+            font-size: 0.85rem;
+            text-transform: uppercase;
         }
 
         .desktop-menu-table { width: 100%; border-collapse: collapse; }
@@ -213,100 +417,203 @@
             .mobile-menu-grid {
                 display: grid !important;
                 grid-template-columns: 1fr;
-                gap: 0.85rem;
+                gap: 0.75rem;
+                width: 100%;
             }
             .mobile-menu-card {
-                background: #fffdf7; border: 1px solid #ded3b8; border-radius: 16px;
-                padding: 0.85rem; display: flex; gap: 0.85rem; align-items: center;
+                background: #fffdf7;
+                border: 1px solid #ded3b8;
+                border-radius: 14px;
+                padding: 0.75rem;
+                display: flex;
+                gap: 0.75rem;
+                align-items: center;
                 box-shadow: 0 4px 14px rgba(70,55,25,0.06);
+                width: 100%;
             }
             .mobile-dish-thumb {
-                width: 76px; height: 76px; border-radius: 12px; object-fit: cover;
-                border: 1px solid #ded3b8; flex-shrink: 0; background: #eee8d8;
+                width: 68px;
+                height: 68px;
+                border-radius: 10px;
+                object-fit: cover;
+                border: 1px solid #ded3b8;
+                flex-shrink: 0;
+                background: #eee8d8;
             }
-            .mobile-dish-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.25rem; }
+            .mobile-dish-info {
+                flex: 1;
+                min-width: 0;
+                display: flex;
+                flex-direction: column;
+                gap: 0.2rem;
+            }
             .mobile-dish-title {
-                font-size: 1rem; font-weight: 700; color: #302a20;
-                white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                font-size: 0.95rem;
+                font-weight: 700;
+                color: #302a20;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
-            .mobile-dish-meta { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; }
+            .mobile-dish-meta {
+                display: flex;
+                align-items: center;
+                gap: 0.4rem;
+                font-size: 0.78rem;
+            }
             .mobile-dish-cat { color: var(--text-muted); text-transform: capitalize; }
-            .mobile-dish-price { font-size: 1.05rem; font-weight: 800; color: var(--primary-dark); }
+            .mobile-dish-price { font-size: 0.98rem; font-weight: 800; color: var(--primary-dark); }
 
-            .mobile-dish-actions { display: flex; flex-direction: column; gap: 0.4rem; flex-shrink: 0; }
+            .mobile-dish-actions {
+                display: flex;
+                flex-direction: column;
+                gap: 0.35rem;
+                flex-shrink: 0;
+            }
             .btn-mobile-edit {
-                padding: 0.45rem 0.85rem; border-radius: 999px; background: #fffdf7; border: 1px solid #d7cbb0;
-                color: #554830; font-weight: 700; font-size: 0.8rem; cursor: pointer; text-align: center;
+                padding: 0.4rem 0.75rem;
+                border-radius: 999px;
+                background: #fffdf7;
+                border: 1px solid #d7cbb0;
+                color: #554830;
+                font-weight: 700;
+                font-size: 0.78rem;
+                cursor: pointer;
+                text-align: center;
             }
             .btn-mobile-del {
-                padding: 0.45rem 0.85rem; border-radius: 999px; background: #fff1ef; border: 1px solid #e3aaa4;
-                color: #c53d3d; font-weight: 700; font-size: 0.8rem; cursor: pointer; text-align: center;
+                padding: 0.4rem 0.75rem;
+                border-radius: 999px;
+                background: #fff1ef;
+                border: 1px solid #e3aaa4;
+                color: #c53d3d;
+                font-weight: 700;
+                font-size: 0.78rem;
+                cursor: pointer;
+                text-align: center;
             }
         }
 
         .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(55,43,20,0.55); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-            display: none; align-items: center; justify-content: center; z-index: 2000;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(55,43,20,0.55);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 12px;
         }
         .modal-overlay.open { display: flex; }
 
         #adminConfirmModal, #adminCancelPromptModal { z-index: 2500 !important; }
 
         .modal-box {
-            background: #fffdf7; border: 1px solid #ded3b8; border-radius: 20px;
-            width: 100%; max-width: 520px; padding: 2rem; max-height: 88vh; overflow-y: auto;
-            box-shadow: 0 20px 55px rgba(55,43,20,0.25); position: relative;
+            background: #fffdf7;
+            border: 1px solid #ded3b8;
+            border-radius: 18px;
+            width: 100%;
+            max-width: 480px;
+            padding: 1.5rem 1.25rem;
+            max-height: 88vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 55px rgba(55,43,20,0.25);
+            position: relative;
         }
 
         @media (max-width: 768px) {
-            .modal-overlay { align-items: flex-end !important; }
+            .modal-overlay { align-items: flex-end !important; padding: 0 !important; }
             .modal-box {
-                max-width: 100% !important; border-radius: 24px 24px 0 0 !important;
-                border-bottom: none !important; padding: 1.5rem 1.25rem 2rem !important;
+                max-width: 100% !important;
+                border-radius: 20px 20px 0 0 !important;
+                border-bottom: none !important;
+                padding: 1.25rem 1rem calc(1.5rem + env(safe-area-inset-bottom, 0px)) !important;
                 animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             }
             @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         }
 
-        .modal-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
-        .modal-header-row h3 { font-size: 1.25rem; font-weight: 800; color: #302a20; }
-        .modal-close-icon { background: none; border: none; font-size: 1.75rem; color: var(--text-muted); cursor: pointer; line-height: 1; }
+        .modal-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .modal-header-row h3 { font-size: 1.15rem; font-weight: 800; color: #302a20; }
+        .modal-close-icon { background: none; border: none; font-size: 1.6rem; color: var(--text-muted); cursor: pointer; line-height: 1; }
 
-        .form-field { margin-bottom: 1rem; }
-        .form-field label { display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem; }
+        .form-field { margin-bottom: 0.85rem; }
+        .form-field label { display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.3rem; }
         .form-input {
-            width: 100%; padding: 0.75rem; background: #fffaf0; border: 1px solid #ded3b8;
-            border-radius: 12px; font-size: 0.95rem; color: #302a20; outline: none; box-sizing: border-box;
+            width: 100%;
+            padding: 0.7rem;
+            background: #fffaf0;
+            border: 1px solid #ded3b8;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            color: #302a20;
+            outline: none;
+            box-sizing: border-box;
         }
         .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(184, 149, 63, 0.15); }
 
-        .modal-buttons { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; }
+        .modal-buttons { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1.25rem; }
         .btn-secondary {
-            background: #fffdf7; color: #665b48; border: 1px solid #d7cbb0; padding: 0.7rem 1.25rem;
-            border-radius: 999px; cursor: pointer; font-weight: 700; font-size: 0.9rem;
+            background: #fffdf7;
+            color: #665b48;
+            border: 1px solid #d7cbb0;
+            padding: 0.65rem 1.1rem;
+            border-radius: 999px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.85rem;
         }
         .btn-primary {
-            background: linear-gradient(135deg,#d8bd70,#b8953f); color: #fffdf7; border: 1px solid #927326;
-            padding: 0.7rem 1.4rem; border-radius: 999px; cursor: pointer; font-weight: 800; font-size: 0.9rem;
+            background: linear-gradient(135deg,#d8bd70,#b8953f);
+            color: #fffdf7;
+            border: 1px solid #927326;
+            padding: 0.65rem 1.25rem;
+            border-radius: 999px;
+            cursor: pointer;
+            font-weight: 800;
+            font-size: 0.85rem;
         }
 
-        .dialog-icon { font-size: 2.2rem; margin-bottom: 0.5rem; text-align: center; }
-        .dialog-title { font-size: 1.25rem; font-weight: 800; color: #302a20; text-align: center; margin-bottom: 0.5rem; }
-        .dialog-message { font-size: 0.95rem; color: #665b48; text-align: center; margin-bottom: 1.25rem; line-height: 1.5; }
+        .dialog-icon { font-size: 2rem; margin-bottom: 0.4rem; text-align: center; }
+        .dialog-title { font-size: 1.15rem; font-weight: 800; color: #302a20; text-align: center; margin-bottom: 0.4rem; }
+        .dialog-message { font-size: 0.88rem; color: #665b48; text-align: center; margin-bottom: 1.1rem; line-height: 1.45; }
         .dialog-textarea {
-            width: 100%; padding: 0.75rem; background: #fffaf0; border: 1px solid #d9ccb0;
-            border-radius: 12px; font-size: 0.95rem; color: #302a20; outline: none; margin-bottom: 1rem; box-sizing: border-box;
+            width: 100%;
+            padding: 0.7rem;
+            background: #fffaf0;
+            border: 1px solid #d9ccb0;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            color: #302a20;
+            outline: none;
+            margin-bottom: 0.85rem;
+            box-sizing: border-box;
         }
 
         .category-item-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0.65rem 0.85rem; background: #fffaf0; border: 1px solid #e6dcc7;
-            border-radius: 10px; margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.55rem 0.75rem;
+            background: #fffaf0;
+            border: 1px solid #e6dcc7;
+            border-radius: 8px;
+            margin-bottom: 0.45rem;
         }
         .btn-del-cat {
-            background: #fff1ef; color: #c53d3d; border: 1px solid #e3aaa4;
-            padding: 0.3rem 0.7rem; border-radius: 8px; font-size: 0.78rem; font-weight: 700; cursor: pointer;
+            background: #fff1ef;
+            color: #c53d3d;
+            border: 1px solid #e3aaa4;
+            padding: 0.25rem 0.65rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -340,7 +647,7 @@
         <div class="main-tab-controls">
             <button class="main-tab-btn active" id="ordersMainTabBtn" onclick="switchMainTab('ordersTab')">
                 <span>Orders Manager</span>
-                <span style="background:#0f172a; color:#fff; padding:0.15rem 0.6rem; border-radius:999px; font-size:0.8rem;" id="totalQueueBadge">0</span>
+                <span style="background:#0f172a; color:#fff; padding:0.15rem 0.55rem; border-radius:999px; font-size:0.75rem;" id="totalQueueBadge">0</span>
             </button>
             <button class="main-tab-btn" id="menuMainTabBtn" onclick="switchMainTab('menuTab')">
                 <span>Menu Item Catalog</span>
@@ -351,16 +658,16 @@
         <section id="ordersTab">
             <div class="sub-orders-controls">
                 <button class="sub-order-btn active-new" id="btnSubNew" onclick="switchOrdersSubSection('new')">
-                    <span>⏳ New Requests</span>
-                    <span style="background:var(--amber); color:#000; padding:0.15rem 0.55rem; border-radius:999px; font-size:0.75rem;" id="newOrdersBadge">0</span>
+                    <span>⏳ Requests</span>
+                    <span style="background:var(--amber); color:#000; padding:0.1rem 0.45rem; border-radius:999px; font-size:0.7rem;" id="newOrdersBadge">0</span>
                 </button>
                 <button class="sub-order-btn" id="btnSubInProg" onclick="switchOrdersSubSection('inprog')">
-                    <span>🍳 In-Progress</span>
-                    <span style="background:var(--primary); color:#fff; padding:0.15rem 0.55rem; border-radius:999px; font-size:0.75rem;" id="activeOrdersBadge">0</span>
+                    <span>🍳 Cooking</span>
+                    <span style="background:var(--primary); color:#fff; padding:0.1rem 0.45rem; border-radius:999px; font-size:0.7rem;" id="activeOrdersBadge">0</span>
                 </button>
                 <button class="sub-order-btn" id="btnSubCounter" onclick="switchOrdersSubSection('counter')">
-                    <span>🧾 Counter Bills</span>
-                    <span style="background:var(--purple); color:#fff; padding:0.15rem 0.55rem; border-radius:999px; font-size:0.75rem;" id="counterBillsBadge">0</span>
+                    <span>🧾 Counter</span>
+                    <span style="background:var(--purple); color:#fff; padding:0.1rem 0.45rem; border-radius:999px; font-size:0.7rem;" id="counterBillsBadge">0</span>
                 </button>
             </div>
 
@@ -370,10 +677,10 @@
                     <div class="section-title">
                         <span>⏳ Incoming Unaccepted Orders</span>
                     </div>
-                    <span style="font-size:0.8rem; color:var(--text-muted);">60s auto-cancel window</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">60s auto-cancel</span>
                 </div>
                 <div class="orders-grid" id="newOrdersGrid">
-                    <div style="color:var(--text-muted); padding:1rem;">No new incoming orders.</div>
+                    <div style="color:var(--text-muted); padding:0.75rem;">No new incoming orders.</div>
                 </div>
             </div>
 
@@ -383,10 +690,10 @@
                     <div class="section-title">
                         <span>🍳 Active Kitchen Orders</span>
                     </div>
-                    <span style="font-size:0.8rem; color:var(--text-muted);">🟢 Green = Paid | 🔴 Red = Unpaid</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">🟢 Paid | 🔴 Unpaid</span>
                 </div>
                 <div class="orders-grid" id="activeOrdersGrid">
-                    <div style="color:var(--text-muted); padding:1rem;">No active orders in kitchen.</div>
+                    <div style="color:var(--text-muted); padding:0.75rem;">No active orders in kitchen.</div>
                 </div>
             </div>
 
@@ -396,10 +703,10 @@
                     <div class="section-title">
                         <span>🧾 Counter Cash Bills Pending Payment</span>
                     </div>
-                    <span style="font-size:0.8rem; color:var(--text-muted);">Click 'Payment Completed' once cash is collected</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Collect cash at counter</span>
                 </div>
                 <div class="orders-grid" id="counterOrdersGrid">
-                    <div style="color:var(--text-muted); padding:1rem;">No counter cash bills waiting for payment.</div>
+                    <div style="color:var(--text-muted); padding:0.75rem;">No counter cash bills waiting for payment.</div>
                 </div>
             </div>
         </section>
@@ -407,11 +714,11 @@
         <!-- TAB 2: MENU CATALOGUE -->
         <section id="menuTab" style="display:none;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
-                <h3 style="font-size:1.2rem; font-weight:800; color:#302a20;">Live Restaurant Menu</h3>
-                <button class="btn-primary" onclick="openItemModal()" style="padding:0.6rem 1.2rem; font-size:0.9rem;">+ Add Food Item</button>
+                <h3 style="font-size:1.15rem; font-weight:800; color:#302a20;">Restaurant Menu</h3>
+                <button class="btn-primary" onclick="openItemModal()" style="padding:0.55rem 1rem; font-size:0.85rem;">+ Add Food</button>
             </div>
 
-            <div class="desktop-menu-table-wrap" style="background:#fffdf7; border:1px solid #ded3b8; border-radius:16px; overflow:hidden;">
+            <div class="desktop-menu-table-wrap" style="background:#fffdf7; border:1px solid #ded3b8; border-radius:14px; overflow:hidden;">
                 <table class="desktop-menu-table">
                     <thead>
                         <tr>
@@ -433,21 +740,21 @@
 
     <!-- CATEGORY LIST EDIT MODAL -->
     <div class="modal-overlay" id="categoriesModal">
-        <div class="modal-box" style="max-width: 480px;">
+        <div class="modal-box">
             <div class="modal-header-row">
                 <h3>Manage Category List</h3>
                 <button class="modal-close-icon" onclick="closeCategoriesModal()">&times;</button>
             </div>
             
-            <form onsubmit="handleAddCategory(event)" style="display:flex; gap:0.5rem; margin-bottom:1.25rem;">
+            <form onsubmit="handleAddCategory(event)" style="display:flex; gap:0.4rem; margin-bottom:1rem;">
                 <input type="text" id="newCategoryInput" class="form-input" style="flex:1;" placeholder="New category (e.g. Desserts)" required />
-                <button type="submit" class="btn-primary" style="padding:0.7rem 1.1rem; white-space:nowrap;">+ Add</button>
+                <button type="submit" class="btn-primary" style="padding:0.6rem 0.95rem; white-space:nowrap;">+ Add</button>
             </form>
 
-            <label style="display:block; font-size:0.85rem; font-weight:700; color:var(--text-muted); margin-bottom:0.5rem;">Existing Categories</label>
-            <div id="categoriesListContainer" style="max-height: 250px; overflow-y: auto; padding-right: 4px;"></div>
+            <label style="display:block; font-size:0.82rem; font-weight:700; color:var(--text-muted); margin-bottom:0.4rem;">Existing Categories</label>
+            <div id="categoriesListContainer" style="max-height: 220px; overflow-y: auto;"></div>
 
-            <div class="modal-buttons" style="margin-top:1.25rem;">
+            <div class="modal-buttons" style="margin-top:1rem;">
                 <button class="btn-secondary" onclick="closeCategoriesModal()">Close</button>
             </div>
         </div>
@@ -455,7 +762,7 @@
 
     <!-- THEMED CONFIRMATION MODAL -->
     <div class="modal-overlay" id="adminConfirmModal">
-        <div class="modal-box" style="max-width: 400px; text-align:center;">
+        <div class="modal-box" style="max-width: 380px; text-align:center;">
             <div class="dialog-icon" id="confirmDialogIcon">⚠</div>
             <h3 class="dialog-title" id="confirmDialogTitle">Confirm Action</h3>
             <p class="dialog-message" id="confirmDialogMessage">Are you sure you want to proceed?</p>
@@ -468,12 +775,12 @@
 
     <!-- THEMED CANCEL PROMPT MODAL -->
     <div class="modal-overlay" id="adminCancelPromptModal">
-        <div class="modal-box" style="max-width: 440px;">
+        <div class="modal-box" style="max-width: 400px;">
             <div class="modal-header-row">
                 <h3>Cancel Order</h3>
                 <button class="modal-close-icon" onclick="closeCancelPrompt(false)">&times;</button>
             </div>
-            <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1rem;">Enter cancellation reason for the customer:</p>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.85rem;">Enter cancellation reason for the customer:</p>
             <textarea class="dialog-textarea" id="cancelReasonInput" rows="3" placeholder="e.g. Kitchen is busy, Out of stock"></textarea>
             <div class="modal-buttons">
                 <button class="btn-secondary" onclick="closeCancelPrompt(false)">Abort</button>
@@ -538,11 +845,11 @@
     <div class="modal-overlay" id="photosModal">
         <div class="modal-box">
             <div class="modal-header-row">
-                <h3>Static Uploaded Photos</h3>
+                <h3>Uploaded Photos</h3>
                 <button class="modal-close-icon" onclick="closePhotosModal()">&times;</button>
             </div>
-            <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">Stored asset files inside /static/uploads/</p>
-            <div id="photosContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(85px, 1fr)); gap:0.65rem;"></div>
+            <p style="font-size:0.78rem; color:var(--text-muted); margin-bottom:0.85rem;">Stored asset files in /static/uploads/</p>
+            <div id="photosContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); gap:0.5rem;"></div>
             <div class="modal-buttons">
                 <button class="btn-secondary" onclick="closePhotosModal()">Close</button>
             </div>
@@ -551,7 +858,7 @@
 
     <!-- PASSWORD MODAL -->
     <div class="modal-overlay" id="passwordModal">
-        <div class="modal-box" style="max-width:380px;">
+        <div class="modal-box" style="max-width:360px;">
             <div class="modal-header-row">
                 <h3>Admin Password</h3>
                 <button class="modal-close-icon" onclick="closePasswordModal()">&times;</button>
@@ -653,9 +960,6 @@
             }
         }
 
-        // ==========================================
-        // Category Management Functions
-        // ==========================================
         async function loadAdminCategories() {
             try {
                 const res = await fetch("/api/categories");
@@ -743,9 +1047,6 @@
             }
         }
 
-        // ==========================================
-        // Orders & Timers
-        // ==========================================
         let countdownTimerMap = {};
         function startLocalTimers() {
             setInterval(() => {
@@ -782,7 +1083,7 @@
 
                 // 1. Render New Incoming Orders
                 if (!data.new_orders || data.new_orders.length === 0) {
-                    newGrid.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">No new incoming orders.</div>';
+                    newGrid.innerHTML = '<div style="color:var(--text-muted); padding:0.85rem;">No new incoming orders.</div>';
                 } else {
                     newGrid.innerHTML = "";
                     data.new_orders.forEach(order => {
@@ -798,20 +1099,20 @@
                         card.innerHTML = `
                             <div class="order-head">
                                 <div>
-                                    <div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.25rem;">
+                                    <div style="display:flex; align-items:center; gap:0.35rem; margin-bottom:0.25rem;">
                                         <span class="token-tag">Token #${order.daily_order_number}</span>
                                         ${typeBadge}
                                     </div>
-                                    <div style="font-weight:700; margin-top:0.2rem;">${order.username}</div>
+                                    <div style="font-weight:700; margin-top:0.2rem; font-size:0.92rem;">${order.username}</div>
                                 </div>
-                                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.25rem;">
+                                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.2rem;">
                                     <span class="order-countdown-tag ${isUrgent}" id="orderTimer_${order.id}">⏳ ${countdownTimerMap[order.id]}s left</span>
-                                    <span style="font-size:0.75rem; color:var(--text-muted);">${order.time}</span>
+                                    <span style="font-size:0.72rem; color:var(--text-muted);">${order.time}</span>
                                 </div>
                             </div>
                             <div class="order-items-box">${itemsHtml}</div>
                             <div class="order-total-line"><span>Total</span><span>₹${order.total_amount.toFixed(2)}</span></div>
-                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.4rem;">
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.4rem; margin-top:0.35rem;">
                                 <button class="btn-action btn-accept" onclick="confirmAndUpdateStatus(${order.id}, 'accepted')">Accept</button>
                                 <button class="btn-action btn-cancel" onclick="cancelOrderWithPrompt(${order.id})">Cancel</button>
                             </div>
@@ -822,7 +1123,7 @@
 
                 // 2. Render In-Progress Orders
                 if (!data.active_orders || data.active_orders.length === 0) {
-                    activeGrid.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">No active orders in kitchen.</div>';
+                    activeGrid.innerHTML = '<div style="color:var(--text-muted); padding:0.85rem;">No active orders in kitchen.</div>';
                 } else {
                     activeGrid.innerHTML = "";
                     data.active_orders.forEach(order => {
@@ -838,34 +1139,34 @@
 
                         let payMethodBadge = '';
                         if (order.payment_method === 'counter') {
-                            payMethodBadge = `<span class="order-pay-method-badge counter">💵 Pay at Counter</span>`;
+                            payMethodBadge = `<span class="order-pay-method-badge counter">💵 Counter</span>`;
                         } else if (order.payment_method === 'online') {
-                            payMethodBadge = `<span class="order-pay-method-badge online">📱 PhonePe/Online</span>`;
+                            payMethodBadge = `<span class="order-pay-method-badge online">📱 Online</span>`;
                         }
 
                         card.innerHTML = `
                             <div class="order-head">
                                 <div>
-                                    <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.35rem; margin-bottom:0.25rem;">
+                                    <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.3rem; margin-bottom:0.25rem;">
                                         <span class="token-tag" style="background:#10b981;">Token #${order.daily_order_number}</span>
                                         ${typeBadge}
                                         ${payMethodBadge}
                                     </div>
-                                    <div style="font-weight:700; margin-top:0.2rem;">${order.username}</div>
+                                    <div style="font-weight:700; margin-top:0.2rem; font-size:0.92rem;">${order.username}</div>
                                 </div>
-                                <div style="display:flex; align-items:center; gap:0.5rem;">
+                                <div style="display:flex; align-items:center; gap:0.4rem;">
                                     <span class="payment-dot ${dotClass}"></span>
-                                    <span style="font-size:0.8rem; font-weight:800; color:${isPaid ? 'var(--success)' : 'var(--danger)'};">
-                                        ${isPaid ? 'PAID' : 'PAYMENT PENDING'}
+                                    <span style="font-size:0.75rem; font-weight:800; color:${isPaid ? 'var(--success)' : 'var(--danger)'};">
+                                        ${isPaid ? 'PAID' : 'PENDING'}
                                     </span>
                                 </div>
                             </div>
                             <div class="order-items-box">${itemsHtml}</div>
                             <div class="order-total-line"><span>Total</span><span>₹${order.total_amount.toFixed(2)}</span></div>
-                            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:0.4rem; margin-top:0.4rem;">
-                                <button class="btn-action btn-prep ${order.order_status === 'preparing' ? 'active' : ''}" onclick="confirmAndUpdateStatus(${order.id}, 'preparing')">Preparing</button>
-                                <button class="btn-action btn-ready ${order.order_status === 'prepared' ? 'active' : ''}" onclick="confirmAndUpdateStatus(${order.id}, 'prepared')">Prepared</button>
-                                <button class="btn-action btn-deliver" onclick="confirmAndUpdateStatus(${order.id}, 'delivered')">Delivered</button>
+                            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:0.35rem; margin-top:0.35rem;">
+                                <button class="btn-action btn-prep ${order.order_status === 'preparing' ? 'active' : ''}" onclick="confirmAndUpdateStatus(${order.id}, 'preparing')">Prep</button>
+                                <button class="btn-action btn-ready ${order.order_status === 'prepared' ? 'active' : ''}" onclick="confirmAndUpdateStatus(${order.id}, 'prepared')">Ready</button>
+                                <button class="btn-action btn-deliver" onclick="confirmAndUpdateStatus(${order.id}, 'delivered')">Done</button>
                             </div>
                         `;
                         activeGrid.appendChild(card);
@@ -874,7 +1175,7 @@
 
                 // 3. Render Counter Bills
                 if (!data.counter_bills || data.counter_bills.length === 0) {
-                    counterGrid.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">No counter cash bills waiting for payment.</div>';
+                    counterGrid.innerHTML = '<div style="color:var(--text-muted); padding:0.85rem;">No counter cash bills waiting for payment.</div>';
                 } else {
                     counterGrid.innerHTML = "";
                     data.counter_bills.forEach(order => {
@@ -883,16 +1184,16 @@
                         const itemsHtml = order.items.map(i => `<div class="order-item-line"><span>${i.name} × ${i.quantity}</span><span>₹${i.subtotal.toFixed(2)}</span></div>`).join('');
                         const typeBadge = order.order_type === 'parcel' 
                             ? `<span class="order-type-badge parcel">📦 Parcel</span>`
-                            : `<span class="order-type-badge dine_in">🍽️️ Dine In</span>`;
+                            : `<span class="order-type-badge dine_in">🍽 Dine In</span>`;
 
                         card.innerHTML = `
                             <div class="order-head">
                                 <div>
-                                    <div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.25rem;">
+                                    <div style="display:flex; align-items:center; gap:0.35rem; margin-bottom:0.25rem;">
                                         <span class="token-tag" style="background:#8b5cf6;">Token #${order.daily_order_number}</span>
                                         ${typeBadge}
                                     </div>
-                                    <div style="font-weight:700; margin-top:0.2rem;">${order.username}</div>
+                                    <div style="font-weight:700; margin-top:0.2rem; font-size:0.92rem;">${order.username}</div>
                                 </div>
                                 <span class="order-pay-method-badge counter">💵 Pay at Counter</span>
                             </div>
@@ -980,14 +1281,14 @@
             currentMenuItems.forEach(item => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
-                    <td><img src="${item.photo_url || 'https://via.placeholder.com/50'}" style="width:50px; height:50px; border-radius:8px; object-fit:cover;" onerror="this.src='https://via.placeholder.com/50'"/></td>
+                    <td><img src="${item.photo_url || 'https://via.placeholder.com/50'}" style="width:48px; height:48px; border-radius:8px; object-fit:cover;" onerror="this.src='https://via.placeholder.com/50'"/></td>
                     <td><strong>${item.item_name}</strong></td>
                     <td style="text-transform:capitalize;">${item.category}</td>
                     <td>₹${Number(item.price).toFixed(2)}</td>
                     <td>${item.is_active ? '🟢 Active' : '🔴 Inactive'}</td>
                     <td>
-                        <button class="btn-secondary" onclick="editMenuItem(${item.id})" style="padding:0.4rem 0.8rem; font-size:0.8rem;">Edit</button>
-                        <button class="btn-secondary" style="background:#fff1ef; color:#c53d3d; padding:0.4rem 0.8rem; font-size:0.8rem; margin-left:0.25rem;" onclick="deleteMenuItem(${item.id})">Delete</button>
+                        <button class="btn-secondary" onclick="editMenuItem(${item.id})" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Edit</button>
+                        <button class="btn-secondary" style="background:#fff1ef; color:#c53d3d; padding:0.35rem 0.7rem; font-size:0.75rem; margin-left:0.2rem;" onclick="deleteMenuItem(${item.id})">Delete</button>
                     </td>
                 `;
                 tbody.appendChild(row);
@@ -1007,7 +1308,7 @@
                     </div>
                     <div class="mobile-dish-actions">
                         <button class="btn-mobile-edit" onclick="editMenuItem(${item.id})">Edit</button>
-                        <button class="btn-mobile-del" onclick="deleteMenuItem(${item.id})">Delete</button>
+                        <button class="btn-mobile-del" onclick="deleteMenuItem(${item.id})">Del</button>
                     </div>
                 `;
                 mobileGrid.appendChild(card);
@@ -1101,8 +1402,8 @@
                 card.style.borderRadius = "8px";
                 card.style.overflow = "hidden";
                 card.innerHTML = `
-                    <img src="${p.url}" style="width:100%; height:80px; object-fit:cover; display:block;" />
-                    <button type="button" style="position:absolute; top:4px; right:4px; background:#c53d3d; color:#fff; border:none; border-radius:50%; width:24px; height:24px; font-weight:800; cursor:pointer; line-height:24px; font-size:14px;" onclick="event.stopPropagation(); deleteStaticPhoto('${p.filename}')">×</button>
+                    <img src="${p.url}" style="width:100%; height:75px; object-fit:cover; display:block;" />
+                    <button type="button" style="position:absolute; top:4px; right:4px; background:#c53d3d; color:#fff; border:none; border-radius:50%; width:22px; height:22px; font-weight:800; cursor:pointer; line-height:22px; font-size:13px;" onclick="event.stopPropagation(); deleteStaticPhoto('${p.filename}')">×</button>
                 `;
                 box.appendChild(card);
             });
