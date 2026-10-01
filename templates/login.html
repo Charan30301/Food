@@ -86,6 +86,8 @@
 
     <!-- STEP 1: Google One-Click Login -->
     <div id="googleSection">
+        <button id="nativeGoogleButton" type="button" class="btn-submit hidden" onclick="FoodNative.startGoogleSignIn()">Continue with Google</button>
+        <div id="webGoogleSignIn">
         <div id="g_id_onload"
              data-client_id="{{ google_client_id }}"
              data-callback="handleCredentialResponse"
@@ -93,6 +95,7 @@
         </div>
         <div class="google-btn-container">
             <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="filled_black" data-text="signin_with" data-size="large"></div>
+        </div>
         </div>
     </div>
 
@@ -116,14 +119,34 @@
 <script>
     let verifiedEmail = "";
 
+    // Android app: use Google's native sign-in UI instead of GIS inside WebView.
+    // Chrome/browser users continue using the existing Google Identity Services button.
+    if (window.FoodNative && typeof window.FoodNative.startGoogleSignIn === "function") {
+        document.getElementById("webGoogleSignIn").classList.add("hidden");
+        document.getElementById("nativeGoogleButton").classList.remove("hidden");
+    }
+
     async function handleCredentialResponse(response) {
+        return handleGoogleCredential(response.credential);
+    }
+
+    window.handleNativeGoogleCredential = function(token) {
+        handleGoogleCredential(token);
+    };
+
+    window.handleNativeGoogleError = function(message) {
+        document.getElementById("errorBox").textContent = message || "Google sign-in failed.";
+    };
+
+    async function handleGoogleCredential(credential) {
         document.getElementById("errorBox").textContent = "";
 
         try {
             const res = await fetch("/api/auth/google", {
                 method: "POST",
+                credentials: "same-origin",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ credential: response.credential })
+                body: JSON.stringify({ credential: credential })
             });
 
             const data = await res.json();

@@ -18,3 +18,7 @@ The Android app uses Android's local notification API and polls the authenticate
 ## Build Android app
 
 Follow `android-app/README.md`. Set the live HTTPS Render URL in `android-app/app/src/main/java/com/localfood/foodapp/MainActivity.kt`, open the `android-app` folder in Android Studio, sync Gradle, then choose **Build > Build APK(s)**.
+
+
+## Android app Google Sign-In fix
+The `android-app` now uses native Google Sign-In rather than loading Google's GIS login flow inside Android WebView. Configure `GOOGLE_WEB_CLIENT_ID` in `MainActivity.kt` to match the Render `GOOGLE_CLIENT_ID` Web OAuth client, and register the Android OAuth client in Google Cloud using package `com.localfood.foodapp` and the installed APK's SHA-1. This does not add Firebase Cloud Messaging or change the Flask login endpoints. See `android-app/README.md`.

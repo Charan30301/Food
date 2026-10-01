@@ -10,12 +10,20 @@ This does **not** use Firebase Cloud Messaging, VAPID, or any external push prov
 
 ## Setup
 
-1. Deploy the Flask backend to Render as usual and make sure the database schema includes the existing `orders` table. No Firebase environment variable or Firebase file is required.
-2. Open this `android-app` folder in Android Studio.
-3. In `app/src/main/java/com/localfood/foodapp/MainActivity.kt`, replace `https://YOUR-RENDER-SERVICE.onrender.com/` with your actual HTTPS Render website URL. Keep the trailing `/`.
-4. Let Android Studio sync Gradle. Ensure Android SDK Platform 35 is installed if prompted.
-5. Use **Build > Build APK(s)**. Android Studio will generate a debug APK under `app/build/outputs/apk/debug/`.
-6. Install the APK on an Android phone, open it, sign in, and allow notifications. Place a test order and use the admin dashboard in a browser to change its status to `delivered` while the app remains open.
+1. Deploy the Flask backend to Render as usual. This app uses the existing `/api/auth/google` and `/api/register` endpoints. No Flask auth route change is required. No Firebase Cloud Messaging, `google-services.json`, or Firebase environment variable is used.
+2. In Render Environment, copy the value of `GOOGLE_CLIENT_ID`. It must be the Web application OAuth client ID ending in `.apps.googleusercontent.com`.
+3. In Google Cloud Console > APIs & Services > Credentials, keep the existing Web OAuth client used by your working Chrome login. Create an additional **OAuth client ID > Android** with package name `com.localfood.foodapp` and the SHA-1 signing certificate fingerprint for the APK you will install. For a debug APK, use Android Studio's Gradle `signingReport` task to find the debug SHA-1. If you later publish a Play Store-signed build, configure that signing certificate SHA-1 too.
+4. Open `app/src/main/java/com/localfood/foodapp/MainActivity.kt`. Replace `https://YOUR-RENDER-SERVICE.onrender.com/` with your real HTTPS Render URL. Replace `YOUR_WEB_CLIENT_ID.apps.googleusercontent.com` in `GOOGLE_WEB_CLIENT_ID` with the exact **Web application client ID** copied from Render, not the Android client ID.
+5. The Android app now shows its native Google sign-in button. It obtains a Google ID token through Google Play services and sends that token to the existing Flask `/api/auth/google` route inside the WebView session. Existing browser sign-in remains unchanged.
+6. Let Android Studio sync Gradle. Ensure Android SDK Platform 35 is installed if prompted.
+7. Use **Build > Build APK(s)**. Android Studio will generate a debug APK under `app/build/outputs/apk/debug/`.
+8. Install the newly built APK (uninstall the older one first if needed), open it, sign in, and allow notifications. Place a test order and use the admin dashboard in a browser to change its status to `delivered` while the app remains open.
+
+### Google Sign-In troubleshooting
+
+- Error 10 / DEVELOPER_ERROR commonly means the Android package name or SHA-1 does not match the Android OAuth client.
+- Missing ID token or token audience errors usually mean `GOOGLE_WEB_CLIENT_ID` is not exactly the same Web client ID as Render's `GOOGLE_CLIENT_ID`.
+- Google native authentication uses Google Play services authentication only; this is separate from push notifications and does not add Firebase Cloud Messaging.
 
 ## Deploy backend changes
 

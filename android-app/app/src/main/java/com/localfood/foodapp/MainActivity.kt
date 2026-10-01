@@ -1,6 +1,7 @@
 package com.localfood.foodapp
 
 import android.Manifest
+import android.app.Activity
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -16,6 +17,13 @@ import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.util.Log
+import org.json.JSONObject
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.ComponentActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -25,10 +33,14 @@ class MainActivity : ComponentActivity() {
         // Replace this with your live Render URL before building the app.
         const val SITE_URL = "https://YOUR-RENDER-SERVICE.onrender.com/"
         const val CHANNEL_ID = "food_order_updates"
+        // Must be the WEB application OAuth client ID used by Flask GOOGLE_CLIENT_ID.
+        const val GOOGLE_WEB_CLIENT_ID = "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com"
         var activeActivity: MainActivity? = null
     }
 
     private lateinit var webView: WebView
+    private lateinit var googleSignInLauncher: ActivityResultLauncher<Intent>
+    private lateinit var googleSignInClient: com.google.android.gms.auth.api.signin.GoogleSignInClient
     private val siteHost: String by lazy { Uri.parse(SITE_URL).host ?: "" }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -37,6 +49,31 @@ class MainActivity : ComponentActivity() {
         activeActivity = this
         createNotificationChannel()
         askNotificationPermission()
+
+        val googleOptions = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestEmail()
+            .requestIdToken(GOOGLE_WEB_CLIENT_ID)
+            .build()
+        googleSignInClient = GoogleSignIn.getClient(this, googleOptions)
+        googleSignInLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                try {
+                    val account = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+                        .getResult(ApiException::class.java)
+                    val idToken = account.idToken
+                    if (idToken.isNullOrBlank()) {
+                        sendNativeGoogleError("Google did not return an ID token. Check the Web OAuth client ID and SHA-1 configuration.")
+                    } else {
+                        sendNativeGoogleTokenToPage(idToken)
+                    }
+                } catch (e: ApiException) {
+                    Log.e("FoodGoogleSignIn", "Google sign-in failed: ${e.statusCode}", e)
+                    sendNativeGoogleError("Google sign-in failed (code ${e.statusCode}). Check your OAuth client ID and SHA-1 setup.")
+                }
+            } else if (result.resultCode != Activity.RESULT_CANCELED) {
+                sendNativeGoogleError("Google sign-in was not completed. Please try again.")
+            }
+        }
 
         webView = WebView(this)
         setContentView(webView)
@@ -60,9 +97,12 @@ class MainActivity : ComponentActivity() {
                         }
                         return false
                     }
-                    // Keep Google sign-in and payment provider pages in the WebView so
-                    // the existing site flow can attempt to complete. Some identity providers
-                    // may restrict embedded WebViews; see README for this limitation.
+                    // Never embed Google's account page in WebView. Payment provider
+                    // pages remain in WebView so existing checkout redirects can work.
+                    if (uri.host == "accounts.google.com" || uri.host == "oauth2.googleapis.com") {
+                        startActivity(Intent(Intent.ACTION_VIEW, uri))
+                        return true
+                    }
                     return false
                 }
                 return true
@@ -79,6 +119,32 @@ class MainActivity : ComponentActivity() {
             }
         }
         webView.loadUrl(SITE_URL)
+    }
+
+    private fun startNativeGoogleSignIn() {
+        if (GOOGLE_WEB_CLIENT_ID.startsWith("YOUR_")) {
+            sendNativeGoogleError("Set GOOGLE_WEB_CLIENT_ID in MainActivity.kt to the same Web OAuth client ID as Render GOOGLE_CLIENT_ID.")
+            return
+        }
+        googleSignInLauncher.launch(googleSignInClient.signInIntent)
+    }
+
+    private fun sendNativeGoogleTokenToPage(idToken: String) {
+        val safeToken = JSONObject.quote(idToken)
+        runOnUiThread {
+            if (::webView.isInitialized) {
+                webView.evaluateJavascript("window.handleNativeGoogleCredential && window.handleNativeGoogleCredential($safeToken);", null)
+            }
+        }
+    }
+
+    private fun sendNativeGoogleError(message: String) {
+        val safeMessage = JSONObject.quote(message)
+        runOnUiThread {
+            if (::webView.isInitialized) {
+                webView.evaluateJavascript("window.handleNativeGoogleError && window.handleNativeGoogleError($safeMessage);", null)
+            }
+        }
     }
 
     private fun isAdminPath(path: String): Boolean =
@@ -124,7 +190,12 @@ class MainActivity : ComponentActivity() {
     }
 
     inner class NativeBridge {
-        @JavascriptInterface fun appVersion(): String = "1.1.0"
+        @JavascriptInterface fun appVersion(): String = "1.2.0"
+
+        @JavascriptInterface
+        fun startGoogleSignIn() {
+            runOnUiThread { startNativeGoogleSignIn() }
+        }
 
         @JavascriptInterface
         fun showOrderNotification(title: String, body: String, orderId: String) {
