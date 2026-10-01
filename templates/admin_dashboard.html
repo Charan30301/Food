@@ -205,6 +205,9 @@
             box-shadow: 0 2px 8px rgba(90,70,30,0.05);
             white-space: nowrap;
         }
+        /* Cooking orders are now managed on the dedicated /admin/cooking page. */
+        #btnSubInProg, #inprogOrdersSection { display: none !important; }
+
         .sub-order-btn.active-new {
             background: #fffbeb !important;
             border-color: var(--amber) !important;
@@ -530,15 +533,18 @@
         }
 
         @media (max-width: 768px) {
-            .modal-overlay { align-items: flex-end !important; padding: 0 !important; }
+            .modal-overlay { align-items: center !important; justify-content: center !important; padding: 12px !important; }
             .modal-box {
-                max-width: 100% !important;
-                border-radius: 20px 20px 0 0 !important;
-                border-bottom: none !important;
-                padding: 1.25rem 1rem calc(1.5rem + env(safe-area-inset-bottom, 0px)) !important;
-                animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                width: min(100%, 480px) !important;
+                max-width: 480px !important;
+                max-height: 88vh !important;
+                overflow-y: auto !important;
+                border-radius: 18px !important;
+                border: 1px solid #ded3b8 !important;
+                padding: 1.25rem 1rem !important;
+                animation: modalPop 0.18s ease-out;
             }
-            @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+            @keyframes modalPop { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: scale(1); } }
         }
 
         .modal-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
@@ -637,6 +643,12 @@
                 <span class="admin-btn-caret">▼</span>
             </button>
             <div class="profile-dropdown-menu" id="profileDropdown">
+                <button class="dropdown-item" onclick="window.location.href='/admin/statistics'">
+                    <span>📊 Statistics</span>
+                </button>
+                <button class="dropdown-item" onclick="window.location.href='/admin/cooking'">
+                    <span>🍳 Cooking Orders</span>
+                </button>
                 <button class="dropdown-item" onclick="openCategoriesModal()">
                     <span>🏷️ Category List</span>
                 </button>
@@ -1235,7 +1247,7 @@
 
         async function loadAdminOrders() {
             try {
-                const res = await fetch("/api/admin/orders");
+                const res = await fetch("/api/admin/orders", { cache: "no-store" });
                 const data = await res.json();
                 updateKitchenUI(data.kitchen_open);
 
@@ -1258,7 +1270,6 @@
                 document.getElementById("totalQueueBadge").textContent = currentNew + (data.active_count || 0);
 
                 const newGrid = document.getElementById("newOrdersGrid");
-                const activeGrid = document.getElementById("activeOrdersGrid");
                 const counterGrid = document.getElementById("counterOrdersGrid");
 
                 // 1. Render New Incoming Orders
@@ -1301,57 +1312,7 @@
                     });
                 }
 
-                // 2. Render In-Progress Orders
-                if (!data.active_orders || data.active_orders.length === 0) {
-                    activeGrid.innerHTML = '<div style="color:var(--text-muted); padding:0.85rem;">No active orders in kitchen.</div>';
-                } else {
-                    activeGrid.innerHTML = "";
-                    data.active_orders.forEach(order => {
-                        const card = document.createElement("div");
-                        const isPaid = order.payment_status === 'paid';
-                        card.className = "order-card" + (isPaid ? "" : " order-card-unpaid");
-
-                        const itemsHtml = order.items.map(i => `<div class="order-item-line"><span>${i.name} × ${i.quantity}</span><span>₹${i.subtotal.toFixed(2)}</span></div>`).join('');
-                        const dotClass = isPaid ? 'dot-paid' : 'dot-pending';
-                        const typeBadge = order.order_type === 'parcel' 
-                            ? `<span class="order-type-badge parcel">📦 Parcel</span>`
-                            : `<span class="order-type-badge dine_in">🍽️ Dine In</span>`;
-
-                        let payMethodBadge = '';
-                        if (order.payment_method === 'counter') {
-                            payMethodBadge = `<span class="order-pay-method-badge counter">💵 Counter</span>`;
-                        } else if (order.payment_method === 'online') {
-                            payMethodBadge = `<span class="order-pay-method-badge online">📱 Online</span>`;
-                        }
-
-                        card.innerHTML = `
-                            <div class="order-head">
-                                <div>
-                                    <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.3rem; margin-bottom:0.25rem;">
-                                        <span class="token-tag" style="background:#10b981;">Token #${order.daily_order_number}</span>
-                                        ${typeBadge}
-                                        ${payMethodBadge}
-                                    </div>
-                                    <div style="font-weight:700; margin-top:0.2rem; font-size:0.92rem;">${order.username}</div>
-                                </div>
-                                <div style="display:flex; align-items:center; gap:0.4rem;">
-                                    <span class="payment-dot ${dotClass}"></span>
-                                    <span style="font-size:0.75rem; font-weight:800; color:${isPaid ? 'var(--success)' : 'var(--danger)'};">
-                                        ${isPaid ? 'PAID' : 'PENDING'}
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="order-items-box">${itemsHtml}</div>
-                            <div class="order-total-line"><span>Total</span><span>₹${order.total_amount.toFixed(2)}</span></div>
-                            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:0.35rem; margin-top:0.35rem;">
-                                <button class="btn-action btn-prep ${order.order_status === 'preparing' ? 'active' : ''}" onclick="confirmAndUpdateStatus(${order.id}, 'preparing')">Prep</button>
-                                <button class="btn-action btn-ready ${order.order_status === 'prepared' ? 'active' : ''}" onclick="confirmAndUpdateStatus(${order.id}, 'prepared')">Ready</button>
-                                <button class="btn-action btn-deliver" onclick="confirmAndUpdateStatus(${order.id}, 'delivered')">Done</button>
-                            </div>
-                        `;
-                        activeGrid.appendChild(card);
-                    });
-                }
+                // Accepted/cooking orders are rendered only on /admin/cooking.
 
                 // 3. Render Counter Bills
                 if (!data.counter_bills || data.counter_bills.length === 0) {

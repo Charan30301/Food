@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cooking Orders</title>
+<style>
+:root{--bg:#f8f5ec;--card:#fffdf7;--border:#ded3b8;--ink:#302a20;--muted:#766d5d;--gold:#b8953f;--green:#16865f;--red:#d94b4b}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#fffdf8,#f4efe2);color:var(--ink);font-family:Segoe UI,system-ui,sans-serif}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px clamp(14px,3vw,32px);background:#fffdf7;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:3}h1{font-size:1.2rem;margin:0}a,.btn{color:#49391a;font-weight:700;text-decoration:none;border:1px solid var(--border);border-radius:10px;padding:9px 12px;background:#fffaf0;cursor:pointer}
+main{max-width:1400px;margin:20px auto;padding:0 14px 40px}.orders-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}.order-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:15px;box-shadow:0 5px 18px #5a46120d;display:flex;flex-direction:column;gap:11px}.order-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.token{background:#10b981;color:white;padding:4px 8px;border-radius:8px;font-size:.78rem;font-weight:800}.muted{color:var(--muted);font-size:.82rem}.items{background:#faf6eb;border-radius:10px;padding:10px;display:grid;gap:7px}.item{display:flex;justify-content:space-between;gap:10px;font-size:.9rem}.total{display:flex;justify-content:space-between;font-weight:800;border-top:1px solid #e8dec4;padding-top:10px}.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.actions button{border:0;border-radius:9px;padding:10px 5px;font-weight:800;cursor:pointer;background:#e9f1ff;color:#1d4ed8}.actions button.active{outline:2px solid var(--gold)}.actions button.ready{background:#e8f7ef;color:#13845e}.actions button.done{background:#302a20;color:white}.badge{font-size:.75rem;font-weight:800;border-radius:999px;padding:4px 8px;background:#f0e7d1}.status{padding:36px;text-align:center;color:var(--muted);background:#fffdf7;border:1px dashed var(--border);border-radius:14px}.spinner{width:34px;height:34px;border:4px solid #e8dec4;border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}@keyframes spin{to{transform:rotate(360deg)}}@media(max-width:500px){header{align-items:flex-start}h1{font-size:1rem}.orders-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><h1>🍳 Cooking Orders <span id="count" class="badge">0</span></h1><div style="display:flex;gap:8px;flex-wrap:wrap"><a href="/admin">← Admin Dashboard</a><button class="btn" onclick="loadOrders()">↻ Refresh</button></div></header>
+<main><div id="orders" class="orders-grid"><div class="status" style="grid-column:1/-1"><div class="spinner"></div>Loading cooking orders…</div></div></main>
+<script>
+const money=n=>'₹'+Number(n||0).toFixed(2);
+async function updateStatus(id,status){
+ if(!confirm(`Change order #${id} to ${status.toUpperCase()}?`))return;
+ try{const res=await fetch('/api/admin/order/update-status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:id,status})});const d=await res.json();if(!res.ok||!d.success)throw new Error(d.error||'Update failed');await loadOrders();}
+ catch(e){alert(e.message||'Could not update order.');}
+}
+async function loadOrders(){
+ const box=document.getElementById('orders');
+ try{
+  const res=await fetch('/api/admin/cooking-orders',{cache:'no-store'});if(!res.ok)throw new Error('Unable to load cooking orders.');
+  const data=await res.json();const orders=data.orders||[];document.getElementById('count').textContent=orders.length;
+  if(!orders.length){box.innerHTML='<div class="status" style="grid-column:1/-1">No accepted or cooking orders right now.</div>';return;}
+  box.innerHTML=orders.map(o=>{
+   const items=(o.items||[]).map(i=>`<div class="item"><span>${i.name} × ${i.quantity}</span><span>${money(i.subtotal)}</span></div>`).join('');
+   const type=o.order_type==='parcel'?'📦 Parcel':'🍽 Dine in';
+   const pay=o.payment_method==='counter'?'Cash / counter':o.payment_method==='online'?'Online':'Not selected';
+   const status=o.order_status;
+   return `<article class="order-card"><div class="order-head"><div><span class="token">Token #${o.daily_order_number}</span><div style="font-weight:800;margin-top:8px">${o.username}</div><div class="muted">${o.time} · ${type}</div></div><div style="text-align:right"><span class="badge">${status.toUpperCase()}</span><div class="muted" style="margin-top:7px">${o.payment_status==='paid'?'🟢 PAID':'🔴 UNPAID'}</div></div></div><div class="items">${items}</div><div class="muted">Payment: ${pay}</div><div class="total"><span>Total</span><span>${money(o.total_amount)}</span></div><div class="actions"><button class="${status==='preparing'?'active':''}" onclick="updateStatus(${o.id},'preparing')">Cooking</button><button class="ready ${status==='prepared'?'active':''}" onclick="updateStatus(${o.id},'prepared')">Ready</button><button class="done" onclick="updateStatus(${o.id},'delivered')">Done</button></div></article>`;
+  }).join('');
+ }catch(e){box.innerHTML=`<div class="status" style="grid-column:1/-1">${e.message||'Could not load cooking orders.'}</div>`;}
+}
+loadOrders();setInterval(loadOrders,10000);
+</script>
+</body>
+</html>

@@ -44,3 +44,16 @@ A web-based restaurant food preordering and kitchen operations management system
 1. Log into your PostgreSQL instance:
    ```bash
    psql -U postgres
+
+## Recent additions
+
+- `/admin/statistics`: today's summary, daily totals for the latest 30 calendar days, and month-by-month totals for the latest 6 calendar months.
+- `/admin/cooking`: dedicated accepted/preparing/prepared order board.
+- Customer menu/cart loading indicators and lazy-loaded food photos.
+- Order tax persistence via `orders.tax_amount` and `orders.tax_rate`.
+
+### Database update
+Run the updated `schema.sql` against the existing PostgreSQL database (or deploy the app and open Statistics once; the statistics/payment routes also add the tax columns if missing). Existing orders created before tax persistence was added cannot have exact historical tax reconstructed from the old database fields, so their tax values default to ₹0.00.
+
+### Statistics definitions
+Order counts exclude cancelled orders. Cash/counter and online received totals include only orders marked `paid`. Online payments are currently recorded under the generic `online` method; the current code does not identify PhonePe separately. Tax is summed from the tax amount saved against each paid order.
