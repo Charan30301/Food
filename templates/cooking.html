@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Kitchen - Live Cooking Operations</title>
+    <style>
+        :root {
+            --bg: #f8f5ec;
+            --card-border: #ded3b8;
+            --text-main: #302a20;
+            --text-muted: #766d5d;
+            --primary: #b8953f;
+            --primary-dark: #927326;
+            --success: #18a878;
+            --danger: #d94b4b;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(180deg, #fffdf8 0%, #f8f5ec 55%, #f4efe2 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            min-height: 100dvh;
+            padding-bottom: max(2rem, env(safe-area-inset-bottom));
+        }
+
+        header {
+            background: rgba(255, 253, 247, 0.96);
+            border-bottom: 1px solid var(--card-border);
+            padding: max(0.75rem, env(safe-area-inset-top)) 1rem 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 3px 14px rgba(100, 75, 25, 0.08);
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #302a20;
+        }
+
+        .back-btn {
+            background: #fffdf7;
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            padding: 0.45rem 0.85rem;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 1.25rem auto;
+            padding: 0 1rem;
+        }
+
+        .section-box {
+            background: rgba(255,253,247,0.94);
+            border: 1px solid var(--card-border);
+            border-left: 4px solid var(--primary);
+            border-radius: 16px;
+            padding: 1.25rem;
+            box-shadow: 0 5px 18px rgba(90,70,30,0.07);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.65rem;
+            border-bottom: 1px solid #e7dfcd;
+        }
+
+        .orders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 1rem;
+        }
+
+        .order-card {
+            background: #fffdf7;
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 0.95rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+            box-shadow: 0 4px 12px rgba(90,70,30,0.06);
+        }
+
+        .order-card.order-card-unpaid {
+            background: #fff0ee !important;
+            border: 2px solid #d94b4b !important;
+        }
+
+        .token-tag {
+            background: #10b981;
+            color: #fffdf7;
+            padding: 0.2rem 0.55rem;
+            border-radius: 999px;
+            font-weight: 800;
+            font-size: 0.8rem;
+        }
+
+        .order-type-badge {
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 0.15rem 0.45rem;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+        .order-type-badge.dine_in { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .order-type-badge.parcel { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+
+        .payment-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+        .dot-paid { background-color: var(--success); box-shadow: 0 0 8px var(--success); }
+        .dot-pending { background-color: var(--danger); box-shadow: 0 0 8px var(--danger); }
+
+        .order-items-box {
+            background: #f7f2e7;
+            border: 1px solid #e6dcc7;
+            border-radius: 10px;
+            padding: 0.65rem;
+            font-size: 0.84rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+        .order-item-line { display: flex; justify-content: space-between; gap: 0.5rem; }
+        .order-total-line { display: flex; justify-content: space-between; font-weight: 800; font-size: 0.98rem; color: #927326; }
+
+        .btn-action {
+            border: none;
+            padding: 0.65rem 0.5rem;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 0.78rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            width: 100%;
+            transition: all 0.2s ease;
+        }
+        .btn-prep { background: #f2dfad; color: #70551c; }
+        .btn-ready { background: #e2f1f5; color: #226879; }
+        .btn-deliver { background: #e5f6ed; color: #137951; }
+        .btn-action.active { box-shadow: inset 0 0 0 2px #4a4032; font-weight: 800; }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(55,43,20,0.55);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 16px;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: #fffdf7;
+            border: 1px solid var(--card-border);
+            border-radius: 18px;
+            width: min(92vw, 380px);
+            padding: 1.5rem 1.25rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title">
+            <span>🍳</span>
+            <span>Live Kitchen (Cooking Orders)</span>
+        </div>
+        <a href="/admin" class="back-btn">← Back to Dashboard</a>
+    </header>
+
+    <div class="container">
+        <div class="section-box">
+            <div class="section-header">
+                <h3 style="font-size:1.05rem; font-weight:800; color:#40382c;">Active Preparation Queue</h3>
+                <span style="font-size:0.8rem; color:var(--text-muted);">🟢 Paid | 🔴 Pending Payment</span>
+            </div>
+            <div class="orders-grid" id="cookingOrdersGrid">
+                <div style="color:var(--text-muted); padding:1rem;">Loading active orders...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal-box">
+            <div style="font-size:2rem; margin-bottom:0.4rem;">⚠️</div>
+            <h3 id="confirmTitle" style="font-size:1.15rem; font-weight:800; margin-bottom:0.4rem;">Update Order</h3>
+            <p id="confirmMsg" style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1.2rem;"></p>
+            <div style="display:flex; justify-content:center; gap:0.6rem;">
+                <button style="padding:0.65rem 1.1rem; border-radius:999px; border:1px solid #d7cbb0; background:#fff; cursor:pointer;" onclick="closeConfirm(false)">Cancel</button>
+                <button style="padding:0.65rem 1.25rem; border-radius:999px; border:1px solid #927326; background:linear-gradient(135deg,#d8bd70,#b8953f); color:#fff; font-weight:800; cursor:pointer;" onclick="closeConfirm(true)">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let confirmPromise = null;
+        function askConfirm(title, msg) {
+            document.getElementById("confirmTitle").textContent = title;
+            document.getElementById("confirmMsg").textContent = msg;
+            document.getElementById("confirmModal").classList.add("open");
+            return new Promise(res => { confirmPromise = res; });
+        }
+        function closeConfirm(val) {
+            document.getElementById("confirmModal").classList.remove("open");
+            if (confirmPromise) confirmPromise(val);
+        }
+
+        async function loadCookingOrders() {
+            try {
+                const res = await fetch("/api/admin/orders");
+                const data = await res.json();
+                const grid = document.getElementById("cookingOrdersGrid");
+
+                if (!data.active_orders || data.active_orders.length === 0) {
+                    grid.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">No orders currently cooking.</div>';
+                    return;
+                }
+
+                grid.innerHTML = "";
+                data.active_orders.forEach(order => {
+                    const card = document.createElement("div");
+                    const isPaid = order.payment_status === 'paid';
+                    card.className = "order-card" + (isPaid ? "" : " order-card-unpaid");
+
+                    const itemsHtml = order.items.map(i => `<div class="order-item-line"><span>${i.name} × ${i.quantity}</span><span>₹${i.subtotal.toFixed(2)}</span></div>`).join('');
+                    const typeBadge = order.order_type === 'parcel' ? '📦 Parcel' : '🍽️ Dine In';
+
+                    card.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div>
+                                <div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.25rem;">
+                                    <span class="token-tag">Token #${order.daily_order_number}</span>
+                                    <span class="order-type-badge ${order.order_type}">${typeBadge}</span>
+                                </div>
+                                <div style="font-weight:700; font-size:0.95rem;">${order.username}</div>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:0.4rem;">
+                                <span class="payment-dot ${isPaid ? 'dot-paid' : 'dot-pending'}"></span>
+                                <span style="font-size:0.75rem; font-weight:800; color:${isPaid ? 'var(--success)' : 'var(--danger)'};">
+                                    ${isPaid ? 'PAID' : 'PENDING'}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="order-items-box">${itemsHtml}</div>
+                        <div class="order-total-line"><span>Total</span><span>₹${order.total_amount.toFixed(2)}</span></div>
+                        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:0.4rem; margin-top:0.35rem;">
+                            <button class="btn-action btn-prep ${order.order_status === 'preparing' ? 'active' : ''}" onclick="updateStatus(${order.id}, 'preparing')">Prep</button>
+                            <button class="btn-action btn-ready ${order.order_status === 'prepared' ? 'active' : ''}" onclick="updateStatus(${order.id}, 'prepared')">Ready</button>
+                            <button class="btn-action btn-deliver" onclick="updateStatus(${order.id}, 'delivered')">Done</button>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (e) {}
+        }
+
+        async function updateStatus(orderId, status) {
+            const ok = await askConfirm("Update Order", `Set Token #${orderId} to ${status.toUpperCase()}?`);
+            if (!ok) return;
+            const res = await fetch("/api/admin/order/update-status", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ order_id: orderId, status: status })
+            });
+            const data = await res.json();
+            if (data.success) loadCookingOrders();
+        }
+
+        loadCookingOrders();
+        setInterval(loadCookingOrders, 4000);
+    </script>
+</body>
+</html>

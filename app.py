@@ -914,52 +914,86 @@ def admin_get_orders():
         "kitchen_open": kitchen_open
     })
 
+# ==========================================
+# New Admin Dedicated Page Routes
+# ==========================================
+@app.route("/admin/cooking")
+def admin_cooking_page():
+    if not session.get("is_admin"):
+        return redirect(url_for("admin_page"))
+    return render_template("cooking.html")
+
+@app.route("/admin/statistic")
+def admin_statistic_page():
+    if not session.get("is_admin"):
+        return redirect(url_for("admin_page"))
+    return render_template("stastic.html")
+
+# ==========================================
+# Fixed Statistics Endpoint (Updates Reliably)
+# ==========================================
 @app.route("/api/admin/statistics", methods=["GET"])
 def admin_statistics():
     if not session.get("is_admin"):
         return jsonify({"error": "Unauthorized"}), 401
 
-    period = request.args.get("period", "today")
-    intervals = {"today": "today", "30days": "30 days", "6months": "6 months"}
-    if period not in intervals:
-        return jsonify({"error": "Invalid statistics period"}), 400
-    interval = intervals[period]
+    period = request.args.get("period", "today").strip().lower()
 
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT o.id, o.daily_order_number, COALESCE(u.username, 'Customer') AS username,
-                       o.user_email, o.total_amount::float AS total_amount,
-                       o.payment_status, o.order_status, o.created_at,
-                       COALESCE(o.order_type, 'dine_in') AS order_type
-                FROM orders o
-                LEFT JOIN users u ON u.email = o.user_email
-                WHERE o.created_at >= CASE
-                    WHEN %s = 'today' THEN date_trunc('day', NOW())
-                    ELSE NOW() - (%s)::interval
-                END
-                ORDER BY o.created_at DESC
-            """, (interval, interval))
-            rows = cur.fetchall()
+    # Safe SQL date condition mapping
+    date_conditions = {
+        "today": "o.created_at >= CURRENT_DATE",
+        "30days": "o.created_at >= (NOW() - INTERVAL '30 days')",
+        "6months": "o.created_at >= (NOW() - INTERVAL '6 months')"
+    }
+    date_filter = date_conditions.get(period, "o.created_at >= CURRENT_DATE")
 
-    orders = [{
-        "id": r["id"],
-        "token": r["daily_order_number"],
-        "username": r["username"],
-        "email": r["user_email"],
-        "total": float(r["total_amount"] or 0),
-        "payment_status": r["payment_status"],
-        "status": r["order_status"],
-        "order_type": r["order_type"],
-        "created_at": r["created_at"].strftime("%d %b %Y, %I:%M %p") if r["created_at"] else ""
-    } for r in rows]
-    return jsonify({
-        "success": True, "period": period, "orders": orders,
-        "order_count": len(orders),
-        "total_amount": round(sum(o["total"] for o in orders), 2),
-        "paid_amount": round(sum(o["total"] for o in orders if o["payment_status"] == "paid"), 2)
-    })
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                query = f"""
+                    SELECT o.id, o.daily_order_number, 
+                           COALESCE(u.username, 'Customer') AS username,
+                           o.user_email, 
+                           COALESCE(o.total_amount::float, 0) AS total_amount,
+                           o.payment_status, 
+                           o.order_status, 
+                           o.created_at,
+                           COALESCE(o.order_type, 'dine_in') AS order_type
+                    FROM orders o
+                    LEFT JOIN users u ON u.email = o.user_email
+                    WHERE {date_filter}
+                    ORDER BY o.created_at DESC;
+                """
+                cur.execute(query)
+                rows = cur.fetchall()
 
+        orders = [{
+            "id": r["id"],
+            "token": r["daily_order_number"],
+            "username": r["username"],
+            "email": r["user_email"],
+            "total": float(r["total_amount"] or 0),
+            "payment_status": r["payment_status"],
+            "status": r["order_status"],
+            "order_type": r["order_type"],
+            "created_at": r["created_at"].strftime("%d %b %Y, %I:%M %p") if r["created_at"] else ""
+        } for r in rows]
+
+        total_amount = round(sum(o["total"] for o in orders), 2)
+        paid_amount = round(sum(o["total"] for o in orders if o["payment_status"] == "paid"), 2)
+
+        return jsonify({
+            "success": True,
+            "period": period,
+            "orders": orders,
+            "order_count": len(orders),
+            "total_amount": total_amount,
+            "paid_amount": paid_amount
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+    
 @app.route("/api/admin/kitchen-toggle", methods=["POST"])
 def admin_toggle_kitchen():
     if not session.get("is_admin"):
