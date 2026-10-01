@@ -1,59 +1,20 @@
-# Grand Palace Hotel - Food Preordering & Kitchen Management System
+# Food Ordering Website + Android customer app (no third-party push)
 
-A web-based restaurant food preordering and kitchen operations management system built with Flask and PostgreSQL, styled with an embedded luxury champagne gold and ivory theme.
+This project contains the Flask/PostgreSQL food-ordering website and an Android Studio app wrapper for customer pages. The admin dashboard remains accessible in a regular browser and is blocked inside the Android app.
 
----
+## Notifications without Firebase
 
-## Key Features
+The Android app uses Android's local notification API and polls the authenticated backend every 20 seconds while the app is active. It notifies when an order status changes to `delivered`. No Firebase Cloud Messaging, VAPID, or third-party push credentials are used.
 
-- **Customer Ordering & Tracking**:
-  - Live food menu filtered by categories (`Tiffins`, `Fast Food`, `Meals`).
-  - Mobile bottom-sheet food details on card click.
-  - Cart item synchronization using encoded database cart strings.
-  - 60-second real-time kitchen acceptance window with automatic timeout cancellation.
-  - Persistent acceptance timer across page reloads and navigation.
-  - Interactive 4-stage live stepper tracker with emerald-green status dots (`Accepted` → `Preparing` → `Prepared` → `Delivered`).
-  - Themed modal notifications for kitchen updates and cancellation notices with custom kitchen reasons.
-  - Fixed-footer slide-out profile sidebar with pinned logout and order history.
+**Important:** notification permission allows an app to show notifications; it does not cause a Render server to send updates to a closed app. This no-third-party version does not guarantee notifications when the app is closed or suspended. Reliable remote notifications while closed require some delivery mechanism such as a push service or a continuously running connection/service with Android background limitations.
 
-- **Kitchen Operations (Admin Dashboard)**:
-  - Dual-view orders manager separated into sub-tabs: **New Requests** and **In-Progress Orders**.
-  - Dynamic 60-second countdown badge on each new incoming request card.
-  - Full-card solid red highlighting for orders pending payment.
-  - Single-step themed confirmation modal before updating order lifecycle states.
-  - Responsive menu management: desktop table and touch-optimized mobile cards.
-  - Mobile-responsive bottom-sheet modal for adding and updating food items.
-  - Master kitchen operational toggle (`Kitchen: OPEN` / `Kitchen: CLOSED`).
-  - Orphaned media management tool for browsing and deleting files in `static/uploads/`.
-  - Automatic client-side menu synchronization using database version bumps.
+## Deploy website/backend
 
----
+1. Push the updated `app.py`, `requirements.txt`, and `schema.sql` to the GitHub repository connected to Render.
+2. Confirm Render has the required existing environment variables for Flask, PostgreSQL, Google sign-in and payment features.
+3. Wait for the Render deployment to finish and test the website in a browser.
+4. No Firebase environment variables or `google-services.json` are needed.
 
-## Tech Stack
+## Build Android app
 
-- **Backend**: Python 3.10+, Flask
-- **Database**: PostgreSQL (psycopg v3 with `dict_row`)
-- **Authentication**: Google One-Tap Identity Services OAuth 2.0 (Customer), scrypt hashed credentials (Admin)
-- **Payment Processing**: Razorpay Gateway (Live mode) & Instant Bypass Controller (Test mode)
-- **Frontend**: Vanilla HTML5, CSS3 (inlined luxury ivory/gold responsive styles), JavaScript (ES6+ Fetch API)
-
----
-
-## Database Setup
-
-1. Log into your PostgreSQL instance:
-   ```bash
-   psql -U postgres
-
-## Recent additions
-
-- `/admin/statistics`: today's summary, daily totals for the latest 30 calendar days, and month-by-month totals for the latest 6 calendar months.
-- `/admin/cooking`: dedicated accepted/preparing/prepared order board.
-- Customer menu/cart loading indicators and lazy-loaded food photos.
-- Order tax persistence via `orders.tax_amount` and `orders.tax_rate`.
-
-### Database update
-Run the updated `schema.sql` against the existing PostgreSQL database (or deploy the app and open Statistics once; the statistics/payment routes also add the tax columns if missing). Existing orders created before tax persistence was added cannot have exact historical tax reconstructed from the old database fields, so their tax values default to ₹0.00.
-
-### Statistics definitions
-Order counts exclude cancelled orders. Cash/counter and online received totals include only orders marked `paid`. Online payments are currently recorded under the generic `online` method; the current code does not identify PhonePe separately. Tax is summed from the tax amount saved against each paid order.
+Follow `android-app/README.md`. Set the live HTTPS Render URL in `android-app/app/src/main/java/com/localfood/foodapp/MainActivity.kt`, open the `android-app` folder in Android Studio, sync Gradle, then choose **Build > Build APK(s)**.

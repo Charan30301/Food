@@ -8,26 +8,30 @@
 :root{--bg:#f8f5ec;--card:#fffdf7;--border:#ded3b8;--ink:#302a20;--muted:#766d5d;--gold:#b8953f;--green:#16865f;--blue:#356ac3;--purple:#7852b8}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#fffdf8,#f4efe2);color:var(--ink);font-family:Segoe UI,system-ui,sans-serif}
 header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px clamp(14px,3vw,32px);background:#fffdf7;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:3}
-h1{font-size:1.25rem;margin:0}a,.btn{color:#49391a;font-weight:700;text-decoration:none;border:1px solid var(--border);border-radius:10px;padding:9px 12px;background:#fffaf0;cursor:pointer}
+html{scroll-behavior:smooth;scroll-padding-top:90px}h1{font-size:1.25rem;margin:0}.pill-status{display:inline-block;padding:4px 8px;border-radius:99px;background:#f2e6c8;font-weight:700;font-size:.78rem}a,.btn{color:#49391a;font-weight:700;text-decoration:none;border:1px solid var(--border);border-radius:10px;padding:9px 12px;background:#fffaf0;cursor:pointer}
 main{max-width:1300px;margin:22px auto;padding:0 14px 40px}.section{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px;margin-bottom:20px;box-shadow:0 5px 18px #5a46120d}
 .section h2{font-size:1.08rem;margin:0 0 14px}.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 .metric{background:#fff;border:1px solid #e7dfcd;border-radius:14px;padding:15px;min-width:0}.metric span{display:block;color:var(--muted);font-size:.82rem;font-weight:650}.metric strong{display:block;font-size:1.45rem;margin-top:7px;overflow-wrap:anywhere}.metric.orders strong{color:var(--gold)}.metric.cash strong{color:var(--green)}.metric.online strong{color:var(--blue)}.metric.tax strong{color:var(--purple)}
-.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:720px}th,td{text-align:right;padding:11px 9px;border-bottom:1px solid #eee7d8;font-size:.88rem;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{color:var(--muted);font-size:.78rem;background:#faf6eb}tbody tr:last-child td{border-bottom:0}.hint{color:var(--muted);font-size:.82rem;line-height:1.5;margin:0 0 12px}.status{color:var(--muted);padding:18px;text-align:center}.spinner{width:34px;height:34px;border:4px solid #e8dec4;border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}@keyframes spin{to{transform:rotate(360deg)}}@media(max-width:760px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.section{padding:13px}.metric strong{font-size:1.2rem}header{align-items:flex-start}h1{font-size:1.05rem}}
+.nav-pills{display:flex;gap:9px;flex-wrap:wrap;margin:0 0 18px}.nav-pills button{flex:1;min-width:130px;padding:12px;border:1px solid var(--border);border-radius:12px;background:#fffaf0;color:var(--ink);font-weight:800;cursor:pointer}.nav-pills button:hover,.nav-pills button:focus{background:#f2e6c8;outline:2px solid #d4b45c}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:720px}th,td{text-align:right;padding:11px 9px;border-bottom:1px solid #eee7d8;font-size:.88rem;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{color:var(--muted);font-size:.78rem;background:#faf6eb}tbody tr:last-child td{border-bottom:0}.hint{color:var(--muted);font-size:.82rem;line-height:1.5;margin:0 0 12px}.status{color:var(--muted);padding:18px;text-align:center}.spinner{width:34px;height:34px;border:4px solid #e8dec4;border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}@keyframes spin{to{transform:rotate(360deg)}}@media(max-width:760px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.section{padding:13px}.metric strong{font-size:1.2rem}header{align-items:flex-start}h1{font-size:1.05rem}}
 </style>
 </head>
 <body>
 <header><h1>📊 Order Statistics</h1><div style="display:flex;gap:8px;flex-wrap:wrap"><a href="/admin">← Admin Dashboard</a><button class="btn" onclick="loadStatistics()">↻ Refresh</button></div></header>
 <main>
-<section class="section">
+<nav class="nav-pills" aria-label="Statistics sections"><button onclick="goToSection('todaySection')">📅 Today &amp; Orders</button><button onclick="goToSection('dailySection')">🗓️ Last 30 Days</button><button onclick="goToSection('monthlySection')">📈 Last 6 Months</button></nav>
+<section class="section" id="todaySection">
 <h2>Today — <span id="todayDate">Loading…</span></h2>
 <div id="todayMetrics" class="cards"><div class="status" style="grid-column:1/-1"><div class="spinner"></div>Loading today's totals…</div></div>
+<h2 style="margin-top:22px">All orders placed today</h2>
+<p class="hint">Includes every order created today, including orders that have been completed or cancelled.</p>
+<div class="table-wrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Time</th><th>Status</th><th>Payment</th><th>Total</th><th>Tax</th></tr></thead><tbody id="todayOrderRows"><tr><td colspan="7" class="status">Loading today's orders…</td></tr></tbody></table></div>
 </section>
-<section class="section">
+<section class="section" id="dailySection">
 <h2>Last 30 Days — Day by Day</h2>
 <p class="hint">Includes today and the previous 29 calendar days. Orders exclude cancelled orders. Payment totals include only orders marked paid.</p>
 <div class="table-wrap"><table><thead><tr><th>Date</th><th>Orders</th><th>Cash received</th><th>Online received</th><th>Tax collected</th></tr></thead><tbody id="dailyRows"><tr><td colspan="5" class="status">Loading…</td></tr></tbody></table></div>
 </section>
-<section class="section">
+<section class="section" id="monthlySection">
 <h2>Last 6 Calendar Months — Month by Month</h2>
 <p class="hint">Each month is calculated from the first day of that month up to (but not including) the first day of the next month. The current month is included.</p>
 <div class="table-wrap"><table><thead><tr><th>Month</th><th>Orders</th><th>Cash received</th><th>Online received</th><th>Tax collected</th></tr></thead><tbody id="monthlyRows"><tr><td colspan="5" class="status">Loading…</td></tr></tbody></table></div>
@@ -39,6 +43,9 @@ const money = n => '₹' + Number(n || 0).toLocaleString('en-IN',{minimumFractio
 const fmtDate = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); };
 const fmtMonth = s => { const [y,m]=s.split('-').map(Number); return new Date(y,m-1,1).toLocaleDateString('en-IN',{month:'long',year:'numeric'}); };
 function metric(label,value,cls){return `<div class="metric ${cls}"><span>${label}</span><strong>${value}</strong></div>`;}
+function goToSection(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'});}
+function todayOrdersHTML(rows){if(!rows.length)return '<tr><td colspan="7" class="status">No orders placed today.</td></tr>';return rows.map(o=>`<tr><td>#${o.daily_order_number||o.id}</td><td>${escapeHTML(o.username||'Customer')}</td><td>${escapeHTML(o.time||'')}</td><td><span class="pill-status">${escapeHTML(o.order_status||'')}</span></td><td>${escapeHTML(o.payment_method||'—')} · ${escapeHTML(o.payment_status||'')}</td><td>${money(o.total_amount)}</td><td>${money(o.tax_amount)}</td></tr>`).join('');}
+function escapeHTML(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function rowsHTML(rows, monthly=false){if(!rows.length)return '<tr><td colspan="5" class="status">No data found.</td></tr>';return rows.map(r=>`<tr><td>${monthly?fmtMonth(r.period):fmtDate(r.period)}</td><td>${r.orders}</td><td>${money(r.cash_received)}</td><td>${money(r.online_received)}</td><td>${money(r.tax_collected)}</td></tr>`).join('');}
 async function loadStatistics(){
  document.getElementById('todayMetrics').innerHTML='<div class="status" style="grid-column:1/-1"><div class="spinner"></div>Loading statistics…</div>';
@@ -55,10 +62,12 @@ async function loadStatistics(){
    metric('Tax collected',money(t.tax_collected),'tax');
   document.getElementById('dailyRows').innerHTML=rowsHTML(data.daily||[]);
   document.getElementById('monthlyRows').innerHTML=rowsHTML(data.monthly||[],true);
+  document.getElementById('todayOrderRows').innerHTML=todayOrdersHTML(data.today_orders||[]);
  }catch(e){
   document.getElementById('todayMetrics').innerHTML=`<div class="status" style="grid-column:1/-1">${e.message||'Could not load statistics.'}</div>`;
   document.getElementById('dailyRows').innerHTML='<tr><td colspan="5" class="status">Could not load statistics.</td></tr>';
   document.getElementById('monthlyRows').innerHTML='<tr><td colspan="5" class="status">Could not load statistics.</td></tr>';
+  document.getElementById('todayOrderRows').innerHTML='<tr><td colspan="7" class="status">Could not load today’s orders.</td></tr>'; 
  }
 }
 loadStatistics();

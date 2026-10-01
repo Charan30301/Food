@@ -22,6 +22,7 @@ try:
 except ModuleNotFoundError:
     razorpay = None
 
+
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "hotel_secret_key_12345")
 
@@ -39,7 +40,7 @@ client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)) if razorpa
 DB_CONFIG = {
     "dbname": os.environ.get("DB_NAME", "hotel_db_aza2"),
     "user": os.environ.get("DB_USER", "hotel_db_aza2_user"),
-    "password": os.environ.get("DB_PASSWORD", "NPsOIbUvGQeBdFEzdszeCvtL7zfeSfWS"),
+    "password": os.environ.get("DB_PASSWORD", ""),
     "host": os.environ.get("DB_HOST", "dpg-dauafeo93c1s73de82gg-a"),
     "port": int(os.environ.get("DB_PORT", 5432))
 }
@@ -632,6 +633,33 @@ def complete_counter_payment():
 
     return jsonify({"success": True})
 
+
+@app.route("/api/mobile/orders/statuses", methods=["GET"])
+def mobile_order_statuses():
+    """Authenticated status polling for the Android app; no push provider required."""
+    user_email = session.get("user_email")
+    if not user_email:
+        return jsonify({"success": False, "error": "Please sign in first."}), 401
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT id, order_status, updated_at
+                    FROM orders
+                    WHERE user_email = %s
+                    ORDER BY updated_at DESC
+                    LIMIT 20;
+                """, (user_email,))
+                rows = cur.fetchall()
+        return jsonify({"success": True, "orders": [
+            {"id": row["id"], "status": row["order_status"], "updated_at": row["updated_at"].isoformat() if row["updated_at"] else None}
+            for row in rows
+        ]})
+    except Exception:
+        app.logger.exception("Could not retrieve mobile order statuses")
+        return jsonify({"success": False, "error": "Could not retrieve order statuses."}), 500
+
+
 @app.route("/api/order/ack-alert", methods=["POST"])
 def acknowledge_order_alert():
     data = request.get_json() or {}
@@ -953,6 +981,18 @@ def admin_statistics():
                 """)
                 today_row = cur.fetchone()
 
+                cur.execute("""SELECT o.id, o.daily_order_number, o.user_email,
+                    COALESCE(u.username, 'Customer') AS username, o.created_at,
+                    o.order_status, o.payment_status,
+                    COALESCE(o.payment_method, 'unselected') AS payment_method,
+                    o.total_amount::float AS total_amount,
+                    COALESCE(o.tax_amount, 0)::float AS tax_amount
+                    FROM orders o LEFT JOIN users u ON u.email = o.user_email
+                    WHERE o.created_at >= CURRENT_DATE
+                      AND o.created_at < CURRENT_DATE + INTERVAL '1 day'
+                    ORDER BY o.created_at DESC;""")
+                today_orders = cur.fetchall()
+
                 cur.execute("""
                     SELECT d.day::date AS period,
                            COUNT(o.id) FILTER (WHERE o.order_status <> 'cancelled')::int AS orders,
@@ -1009,7 +1049,17 @@ def admin_statistics():
             "online_received": round(today_row["online_received"] or 0, 2),
             "tax_collected": round(today_row["tax_collected"] or 0, 2)
         }
-        return jsonify({"today": today, "daily": serialise(daily_rows), "monthly": serialise(monthly_rows)})
+        today_order_list = [{
+            "id": row["id"], "daily_order_number": row["daily_order_number"],
+            "username": row["username"],
+            "time": row["created_at"].strftime("%I:%M %p") if row["created_at"] else "",
+            "order_status": row["order_status"], "payment_status": row["payment_status"],
+            "payment_method": row["payment_method"],
+            "total_amount": round(row["total_amount"] or 0, 2),
+            "tax_amount": round(row["tax_amount"] or 0, 2)
+        } for row in today_orders]
+        return jsonify({"today": today, "today_orders": today_order_list,
+                        "daily": serialise(daily_rows), "monthly": serialise(monthly_rows)})
     except Exception as exc:
         app.logger.exception("Could not build admin statistics")
         return jsonify({"error": "Could not load statistics. Check the database schema and connection."}), 500
@@ -1092,18 +1142,21 @@ def admin_update_order_status():
     new_status = str(data.get("status", "")).strip().lower()
     reason = data.get("reason", "").strip()
 
+    allowed_statuses = {"accepted", "preparing", "prepared", "delivered", "cancelled"}
+    if new_status not in allowed_statuses or not order_id:
+        return jsonify({"success": False, "error": "Invalid order status."}), 400
     with get_db() as conn:
         with conn.cursor() as cur:
-            cur.execute("""
-                UPDATE orders 
-                SET order_status = %s, 
-                    cancellation_reason = CASE WHEN %s = 'cancelled' THEN %s ELSE cancellation_reason END,
-                    customer_alert = TRUE,
-                    updated_at = NOW()
-                WHERE id = %s;
-            """, (new_status, new_status, reason, order_id))
+            cur.execute("SELECT user_email FROM orders WHERE id = %s;", (order_id,))
+            order_row = cur.fetchone()
+            if not order_row:
+                return jsonify({"success": False, "error": "Order not found."}), 404
+            user_email = order_row["user_email"]
+            cur.execute("""UPDATE orders SET order_status = %s,
+                cancellation_reason = CASE WHEN %s = 'cancelled' THEN %s ELSE cancellation_reason END,
+                customer_alert = TRUE, updated_at = NOW() WHERE id = %s;""",
+                (new_status, new_status, reason, order_id))
             conn.commit()
-
     return jsonify({"success": True})
 
 @app.route("/api/admin/menu/items", methods=["GET"])
