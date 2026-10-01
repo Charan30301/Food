@@ -84,6 +84,7 @@ class MainActivity : ComponentActivity() {
         webView.settings.loadsImagesAutomatically = true
         webView.settings.javaScriptCanOpenWindowsAutomatically = true
         webView.settings.setSupportMultipleWindows(false)
+        webView.webViewClient = WebViewClient()
         webView.webChromeClient = WebChromeClient()
         webView.addJavascriptInterface(NativeBridge(), "FoodNative")
         webView.webViewClient = object : WebViewClient() {

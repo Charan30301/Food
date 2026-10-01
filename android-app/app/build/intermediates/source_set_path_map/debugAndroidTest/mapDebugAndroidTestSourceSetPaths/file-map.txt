@@ -1,0 +1,4 @@
+com.localfood.foodapp.test.app-androidTest-0 C:\Users\manoh\Downloads\Food\android-app\app\build\generated\res\resValues\androidTest\debug
+com.localfood.foodapp.test.app-mergeDebugAndroidTestResources-1 C:\Users\manoh\Downloads\Food\android-app\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
+com.localfood.foodapp.test.app-mergeDebugAndroidTestResources-2 C:\Users\manoh\Downloads\Food\android-app\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
+com.localfood.foodapp.test.app-debugAndroidTest-3 C:\Users\manoh\Downloads\Food\android-app\app\build\intermediates\merged_res\debugAndroidTest\mergeDebugAndroidTestResources
