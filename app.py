@@ -39,7 +39,7 @@ client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)) if razorpa
 DB_CONFIG = {
     "dbname": os.environ.get("DB_NAME", "hotel_db_aza2"),
     "user": os.environ.get("DB_USER", "hotel_db_aza2_user"),
-    "password": os.environ.get("DB_PASSWORD", ""),
+    "password": os.environ.get("DB_PASSWORD", "NPsOIbUvGQeBdFEzdszeCvtL7zfeSfWS"),
     "host": os.environ.get("DB_HOST", "dpg-dauafeo93c1s73de82gg-a"),
     "port": int(os.environ.get("DB_PORT", 5432))
 }
