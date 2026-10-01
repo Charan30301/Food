@@ -1053,6 +1053,8 @@ def admin_cooking_orders():
             cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(30) DEFAULT 'unselected';")
             cur.execute("SELECT id, item_name, price::float FROM menu_items;")
             menu_map = {row["id"]: row for row in cur.fetchall()}
+            
+            # REQUIREMENT: Wait until payment is done (payment_status = 'paid')
             cur.execute("""
                 SELECT o.id, o.user_email, COALESCE(u.username, 'Customer') AS username,
                        o.items_code, o.total_amount::float, o.payment_status, o.order_status,
@@ -1062,6 +1064,7 @@ def admin_cooking_orders():
                 FROM orders o
                 LEFT JOIN users u ON o.user_email = u.email
                 WHERE o.order_status IN ('accepted', 'preparing', 'prepared')
+                  AND o.payment_status = 'paid'
                 ORDER BY o.created_at ASC;
             """)
             rows = cur.fetchall()
@@ -1087,7 +1090,6 @@ def admin_cooking_orders():
             } for item_id, qty in parsed.items()]
         })
     return jsonify({"orders": orders})
-
 
 @app.route("/api/admin/kitchen-toggle", methods=["POST"])
 def admin_toggle_kitchen():

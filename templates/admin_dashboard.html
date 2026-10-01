@@ -19,7 +19,12 @@
             --purple: #8b5cf6;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
 
         html, body {
             width: 100%;
@@ -56,6 +61,7 @@
             color: #302a20;
             white-space: nowrap;
         }
+
         .header-actions {
             display: flex;
             align-items: center;
@@ -69,12 +75,22 @@
             font-size: 0.75rem;
             cursor: pointer;
             border: 1px solid;
-            box-shadow: 0 3px 9px rgba(80,60,25,0.10);
+            box-shadow: 0 3px 9px rgba(80, 60, 25, 0.10);
             white-space: nowrap;
             transition: 0.2s;
         }
-        .kitchen-open { background: #e8f7ef; color: #13845e; border-color: #9bd7ba; }
-        .kitchen-closed { background: #fff0ee; color: #c53d3d; border-color: #e7aaa5; }
+
+        .kitchen-open {
+            background: #e8f7ef;
+            color: #13845e;
+            border-color: #9bd7ba;
+        }
+
+        .kitchen-closed {
+            background: #fff0ee;
+            color: #c53d3d;
+            border-color: #e7aaa5;
+        }
 
         .admin-profile-btn {
             background: linear-gradient(135deg, #d8bd70, #b8953f);
@@ -84,7 +100,7 @@
             border-radius: 999px;
             font-weight: 700;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(100,75,25,0.16);
+            box-shadow: 0 4px 12px rgba(100, 75, 25, 0.16);
             white-space: nowrap;
             font-size: 0.82rem;
             display: flex;
@@ -117,12 +133,14 @@
             border: 1px solid #ded3b8;
             border-radius: 16px;
             width: 240px;
-            box-shadow: 0 15px 35px rgba(70,55,25,0.16);
+            box-shadow: 0 15px 35px rgba(70, 55, 25, 0.16);
             display: none;
             flex-direction: column;
             z-index: 110;
         }
+
         .profile-dropdown-menu.show { display: flex; }
+
         .dropdown-item {
             padding: 0.85rem 1rem;
             color: #40382c;
@@ -137,7 +155,11 @@
             align-items: center;
             justify-content: space-between;
         }
-        .dropdown-item:hover { background: #f5efdf; color: #927326; }
+
+        .dropdown-item:hover {
+            background: #f5efdf;
+            color: #927326;
+        }
 
         .container {
             width: 100%;
@@ -153,7 +175,9 @@
             overflow-x: auto;
             scrollbar-width: none;
         }
+
         .main-tab-controls::-webkit-scrollbar { display: none; }
+
         .main-tab-btn {
             background: #fffdf7;
             border: 1px solid #ded3b8;
@@ -165,15 +189,16 @@
             display: flex;
             align-items: center;
             gap: 0.4rem;
-            box-shadow: 0 3px 10px rgba(90,70,30,0.06);
+            box-shadow: 0 3px 10px rgba(90, 70, 30, 0.06);
             white-space: nowrap;
             font-size: 0.82rem;
         }
+
         .main-tab-btn.active {
             background: linear-gradient(135deg, #d8bd70, #b8953f);
             color: #fffdf7;
             border-color: #927326;
-            box-shadow: 0 5px 13px rgba(120,90,30,0.18);
+            box-shadow: 0 5px 13px rgba(120, 90, 30, 0.18);
         }
 
         .sub-orders-controls {
@@ -183,8 +208,9 @@
             overflow-x: auto;
             scrollbar-width: none;
         }
+
         .sub-orders-controls::-webkit-scrollbar { display: none; }
-        
+
         .sub-order-btn {
             flex: 1 1 0;
             min-width: 105px;
@@ -202,11 +228,9 @@
             justify-content: center;
             gap: 0.25rem;
             transition: all 0.2s ease;
-            box-shadow: 0 2px 8px rgba(90,70,30,0.05);
+            box-shadow: 0 2px 8px rgba(90, 70, 30, 0.05);
             white-space: nowrap;
         }
-        /* Cooking orders are now managed on the dedicated /admin/cooking page. */
-        #btnSubInProg, #inprogOrdersSection { display: none !important; }
 
         .sub-order-btn.active-new {
             background: #fffbeb !important;
@@ -214,12 +238,14 @@
             color: #b45309 !important;
             box-shadow: 0 4px 12px rgba(196, 154, 58, 0.2) !important;
         }
-        .sub-order-btn.active-inprog {
-            background: #eff6ff !important;
-            border-color: var(--primary) !important;
-            color: #1d4ed8 !important;
-            box-shadow: 0 4px 12px rgba(184, 149, 63, 0.2) !important;
+
+        .sub-order-btn.active-delivery {
+            background: #e8f7ef !important;
+            border-color: var(--success) !important;
+            color: #13845e !important;
+            box-shadow: 0 4px 12px rgba(24, 168, 120, 0.22) !important;
         }
+
         .sub-order-btn.active-counter {
             background: #f5f3ff !important;
             border-color: var(--purple) !important;
@@ -228,14 +254,15 @@
         }
 
         .section-box {
-            background: rgba(255,253,247,0.92);
+            background: rgba(255, 253, 247, 0.92);
             border: 1px solid #ded3b8;
             border-radius: 16px;
             padding: 1rem;
             margin-bottom: 1.25rem;
-            box-shadow: 0 5px 18px rgba(90,70,30,0.07);
+            box-shadow: 0 5px 18px rgba(90, 70, 30, 0.07);
             width: 100%;
         }
+
         .section-header {
             display: flex;
             justify-content: space-between;
@@ -246,6 +273,7 @@
             flex-wrap: wrap;
             gap: 0.35rem;
         }
+
         .section-title {
             font-size: 0.98rem;
             font-weight: 800;
@@ -261,14 +289,10 @@
             gap: 0.85rem;
             width: 100%;
         }
+
         @media (max-width: 480px) {
-            .orders-grid {
-                grid-template-columns: 1fr !important;
-                gap: 0.75rem;
-            }
-            .section-box {
-                padding: 0.85rem 0.65rem;
-            }
+            .orders-grid { grid-template-columns: 1fr !important; gap: 0.75rem; }
+            .section-box { padding: 0.85rem 0.65rem; }
         }
 
         .order-card {
@@ -280,8 +304,15 @@
             flex-direction: column;
             gap: 0.65rem;
             position: relative;
-            box-shadow: 0 4px 12px rgba(90,70,30,0.06);
+            box-shadow: 0 4px 12px rgba(90, 70, 30, 0.06);
             width: 100%;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .order-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(90, 70, 30, 0.1);
         }
 
         .order-countdown-tag {
@@ -297,13 +328,18 @@
             gap: 0.2rem;
             white-space: nowrap;
         }
+
         .order-countdown-tag.urgent {
             background: #fee2e2;
             color: #dc2626;
             border-color: #fecaca;
             animation: pulse-urgent 1s infinite alternate;
         }
-        @keyframes pulse-urgent { 0% { opacity: 0.8; } 100% { opacity: 1; transform: scale(1.03); } }
+
+        @keyframes pulse-urgent {
+            0% { opacity: 0.8; }
+            100% { opacity: 1; transform: scale(1.03); }
+        }
 
         .order-type-badge {
             font-size: 0.68rem;
@@ -316,11 +352,17 @@
             text-transform: uppercase;
             white-space: nowrap;
         }
+
         .order-type-badge.dine_in {
-            background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;
+            background: #e0f2fe;
+            color: #0369a1;
+            border: 1px solid #bae6fd;
         }
+
         .order-type-badge.parcel {
-            background: #fef3c7; color: #92400e; border: 1px solid #fde68a;
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fde68a;
         }
 
         .order-pay-method-badge {
@@ -334,11 +376,17 @@
             text-transform: uppercase;
             white-space: nowrap;
         }
+
         .order-pay-method-badge.counter {
-            background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe;
+            background: #f5f3ff;
+            color: #6d28d9;
+            border: 1px solid #ddd6fe;
         }
+
         .order-pay-method-badge.online {
-            background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;
+            background: #ecfdf5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
         }
 
         .order-card.order-card-unpaid {
@@ -346,18 +394,24 @@
             border: 2px solid #d94b4b !important;
             box-shadow: 0 4px 14px rgba(217, 75, 75, 0.2) !important;
         }
+
         .order-card.order-card-unpaid .order-items-box {
             background: #ffe3e0 !important;
             border-color: #f5b8b5 !important;
             color: #721c24 !important;
         }
-        .order-card.order-card-unpaid .order-total-line { color: #b92c2c !important; }
 
-        .payment-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
-        .dot-paid { background-color: var(--success); box-shadow: 0 0 8px var(--success); }
-        .dot-pending { background-color: var(--danger); box-shadow: 0 0 8px var(--danger); }
+        .order-card.order-card-unpaid .order-total-line {
+            color: #b92c2c !important;
+        }
 
-        .order-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.4rem; }
+        .order-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 0.4rem;
+        }
+
         .token-tag {
             background: linear-gradient(135deg, #d8bd70, #b8953f);
             color: #fffdf7;
@@ -367,6 +421,7 @@
             font-size: 0.8rem;
             white-space: nowrap;
         }
+
         .order-items-box {
             background: #f7f2e7;
             border: 1px solid #e6dcc7;
@@ -379,8 +434,20 @@
             max-height: 160px;
             overflow-y: auto;
         }
-        .order-item-line { display: flex; justify-content: space-between; gap: 0.5rem; }
-        .order-total-line { display: flex; justify-content: space-between; font-weight: 800; font-size: 0.98rem; color: #927326; }
+
+        .order-item-line {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }
+
+        .order-total-line {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 800;
+            font-size: 0.98rem;
+            color: #927326;
+        }
 
         .btn-action {
             border: none;
@@ -394,11 +461,32 @@
             text-align: center;
             width: 100%;
         }
-        .btn-accept { background: linear-gradient(135deg,#d8bd70,#b8953f); color: #fffdf7; }
-        .btn-cancel { background: #fff1ef; color: #c53d3d; border: 1px solid #e3aaa4; }
-        .btn-prep { background: #f2dfad; color: #70551c; }
-        .btn-ready { background: #e2f1f5; color: #226879; }
-        .btn-deliver { background: #e5f6ed; color: #137951; }
+
+        .btn-accept {
+            background: linear-gradient(135deg, #d8bd70, #b8953f);
+            color: #fffdf7;
+        }
+
+        .btn-cancel {
+            background: #fff1ef;
+            color: #c53d3d;
+            border: 1px solid #e3aaa4;
+        }
+
+        .btn-deliver-finish {
+            background: linear-gradient(135deg, #18a878, #13845e);
+            color: #ffffff;
+            border: 1px solid #107251;
+            width: 100%;
+            padding: 0.7rem;
+            border-radius: 10px;
+            font-weight: 800;
+            cursor: pointer;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            transition: 0.2s;
+        }
+
         .btn-counter-complete {
             background: linear-gradient(135deg, #10b981, #059669);
             color: #ffffff;
@@ -412,9 +500,25 @@
             text-transform: uppercase;
         }
 
-        .desktop-menu-table { width: 100%; border-collapse: collapse; }
-        .desktop-menu-table th { padding: 0.75rem 1rem; text-align: left; background: #f7f2e7; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; }
-        .desktop-menu-table td { padding: 0.75rem 1rem; border-bottom: 1px solid #ded3b8; vertical-align: middle; }
+        .desktop-menu-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .desktop-menu-table th {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            background: #f7f2e7;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        .desktop-menu-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #ded3b8;
+            vertical-align: middle;
+        }
 
         .mobile-menu-grid { display: none; }
 
@@ -434,7 +538,7 @@
                 display: flex;
                 gap: 0.75rem;
                 align-items: center;
-                box-shadow: 0 4px 14px rgba(70,55,25,0.06);
+                box-shadow: 0 4px 14px rgba(70, 55, 25, 0.06);
                 width: 100%;
             }
             .mobile-dish-thumb {
@@ -467,9 +571,15 @@
                 gap: 0.4rem;
                 font-size: 0.78rem;
             }
-            .mobile-dish-cat { color: var(--text-muted); text-transform: capitalize; }
-            .mobile-dish-price { font-size: 0.98rem; font-weight: 800; color: var(--primary-dark); }
-
+            .mobile-dish-cat {
+                color: var(--text-muted);
+                text-transform: capitalize;
+            }
+            .mobile-dish-price {
+                font-size: 0.98rem;
+                font-weight: 800;
+                color: var(--primary-dark);
+            }
             .mobile-dish-actions {
                 display: flex;
                 flex-direction: column;
@@ -506,7 +616,7 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(55,43,20,0.55);
+            background: rgba(55, 43, 20, 0.55);
             backdrop-filter: blur(4px);
             -webkit-backdrop-filter: blur(4px);
             display: none;
@@ -515,6 +625,7 @@
             z-index: 2000;
             padding: 12px;
         }
+
         .modal-overlay.open { display: flex; }
 
         #adminConfirmModal, #adminCancelPromptModal { z-index: 2500 !important; }
@@ -528,31 +639,41 @@
             padding: 1.5rem 1.25rem;
             max-height: 88vh;
             overflow-y: auto;
-            box-shadow: 0 20px 55px rgba(55,43,20,0.25);
+            box-shadow: 0 20px 55px rgba(55, 43, 20, 0.25);
             position: relative;
         }
 
-        @media (max-width: 768px) {
-            .modal-overlay { align-items: center !important; justify-content: center !important; padding: 12px !important; }
-            .modal-box {
-                width: min(100%, 480px) !important;
-                max-width: 480px !important;
-                max-height: 88vh !important;
-                overflow-y: auto !important;
-                border-radius: 18px !important;
-                border: 1px solid #ded3b8 !important;
-                padding: 1.25rem 1rem !important;
-                animation: modalPop 0.18s ease-out;
-            }
-            @keyframes modalPop { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: scale(1); } }
+        .modal-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
         }
 
-        .modal-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-        .modal-header-row h3 { font-size: 1.15rem; font-weight: 800; color: #302a20; }
-        .modal-close-icon { background: none; border: none; font-size: 1.6rem; color: var(--text-muted); cursor: pointer; line-height: 1; }
+        .modal-header-row h3 {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #302a20;
+        }
+
+        .modal-close-icon {
+            background: none;
+            border: none;
+            font-size: 1.6rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            line-height: 1;
+        }
 
         .form-field { margin-bottom: 0.85rem; }
-        .form-field label { display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.3rem; }
+        .form-field label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 0.3rem;
+        }
+
         .form-input {
             width: 100%;
             padding: 0.7rem;
@@ -564,9 +685,19 @@
             outline: none;
             box-sizing: border-box;
         }
-        .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(184, 149, 63, 0.15); }
 
-        .modal-buttons { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1.25rem; }
+        .form-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(184, 149, 63, 0.15);
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.6rem;
+            margin-top: 1.25rem;
+        }
+
         .btn-secondary {
             background: #fffdf7;
             color: #665b48;
@@ -577,8 +708,9 @@
             font-weight: 700;
             font-size: 0.85rem;
         }
+
         .btn-primary {
-            background: linear-gradient(135deg,#d8bd70,#b8953f);
+            background: linear-gradient(135deg, #d8bd70, #b8953f);
             color: #fffdf7;
             border: 1px solid #927326;
             padding: 0.65rem 1.25rem;
@@ -614,6 +746,7 @@
             border-radius: 8px;
             margin-bottom: 0.45rem;
         }
+
         .btn-del-cat {
             background: #fff1ef;
             color: #c53d3d;
@@ -623,6 +756,42 @@
             font-size: 0.75rem;
             font-weight: 700;
             cursor: pointer;
+        }
+
+        /* 2 ITEMS PER ROW GRID */
+        .items-2col-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .item-box {
+            background: #fffaf0;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .item-qty-top {
+            background: var(--primary);
+            color: #ffffff;
+            font-size: 0.8rem;
+            font-weight: 800;
+            padding: 2px 10px;
+            border-radius: 999px;
+            margin-bottom: 6px;
+        }
+
+        .item-name-bottom {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text-main);
         }
     </style>
 </head>
@@ -650,7 +819,7 @@
                     <span>🍳 Cooking Orders</span>
                 </button>
                 <button class="dropdown-item" onclick="openCategoriesModal()">
-                    <span>🏷️ Category List</span>
+                    <span>🏷️️ Category List</span>
                 </button>
                 <button class="dropdown-item" onclick="openTaxModal()">
                     <span>💰 Digital Service Tax</span>
@@ -666,7 +835,7 @@
                     <span>📋 Manage Menu Catalog</span>
                 </button>
                 <button class="dropdown-item" onclick="openPhotosModal()">
-                    <span>🖼️ Manage Photos</span>
+                    <span>🖼️️ Manage Photos</span>
                 </button>
                 <button class="dropdown-item" onclick="logoutAdmin()" style="color: #ef4444;">
                     <span>🚪 Sign Out</span>
@@ -693,9 +862,9 @@
                     <span>⏳ Requests</span>
                     <span style="background:var(--amber); color:#000; padding:0.1rem 0.45rem; border-radius:999px; font-size:0.7rem;" id="newOrdersBadge">0</span>
                 </button>
-                <button class="sub-order-btn" id="btnSubInProg" onclick="switchOrdersSubSection('inprog')">
-                    <span>🍳 Cooking</span>
-                    <span style="background:var(--primary); color:#fff; padding:0.1rem 0.45rem; border-radius:999px; font-size:0.7rem;" id="activeOrdersBadge">0</span>
+                <button class="sub-order-btn" id="btnSubDelivery" onclick="switchOrdersSubSection('delivery')">
+                    <span>🚀 Ready for Delivery</span>
+                    <span style="background:var(--success); color:#fff; padding:0.1rem 0.45rem; border-radius:999px; font-size:0.7rem;" id="deliveryOrdersBadge">0</span>
                 </button>
                 <button class="sub-order-btn" id="btnSubCounter" onclick="switchOrdersSubSection('counter')">
                     <span>🧾 Counter</span>
@@ -716,16 +885,16 @@
                 </div>
             </div>
 
-            <!-- SECTION 2: ACTIVE IN-PROGRESS ORDERS -->
-            <div class="section-box" id="inprogOrdersSection" style="display:none; border-left: 4px solid var(--primary);">
+            <!-- SECTION 2: READY FOR DELIVERY -->
+            <div class="section-box" id="deliveryOrdersSection" style="display:none; border-left: 4px solid var(--success);">
                 <div class="section-header">
                     <div class="section-title">
-                        <span>🍳 Active Kitchen Orders</span>
+                        <span>🚀 Prepared & Ready for Delivery</span>
                     </div>
-                    <span style="font-size:0.75rem; color:var(--text-muted);">🟢 Paid | 🔴 Unpaid</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Clicking delivery clears and completes the order</span>
                 </div>
-                <div class="orders-grid" id="activeOrdersGrid">
-                    <div style="color:var(--text-muted); padding:0.75rem;">No active orders in kitchen.</div>
+                <div class="orders-grid" id="deliveryOrdersGrid">
+                    <div style="color:var(--text-muted); padding:0.75rem;">No orders ready for delivery.</div>
                 </div>
             </div>
 
@@ -800,7 +969,6 @@
                 <h3>Manage Category List</h3>
                 <button class="modal-close-icon" onclick="closeCategoriesModal()">&times;</button>
             </div>
-            
             <form onsubmit="handleAddCategory(event)" style="display:flex; gap:0.4rem; margin-bottom:1rem;">
                 <input type="text" id="newCategoryInput" class="form-input" style="flex:1;" placeholder="New category (e.g. Desserts)" required />
                 <button type="submit" class="btn-primary" style="padding:0.6rem 0.95rem; white-space:nowrap;">+ Add</button>
@@ -926,14 +1094,32 @@
         </div>
     </div>
 
+    <!-- INTERACTIVE FOOD ITEMS POPUP (2 ITEMS PER ROW, QTY ON TOP) -->
+    <div class="modal-overlay" id="orderItemsModal" onclick="closeOrderItemsModal(event)">
+        <div class="modal-box" style="max-width: 440px;" onclick="event.stopPropagation();">
+            <div class="modal-header-row">
+                <h3 id="orderItemsModalTitle">Order Items</h3>
+                <button class="modal-close-icon" onclick="closeOrderItemsModal()">&times;</button>
+            </div>
+            <p id="orderItemsModalSub" style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;"></p>
+            
+            <div id="modalItemsGridAdmin" class="items-2col-grid"></div>
+            
+            <div class="modal-buttons" style="margin-top:1.25rem;">
+                <button type="button" class="btn-secondary" onclick="closeOrderItemsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let adminCategories = [];
         let soundEnabled = true;
         let audioCtx = null;
         let lastNewCount = null;
         let lastCounterCount = null;
+        let currentSubSection = 'new';
+        let allCachedAdminOrders = [];
 
-        // Native Browser Chime Generator (No external MP3 required)
         function playKitchenChime() {
             if (!soundEnabled) return;
             try {
@@ -946,7 +1132,6 @@
 
                 const now = audioCtx.currentTime;
                 
-                // Tone 1: 587 Hz (D5)
                 const osc1 = audioCtx.createOscillator();
                 const gain1 = audioCtx.createGain();
                 osc1.type = 'sine';
@@ -958,7 +1143,6 @@
                 osc1.start(now);
                 osc1.stop(now + 0.5);
 
-                // Tone 2: 880 Hz (A5)
                 const osc2 = audioCtx.createOscillator();
                 const gain2 = audioCtx.createGain();
                 osc2.type = 'sine';
@@ -970,7 +1154,6 @@
                 osc2.start(now + 0.15);
                 osc2.stop(now + 0.75);
 
-                // Tone 3: 1174 Hz (D6)
                 const osc3 = audioCtx.createOscillator();
                 const gain3 = audioCtx.createGain();
                 osc3.type = 'sine';
@@ -997,7 +1180,6 @@
             }
         }
 
-        // Unlock Web Audio context on first user touch
         window.addEventListener('click', function unlockAudio() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1021,31 +1203,43 @@
         function switchMainTab(tabId) {
             document.getElementById("ordersTab").style.display = tabId === 'ordersTab' ? 'block' : 'none';
             document.getElementById("menuTab").style.display = tabId === 'menuTab' ? 'block' : 'none';
-            document.getElementById("ordersMainTabBtn").classList.toggle("active", tabId === 'ordersMainTabBtn');
-            document.getElementById("menuMainTabBtn").classList.toggle("active", tabId === 'menuMainTabBtn');
+            document.getElementById("ordersMainTabBtn").classList.toggle("active", tabId === 'ordersTab');
+            document.getElementById("menuMainTabBtn").classList.toggle("active", tabId === 'menuTab');
             document.getElementById("profileDropdown").classList.remove("show");
             if (tabId === 'ordersTab') loadAdminOrders();
             if (tabId === 'menuTab') loadAdminMenu();
         }
 
-        let currentSubSection = 'new';
         function switchOrdersSubSection(sub) {
             currentSubSection = sub;
-            const newSec = document.getElementById("newOrdersSection");
-            const inprogSec = document.getElementById("inprogOrdersSection");
-            const counterSec = document.getElementById("counterOrdersSection");
+            document.getElementById("newOrdersSection").style.display = sub === 'new' ? 'block' : 'none';
+            document.getElementById("deliveryOrdersSection").style.display = sub === 'delivery' ? 'block' : 'none';
+            document.getElementById("counterOrdersSection").style.display = sub === 'counter' ? 'block' : 'none';
 
-            const btnNew = document.getElementById("btnSubNew");
-            const btnInprog = document.getElementById("btnSubInProg");
-            const btnCounter = document.getElementById("btnSubCounter");
+            document.getElementById("btnSubNew").className = "sub-order-btn" + (sub === 'new' ? " active-new" : "");
+            document.getElementById("btnSubDelivery").className = "sub-order-btn" + (sub === 'delivery' ? " active-delivery" : "");
+            document.getElementById("btnSubCounter").className = "sub-order-btn" + (sub === 'counter' ? " active-counter" : "");
+        }
 
-            newSec.style.display = sub === 'new' ? 'block' : 'none';
-            inprogSec.style.display = sub === 'inprog' ? 'block' : 'none';
-            counterSec.style.display = sub === 'counter' ? 'block' : 'none';
+        function openOrderItemsModal(orderId) {
+            const order = allCachedAdminOrders.find(o => o.id === orderId);
+            if (!order) return;
+            document.getElementById("orderItemsModalTitle").textContent = `Token #${order.daily_order_number} (${order.username})`;
+            document.getElementById("orderItemsModalSub").textContent = `Type: ${order.order_type.toUpperCase()} · Total: ₹${order.total_amount.toFixed(2)}`;
 
-            btnNew.className = "sub-order-btn" + (sub === 'new' ? " active-new" : "");
-            btnInprog.className = "sub-order-btn" + (sub === 'inprog' ? " active-inprog" : "");
-            btnCounter.className = "sub-order-btn" + (sub === 'counter' ? " active-counter" : "");
+            const grid = document.getElementById("modalItemsGridAdmin");
+            grid.innerHTML = (order.items || []).map(i => `
+                <div class="item-box">
+                    <div class="item-qty-top">Qty: ${i.quantity}</div>
+                    <div class="item-name-bottom">${i.name}</div>
+                </div>
+            `).join('');
+
+            document.getElementById("orderItemsModal").classList.add("open");
+        }
+
+        function closeOrderItemsModal() {
+            document.getElementById("orderItemsModal").classList.remove("open");
         }
 
         let confirmResolve = null;
@@ -1056,6 +1250,7 @@
             document.getElementById("adminConfirmModal").classList.add("open");
             return new Promise(resolve => { confirmResolve = resolve; });
         }
+
         function closeAdminConfirm(result) {
             document.getElementById("adminConfirmModal").classList.remove("open");
             if (confirmResolve) confirmResolve(result);
@@ -1067,6 +1262,7 @@
             document.getElementById("adminCancelPromptModal").classList.add("open");
             return new Promise(resolve => { cancelPromptResolve = resolve; });
         }
+
         function closeCancelPrompt(confirmed) {
             document.getElementById("adminCancelPromptModal").classList.remove("open");
             const reason = document.getElementById("cancelReasonInput").value.trim();
@@ -1094,9 +1290,6 @@
             }
         }
 
-        // ==========================================
-        // Tax Rate Management
-        // ==========================================
         async function openTaxModal() {
             document.getElementById("profileDropdown").classList.remove("show");
             try {
@@ -1133,9 +1326,6 @@
             }
         }
 
-        // ==========================================
-        // Category Management Functions
-        // ==========================================
         async function loadAdminCategories() {
             try {
                 const res = await fetch("/api/categories");
@@ -1223,9 +1413,6 @@
             }
         }
 
-        // ==========================================
-        // Orders & Timers
-        // ==========================================
         let countdownTimerMap = {};
         function startLocalTimers() {
             setInterval(() => {
@@ -1254,7 +1441,12 @@
                 const currentNew = data.new_count || 0;
                 const currentCounter = data.counter_count || 0;
 
-                // Play Audio Alert Chime when a new incoming order or counter payment arrives
+                allCachedAdminOrders = [
+                    ...(data.new_orders || []),
+                    ...(data.active_orders || []),
+                    ...(data.counter_bills || [])
+                ];
+
                 if (lastNewCount !== null && currentNew > lastNewCount) {
                     playKitchenChime();
                 } else if (lastCounterCount !== null && currentCounter > lastCounterCount) {
@@ -1264,12 +1456,15 @@
                 lastNewCount = currentNew;
                 lastCounterCount = currentCounter;
 
+                const preparedOrders = (data.active_orders || []).filter(o => o.order_status === 'prepared');
+
                 document.getElementById("newOrdersBadge").textContent = currentNew;
-                document.getElementById("activeOrdersBadge").textContent = data.active_count || 0;
+                document.getElementById("deliveryOrdersBadge").textContent = preparedOrders.length;
                 document.getElementById("counterBillsBadge").textContent = currentCounter;
                 document.getElementById("totalQueueBadge").textContent = currentNew + (data.active_count || 0);
 
                 const newGrid = document.getElementById("newOrdersGrid");
+                const deliveryGrid = document.getElementById("deliveryOrdersGrid");
                 const counterGrid = document.getElementById("counterOrdersGrid");
 
                 // 1. Render New Incoming Orders
@@ -1281,6 +1476,8 @@
                         countdownTimerMap[order.id] = order.seconds_left !== undefined ? order.seconds_left : 60;
                         const card = document.createElement("div");
                         card.className = "order-card";
+                        card.onclick = () => openOrderItemsModal(order.id);
+
                         const itemsHtml = order.items.map(i => `<div class="order-item-line"><span>${i.name} × ${i.quantity}</span><span>₹${i.subtotal.toFixed(2)}</span></div>`).join('');
                         const isUrgent = countdownTimerMap[order.id] <= 15 ? 'urgent' : '';
                         const typeBadge = order.order_type === 'parcel' 
@@ -1304,15 +1501,47 @@
                             <div class="order-items-box">${itemsHtml}</div>
                             <div class="order-total-line"><span>Total</span><span>₹${order.total_amount.toFixed(2)}</span></div>
                             <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.4rem; margin-top:0.35rem;">
-                                <button class="btn-action btn-accept" onclick="confirmAndUpdateStatus(${order.id}, 'accepted')">Accept</button>
-                                <button class="btn-action btn-cancel" onclick="cancelOrderWithPrompt(${order.id})">Cancel</button>
+                                <button class="btn-action btn-accept" onclick="event.stopPropagation(); confirmAndUpdateStatus(${order.id}, 'accepted')">Accept</button>
+                                <button class="btn-action btn-cancel" onclick="event.stopPropagation(); cancelOrderWithPrompt(${order.id})">Cancel</button>
                             </div>
                         `;
                         newGrid.appendChild(card);
                     });
                 }
 
-                // Accepted/cooking orders are rendered only on /admin/cooking.
+                // 2. Render Ready for Delivery Orders
+                if (!preparedOrders || preparedOrders.length === 0) {
+                    deliveryGrid.innerHTML = '<div style="color:var(--text-muted); padding:0.85rem;">No orders ready for delivery.</div>';
+                } else {
+                    deliveryGrid.innerHTML = "";
+                    preparedOrders.forEach(order => {
+                        const card = document.createElement("div");
+                        card.className = "order-card";
+                        card.onclick = () => openOrderItemsModal(order.id);
+
+                        const itemsHtml = order.items.map(i => `<div class="order-item-line"><span>${i.name} × ${i.quantity}</span><span>₹${i.subtotal.toFixed(2)}</span></div>`).join('');
+                        const typeBadge = order.order_type === 'parcel' 
+                            ? `<span class="order-type-badge parcel">📦 Parcel</span>`
+                            : `<span class="order-type-badge dine_in">🍽 Dine In</span>`;
+
+                        card.innerHTML = `
+                            <div class="order-head">
+                                <div>
+                                    <div style="display:flex; align-items:center; gap:0.35rem; margin-bottom:0.25rem;">
+                                        <span class="token-tag" style="background:var(--success);">Token #${order.daily_order_number}</span>
+                                        ${typeBadge}
+                                    </div>
+                                    <div style="font-weight:700; margin-top:0.2rem; font-size:0.92rem;">${order.username}</div>
+                                </div>
+                                <span class="order-countdown-tag" style="background:#dcfce7; color:#15803d; border-color:#86efac;">✅ PREPARED</span>
+                            </div>
+                            <div class="order-items-box">${itemsHtml}</div>
+                            <div class="order-total-line"><span>Total</span><span>₹${order.total_amount.toFixed(2)}</span></div>
+                            <button class="btn-deliver-finish" onclick="event.stopPropagation(); markOrderDelivered(${order.id})">🚀 Mark Delivered</button>
+                        `;
+                        deliveryGrid.appendChild(card);
+                    });
+                }
 
                 // 3. Render Counter Bills
                 if (!data.counter_bills || data.counter_bills.length === 0) {
@@ -1322,6 +1551,8 @@
                     data.counter_bills.forEach(order => {
                         const card = document.createElement("div");
                         card.className = "order-card order-card-unpaid";
+                        card.onclick = () => openOrderItemsModal(order.id);
+
                         const itemsHtml = order.items.map(i => `<div class="order-item-line"><span>${i.name} × ${i.quantity}</span><span>₹${i.subtotal.toFixed(2)}</span></div>`).join('');
                         const typeBadge = order.order_type === 'parcel' 
                             ? `<span class="order-type-badge parcel">📦 Parcel</span>`
@@ -1340,10 +1571,26 @@
                             </div>
                             <div class="order-items-box">${itemsHtml}</div>
                             <div class="order-total-line" style="color:#b92c2c;"><span>Collect Cash</span><span>₹${order.total_amount.toFixed(2)}</span></div>
-                            <button class="btn-counter-complete" onclick="markCounterPaymentComplete(${order.id})">✓ Payment Completed</button>
+                            <button class="btn-counter-complete" onclick="event.stopPropagation(); markCounterPaymentComplete(${order.id})">✓ Payment Completed</button>
                         `;
                         counterGrid.appendChild(card);
                     });
+                }
+            } catch (err) {}
+        }
+
+        async function markOrderDelivered(orderId) {
+            const confirmed = await showAdminConfirm("Complete Delivery", `Mark Token #${orderId} as Delivered? This will clear the order.`);
+            if (!confirmed) return;
+            try {
+                const res = await fetch("/api/admin/order/update-status", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ order_id: orderId, status: "delivered" })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    loadAdminOrders();
                 }
             } catch (err) {}
         }
@@ -1521,8 +1768,14 @@
             loadAdminMenu();
         }
 
-        function openPhotosModal() { loadStaticPhotos(); document.getElementById("photosModal").classList.add("open"); }
-        function closePhotosModal() { document.getElementById("photosModal").classList.remove("open"); }
+        function openPhotosModal() {
+            loadStaticPhotos();
+            document.getElementById("photosModal").classList.add("open");
+        }
+
+        function closePhotosModal() {
+            document.getElementById("photosModal").classList.remove("open");
+        }
 
         async function loadStaticPhotos() {
             const box = document.getElementById("photosContainer");
@@ -1565,8 +1818,13 @@
             }
         }
 
-        function openPasswordModal() { document.getElementById("passwordModal").classList.add("open"); }
-        function closePasswordModal() { document.getElementById("passwordModal").classList.remove("open"); }
+        function openPasswordModal() {
+            document.getElementById("passwordModal").classList.add("open");
+        }
+
+        function closePasswordModal() {
+            document.getElementById("passwordModal").classList.remove("open");
+        }
 
         async function saveAdminPassword() {
             const newPassword = document.getElementById("newAdminPasswordInput").value.trim();
