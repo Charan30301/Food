@@ -130,13 +130,20 @@
         return handleGoogleCredential(response.credential);
     }
 
-    window.handleNativeGoogleCredential = function(token) {
-        handleGoogleCredential(token);
-    };
+    window.handleNativeGoogleCredential = async function(token) {
+    if (!token) {
+        document.getElementById("errorBox").textContent =
+            "Google sign-in did not return a token. Please try again.";
+        return;
+    }
 
-    window.handleNativeGoogleError = function(message) {
-        document.getElementById("errorBox").textContent = message || "Google sign-in failed.";
-    };
+    await handleGoogleCredential(token);
+};
+
+window.handleNativeGoogleError = function(message) {
+    document.getElementById("errorBox").textContent =
+        message || "Google sign-in failed. Please try again.";
+};
 
     async function handleGoogleCredential(credential) {
         document.getElementById("errorBox").textContent = "";
