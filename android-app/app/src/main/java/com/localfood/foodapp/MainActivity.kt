@@ -31,10 +31,10 @@ import androidx.core.content.ContextCompat
 class MainActivity : ComponentActivity() {
     companion object {
         // Replace this with your live Render URL before building the app.
-        const val SITE_URL = "https://YOUR-RENDER-SERVICE.onrender.com/"
+        const val SITE_URL = "https://food-preorder.onrender.com/"
         const val CHANNEL_ID = "food_order_updates"
         // Must be the WEB application OAuth client ID used by Flask GOOGLE_CLIENT_ID.
-        const val GOOGLE_WEB_CLIENT_ID = "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com"
+        const val GOOGLE_WEB_CLIENT_ID = "116617699324-nq62vkdhd87uns0sukirvkadpje6lpu2.apps.googleusercontent.com"
         var activeActivity: MainActivity? = null
     }
 
