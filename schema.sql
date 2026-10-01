@@ -118,3 +118,9 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(30) DEFAULT '
 INSERT INTO system_settings (key, value)
 VALUES ('service_tax_percent', '5.0')
 ON CONFLICT (key) DO NOTHING;
+
+-- Reporting and tax persistence additions (safe to run repeatedly)
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS tax_amount NUMERIC(10,2) NOT NULL DEFAULT 0.00;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS tax_rate NUMERIC(6,2) NOT NULL DEFAULT 0.00;
+CREATE INDEX IF NOT EXISTS idx_orders_created_status_payment
+    ON orders(created_at, order_status, payment_status, payment_method);

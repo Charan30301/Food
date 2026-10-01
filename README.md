@@ -45,16 +45,15 @@ A web-based restaurant food preordering and kitchen operations management system
    ```bash
    psql -U postgres
 
-## New: Order Statistics and Installable Customer App
+## Recent additions
 
-- The admin dashboard includes **Statistics** with Today, Last 30 Days, and Last 6 Months filters. Each view shows order rows, order count, order value, and paid amount.
-- Order history cleanup now retains up to 12 months so six-month statistics can be calculated.
-- Customer login, menu, and cart pages support installation as a Progressive Web App (PWA). The installed app and website use the same Flask backend, database, login session, menu, cart, and order APIs, so customer orders from either place appear in the same admin Orders Manager.
-- The admin dashboard is not part of the customer app navigation and remains accessed through the website's `/admin` page.
-- The PWA requires an HTTPS deployment (such as Render) for service-worker installation on phones. Install from the browser's **Install app** / **Add to Home screen** option. Order placement still requires a network connection to the deployed server; this is not offline ordering.
+- `/admin/statistics`: today's summary, daily totals for the latest 30 calendar days, and month-by-month totals for the latest 6 calendar months.
+- `/admin/cooking`: dedicated accepted/preparing/prepared order board.
+- Customer menu/cart loading indicators and lazy-loaded food photos.
+- Order tax persistence via `orders.tax_amount` and `orders.tax_rate`.
 
-### Deploy/update notes
-1. Commit and push the changed project files to the GitHub repository connected to Render.
-2. Wait for Render to finish deploying.
-3. Open the website on the phone, then use the browser menu to install/add it to the home screen.
-4. Existing database tables do not need a new table for these changes. The app now retains order records for up to 12 months; older records are still removed by the existing cleanup routine.
+### Database update
+Run the updated `schema.sql` against the existing PostgreSQL database (or deploy the app and open Statistics once; the statistics/payment routes also add the tax columns if missing). Existing orders created before tax persistence was added cannot have exact historical tax reconstructed from the old database fields, so their tax values default to ₹0.00.
+
+### Statistics definitions
+Order counts exclude cancelled orders. Cash/counter and online received totals include only orders marked `paid`. Online payments are currently recorded under the generic `online` method; the current code does not identify PhonePe separately. Tax is summed from the tax amount saved against each paid order.

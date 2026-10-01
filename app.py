@@ -39,7 +39,7 @@ client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)) if razorpa
 DB_CONFIG = {
     "dbname": os.environ.get("DB_NAME", "hotel_db_aza2"),
     "user": os.environ.get("DB_USER", "hotel_db_aza2_user"),
-    "password": os.environ.get("DB_PASSWORD", "NPsOIbUvGQeBdFEzdszeCvtL7zfeSfWS"),
+    "password": os.environ.get("DB_PASSWORD", ""),
     "host": os.environ.get("DB_HOST", "dpg-dauafeo93c1s73de82gg-a"),
     "port": int(os.environ.get("DB_PORT", 5432))
 }
@@ -61,7 +61,7 @@ def clean_old_orders():
     try:
         with get_db() as conn:
             with conn.cursor() as cur:
-                cur.execute("DELETE FROM orders WHERE created_at < NOW() - INTERVAL '12 months';")
+                cur.execute("DELETE FROM orders WHERE created_at < NOW() - INTERVAL '3 months';")
                 cur.execute("""
                     UPDATE orders
                     SET order_status = 'cancelled',
@@ -140,13 +140,6 @@ def verify_google_token(token):
 def get_categories():
     with get_db() as conn:
         with conn.cursor() as cur:
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS categories (
-                    id SERIAL PRIMARY KEY,
-                    name VARCHAR(80) UNIQUE NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                );
-            """)
             cur.execute("SELECT id, name FROM categories ORDER BY name ASC;")
             categories = cur.fetchall()
     return jsonify({"categories": categories})
@@ -237,17 +230,6 @@ def admin_service_tax_setting():
 # ==========================================
 # Page Routes
 # ==========================================
-@app.route("/manifest.webmanifest")
-def pwa_manifest():
-    return app.send_static_file("manifest.webmanifest")
-
-@app.route("/service-worker.js")
-def pwa_service_worker():
-    response = app.send_static_file("service-worker.js")
-    response.headers["Service-Worker-Allowed"] = "/"
-    response.headers["Cache-Control"] = "no-cache"
-    return response
-
 @app.route("/")
 def index():
     clean_old_orders()
@@ -354,33 +336,38 @@ def register():
 # ==========================================
 @app.route("/api/menu", methods=["GET"])
 def get_menu():
-    clean_old_orders()
     user_email = session.get("user_email", TEST_USER_EMAIL)
-    kitchen_open = get_setting("kitchen_open", "true") == "true"
-    current_version = int(get_setting("menu_version", "1"))
 
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("""
-                CREATE TABLE IF NOT EXISTS categories (
-                    id SERIAL PRIMARY KEY,
-                    name VARCHAR(80) UNIQUE NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                );
+                SELECT key, value FROM system_settings
+                WHERE key IN ('kitchen_open', 'menu_version');
             """)
-            cur.execute("SELECT name FROM categories ORDER BY name ASC;")
-            cat_rows = cur.fetchall()
-            categories = [c["name"] for c in cat_rows]
+            settings = {row["key"]: row["value"] for row in cur.fetchall()}
+            kitchen_open = settings.get("kitchen_open", "true") == "true"
+            try:
+                current_version = int(settings.get("menu_version", "1"))
+            except (TypeError, ValueError):
+                current_version = 1
 
-            cur.execute("SELECT id, item_name, category, price::float, photo_url, is_active FROM menu_items ORDER BY id ASC;")
+            cur.execute("SELECT name FROM categories ORDER BY name ASC;")
+            categories = [row["name"] for row in cur.fetchall()]
+
+            cur.execute("""
+                SELECT id, item_name, category, price::float, photo_url, is_active
+                FROM menu_items ORDER BY id ASC;
+            """)
             items = cur.fetchall()
 
-            cur.execute("SELECT cart_code, total_price::float FROM carts WHERE user_email = %s;", (user_email,))
+            cur.execute("""
+                SELECT cart_code, total_price::float
+                FROM carts WHERE user_email = %s;
+            """, (user_email,))
             cart_row = cur.fetchone()
 
     cart_dict = parse_cart_code(cart_row["cart_code"]) if cart_row else {}
     total_price = cart_row["total_price"] if cart_row else 0.0
-
     return jsonify({
         "items": items,
         "categories": categories,
@@ -533,6 +520,8 @@ def select_payment_method():
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(30) DEFAULT 'unselected';")
+            cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS tax_amount NUMERIC(10,2) NOT NULL DEFAULT 0.00;")
+            cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS tax_rate NUMERIC(6,2) NOT NULL DEFAULT 0.00;")
             cur.execute("SELECT id, items_code, total_amount::float FROM orders WHERE id = %s;", (order_id,))
             order = cur.fetchone()
 
@@ -562,9 +551,11 @@ def select_payment_method():
                 UPDATE orders
                 SET payment_method = %s,
                     total_amount = %s,
+                    tax_amount = %s,
+                    tax_rate = %s,
                     updated_at = NOW()
                 WHERE id = %s;
-            """, (method, final_total, order_id))
+            """, (method, final_total, tax_amount, tax_rate if method == "online" else 0.0, order_id))
             conn.commit()
 
     return jsonify({
@@ -666,14 +657,25 @@ def acknowledge_order_alert():
 # ==========================================
 @app.route("/api/order/active", methods=["GET"])
 def check_active_order():
-    clean_old_orders()
     user_email = session.get("user_email", TEST_USER_EMAIL)
-    kitchen_open = get_setting("kitchen_open", "true") == "true"
-    menu_version = int(get_setting("menu_version", "1"))
-    tax_rate = float(get_setting("service_tax_percent", "5.0"))
 
     with get_db() as conn:
         with conn.cursor() as cur:
+            cur.execute("""
+                SELECT key, value FROM system_settings
+                WHERE key IN ('kitchen_open', 'menu_version', 'service_tax_percent');
+            """)
+            settings = {row["key"]: row["value"] for row in cur.fetchall()}
+            kitchen_open = settings.get("kitchen_open", "true") == "true"
+            try:
+                menu_version = int(settings.get("menu_version", "1"))
+            except (TypeError, ValueError):
+                menu_version = 1
+            try:
+                tax_rate = float(settings.get("service_tax_percent", "5.0"))
+            except (TypeError, ValueError):
+                tax_rate = 5.0
+
             cur.execute("""
                 SELECT id, order_status, cancellation_reason
                 FROM orders 
@@ -794,6 +796,18 @@ def admin_page():
         return render_template("admin_login.html")
     return render_template("admin_dashboard.html")
 
+@app.route("/admin/statistics")
+def admin_statistics_page():
+    if not session.get("is_admin"):
+        return redirect(url_for("admin_page"))
+    return render_template("admin_statistics.html")
+
+@app.route("/admin/cooking")
+def admin_cooking_page():
+    if not session.get("is_admin"):
+        return redirect(url_for("admin_page"))
+    return render_template("cooking_orders.html")
+
 @app.route("/api/admin/login", methods=["POST"])
 def admin_login():
     data = request.get_json() or {}
@@ -844,7 +858,7 @@ def admin_get_orders():
     if not session.get("is_admin"):
         return jsonify({"error": "Unauthorized"}), 401
 
-    clean_old_orders()
+    # Do not run full-table cleanup on every dashboard poll; this endpoint refreshes frequently.
     kitchen_open = get_setting("kitchen_open", "true") == "true"
 
     with get_db() as conn:
@@ -914,86 +928,167 @@ def admin_get_orders():
         "kitchen_open": kitchen_open
     })
 
-# ==========================================
-# New Admin Dedicated Page Routes
-# ==========================================
-@app.route("/admin/cooking")
-def admin_cooking_page():
-    if not session.get("is_admin"):
-        return redirect(url_for("admin_page"))
-    return render_template("cooking.html")
-
-@app.route("/admin/statistic")
-def admin_statistic_page():
-    if not session.get("is_admin"):
-        return redirect(url_for("admin_page"))
-    return render_template("stastic.html")
-
-# ==========================================
-# Fixed Statistics Endpoint (Updates Reliably)
-# ==========================================
 @app.route("/api/admin/statistics", methods=["GET"])
 def admin_statistics():
     if not session.get("is_admin"):
         return jsonify({"error": "Unauthorized"}), 401
 
-    period = request.args.get("period", "today").strip().lower()
-
-    # Safe SQL date condition mapping
-    date_conditions = {
-        "today": "o.created_at >= CURRENT_DATE",
-        "30days": "o.created_at >= (NOW() - INTERVAL '30 days')",
-        "6months": "o.created_at >= (NOW() - INTERVAL '6 months')"
-    }
-    date_filter = date_conditions.get(period, "o.created_at >= CURRENT_DATE")
-
     try:
         with get_db() as conn:
             with conn.cursor() as cur:
-                query = f"""
-                    SELECT o.id, o.daily_order_number, 
-                           COALESCE(u.username, 'Customer') AS username,
-                           o.user_email, 
-                           COALESCE(o.total_amount::float, 0) AS total_amount,
-                           o.payment_status, 
-                           o.order_status, 
-                           o.created_at,
-                           COALESCE(o.order_type, 'dine_in') AS order_type
+                cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS tax_amount NUMERIC(10,2) NOT NULL DEFAULT 0.00;")
+                cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS tax_rate NUMERIC(6,2) NOT NULL DEFAULT 0.00;")
+                cur.execute("""
+                    SELECT
+                        COUNT(*) FILTER (WHERE order_status <> 'cancelled')::int AS orders,
+                        COALESCE(SUM(total_amount) FILTER (
+                            WHERE payment_status = 'paid' AND payment_method = 'counter'
+                        ), 0)::float AS cash_received,
+                        COALESCE(SUM(total_amount) FILTER (
+                            WHERE payment_status = 'paid' AND payment_method = 'online'
+                        ), 0)::float AS online_received,
+                        COALESCE(SUM(tax_amount) FILTER (WHERE payment_status = 'paid'), 0)::float AS tax_collected
+                    FROM orders
+                    WHERE created_at >= CURRENT_DATE AND created_at < CURRENT_DATE + INTERVAL '1 day';
+                """)
+                today_row = cur.fetchone()
+
+                # Detailed list of all orders placed today, including cancelled orders.
+                cur.execute("""
+                    SELECT o.id, o.daily_order_number,
+                           COALESCE(u.username, o.user_email, 'Customer') AS username,
+                           o.created_at, o.order_status, o.payment_status,
+                           COALESCE(o.payment_method, 'unselected') AS payment_method,
+                           COALESCE(o.total_amount, 0)::float AS total_amount,
+                           COALESCE(o.tax_amount, 0)::float AS tax_amount
                     FROM orders o
-                    LEFT JOIN users u ON u.email = o.user_email
-                    WHERE {date_filter}
+                    LEFT JOIN users u ON o.user_email = u.email
+                    WHERE o.created_at >= CURRENT_DATE
+                      AND o.created_at < CURRENT_DATE + INTERVAL '1 day'
                     ORDER BY o.created_at DESC;
-                """
-                cur.execute(query)
-                rows = cur.fetchall()
+                """)
+                today_orders_rows = cur.fetchall()
 
-        orders = [{
-            "id": r["id"],
-            "token": r["daily_order_number"],
-            "username": r["username"],
-            "email": r["user_email"],
-            "total": float(r["total_amount"] or 0),
-            "payment_status": r["payment_status"],
-            "status": r["order_status"],
-            "order_type": r["order_type"],
-            "created_at": r["created_at"].strftime("%d %b %Y, %I:%M %p") if r["created_at"] else ""
-        } for r in rows]
+                cur.execute("""
+                    SELECT d.day::date AS period,
+                           COUNT(o.id) FILTER (WHERE o.order_status <> 'cancelled')::int AS orders,
+                           COALESCE(SUM(o.total_amount) FILTER (
+                               WHERE o.payment_status = 'paid' AND o.payment_method = 'counter'
+                           ), 0)::float AS cash_received,
+                           COALESCE(SUM(o.total_amount) FILTER (
+                               WHERE o.payment_status = 'paid' AND o.payment_method = 'online'
+                           ), 0)::float AS online_received,
+                           COALESCE(SUM(o.tax_amount) FILTER (WHERE o.payment_status = 'paid'), 0)::float AS tax_collected
+                    FROM generate_series(CURRENT_DATE - INTERVAL '29 days',
+                                         CURRENT_DATE, INTERVAL '1 day') AS d(day)
+                    LEFT JOIN orders o ON o.created_at >= d.day
+                                      AND o.created_at < d.day + INTERVAL '1 day'
+                    GROUP BY d.day
+                    ORDER BY d.day;
+                """)
+                daily_rows = cur.fetchall()
 
-        total_amount = round(sum(o["total"] for o in orders), 2)
-        paid_amount = round(sum(o["total"] for o in orders if o["payment_status"] == "paid"), 2)
+                cur.execute("""
+                    SELECT m.month_start::date AS period,
+                           COUNT(o.id) FILTER (WHERE o.order_status <> 'cancelled')::int AS orders,
+                           COALESCE(SUM(o.total_amount) FILTER (
+                               WHERE o.payment_status = 'paid' AND o.payment_method = 'counter'
+                           ), 0)::float AS cash_received,
+                           COALESCE(SUM(o.total_amount) FILTER (
+                               WHERE o.payment_status = 'paid' AND o.payment_method = 'online'
+                           ), 0)::float AS online_received,
+                           COALESCE(SUM(o.tax_amount) FILTER (WHERE o.payment_status = 'paid'), 0)::float AS tax_collected
+                    FROM generate_series(
+                        date_trunc('month', CURRENT_DATE) - INTERVAL '5 months',
+                        date_trunc('month', CURRENT_DATE),
+                        INTERVAL '1 month'
+                    ) AS m(month_start)
+                    LEFT JOIN orders o ON o.created_at >= m.month_start
+                                      AND o.created_at < m.month_start + INTERVAL '1 month'
+                    GROUP BY m.month_start
+                    ORDER BY m.month_start;
+                """)
+                monthly_rows = cur.fetchall()
 
-        return jsonify({
-            "success": True,
-            "period": period,
-            "orders": orders,
-            "order_count": len(orders),
-            "total_amount": total_amount,
-            "paid_amount": paid_amount
+        def serialise(rows):
+            return [{
+                "period": row["period"].isoformat(),
+                "orders": row["orders"] or 0,
+                "cash_received": round(row["cash_received"] or 0, 2),
+                "online_received": round(row["online_received"] or 0, 2),
+                "tax_collected": round(row["tax_collected"] or 0, 2)
+            } for row in rows]
+
+        today = {
+            "orders": today_row["orders"] or 0,
+            "cash_received": round(today_row["cash_received"] or 0, 2),
+            "online_received": round(today_row["online_received"] or 0, 2),
+            "tax_collected": round(today_row["tax_collected"] or 0, 2)
+        }
+        today_orders = [{
+            "id": row["id"],
+            "daily_order_number": row["daily_order_number"],
+            "username": row["username"],
+            "time": row["created_at"].strftime("%I:%M %p") if row["created_at"] else "—",
+            "status": row["order_status"],
+            "payment_status": row["payment_status"],
+            "payment_method": row["payment_method"],
+            "total_amount": round(row["total_amount"] or 0, 2),
+            "tax_amount": round(row["tax_amount"] or 0, 2)
+        } for row in today_orders_rows]
+        return jsonify({"today": today, "today_orders": today_orders, "daily": serialise(daily_rows), "monthly": serialise(monthly_rows)})
+    except Exception as exc:
+        app.logger.exception("Could not build admin statistics")
+        return jsonify({"error": "Could not load statistics. Check the database schema and connection."}), 500
+
+
+@app.route("/api/admin/cooking-orders", methods=["GET"])
+def admin_cooking_orders():
+    if not session.get("is_admin"):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_type VARCHAR(20) DEFAULT 'dine_in';")
+            cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(30) DEFAULT 'unselected';")
+            cur.execute("SELECT id, item_name, price::float FROM menu_items;")
+            menu_map = {row["id"]: row for row in cur.fetchall()}
+            cur.execute("""
+                SELECT o.id, o.user_email, COALESCE(u.username, 'Customer') AS username,
+                       o.items_code, o.total_amount::float, o.payment_status, o.order_status,
+                       o.daily_order_number, o.created_at,
+                       COALESCE(o.order_type, 'dine_in') AS order_type,
+                       COALESCE(o.payment_method, 'unselected') AS payment_method
+                FROM orders o
+                LEFT JOIN users u ON o.user_email = u.email
+                WHERE o.order_status IN ('accepted', 'preparing', 'prepared')
+                ORDER BY o.created_at ASC;
+            """)
+            rows = cur.fetchall()
+
+    orders = []
+    for order in rows:
+        parsed = parse_cart_code(order["items_code"])
+        orders.append({
+            "id": order["id"],
+            "daily_order_number": order["daily_order_number"],
+            "username": order["username"],
+            "user_email": order["user_email"],
+            "total_amount": order["total_amount"],
+            "payment_status": order["payment_status"],
+            "order_status": order["order_status"],
+            "order_type": order.get("order_type", "dine_in"),
+            "payment_method": order.get("payment_method", "unselected"),
+            "time": order["created_at"].strftime("%I:%M %p") if order["created_at"] else "",
+            "items": [{
+                "name": menu_map.get(item_id, {"item_name": f"Dish #{item_id}"})["item_name"],
+                "quantity": qty,
+                "subtotal": round(menu_map.get(item_id, {"price": 0.0})["price"] * qty, 2)
+            } for item_id, qty in parsed.items()]
         })
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+    return jsonify({"orders": orders})
 
-    
+
 @app.route("/api/admin/kitchen-toggle", methods=["POST"])
 def admin_toggle_kitchen():
     if not session.get("is_admin"):
@@ -1136,7 +1231,6 @@ def admin_delete_photo():
 
 @app.route("/api/profile/orders", methods=["GET"])
 def get_user_orders():
-    clean_old_orders()
     user_email = session.get("user_email", TEST_USER_EMAIL)
 
     with get_db() as conn:
