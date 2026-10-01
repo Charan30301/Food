@@ -636,10 +636,15 @@ def complete_counter_payment():
 
 @app.route("/api/mobile/orders/statuses", methods=["GET"])
 def mobile_order_statuses():
-    """Authenticated status polling for the Android app; no push provider required."""
+    """Authenticated status polling for the Android app."""
     user_email = session.get("user_email")
+
     if not user_email:
-        return jsonify({"success": False, "error": "Please sign in first."}), 401
+        return jsonify({
+            "success": False,
+            "error": "Please sign in"
+        }), 401
+
     try:
         with get_db() as conn:
             with conn.cursor() as cur:
@@ -650,15 +655,32 @@ def mobile_order_statuses():
                     ORDER BY updated_at DESC
                     LIMIT 20;
                 """, (user_email,))
-                rows = cur.fetchall()
-        return jsonify({"success": True, "orders": [
-            {"id": row["id"], "status": row["order_status"], "updated_at": row["updated_at"].isoformat() if row["updated_at"] else None}
-            for row in rows
-        ]})
-    except Exception:
-        app.logger.exception("Could not retrieve mobile order statuses")
-        return jsonify({"success": False, "error": "Could not retrieve order statuses."}), 500
 
+                rows = cur.fetchall()
+
+        return jsonify({
+            "success": True,
+            "orders": [
+                {
+                    "id": row["id"],
+                    "status": row["order_status"],
+                    "updated_at": (
+                        row["updated_at"].isoformat()
+                        if row["updated_at"] else None
+                    )
+                }
+                for row in rows
+            ]
+        })
+
+    except Exception:
+        app.logger.exception(
+            "Could not retrieve mobile order statuses"
+        )
+        return jsonify({
+            "success": False,
+            "error": "Could not retrieve order statuses"
+        }), 500
 
 @app.route("/api/order/ack-alert", methods=["POST"])
 def acknowledge_order_alert():
