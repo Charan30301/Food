@@ -25,12 +25,6 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
 
-        .page-loading-overlay { position: fixed; inset: 0; z-index: 5000; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; background: rgba(251,249,242,.88); backdrop-filter: blur(3px); color: var(--brown); }
-        .page-loading-overlay.hidden { display: none; }
-        .loading-spinner { width: 46px; height: 46px; border: 4px solid #e8dec4; border-top-color: var(--gold-dark); border-radius: 50%; animation: spin .75s linear infinite; }
-        .loading-caption { font-weight: 700; font-size: .92rem; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
         html, body {
             width: 100%;
             max-width: 100vw;
@@ -604,11 +598,11 @@
             #mobileDetailsStatus { color: #756f63; font-size: 0.85rem; font-weight: 600; }
         }
     </style>
+    <meta name="theme-color" content="#b8953f">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" href="/static/app-icon.svg" type="image/svg+xml">
 </head>
-<body>
-    <div class="page-loading-overlay" id="menuLoadingOverlay" role="status" aria-live="polite">
-        <div class="loading-spinner"></div><div class="loading-caption">Loading menu…</div>
-    </div>
+<body>\n<button id="installFoodAppButton" hidden onclick="installFoodApp()" style="position:fixed;z-index:9999;top:12px;right:12px;border:0;border-radius:999px;padding:9px 13px;background:#b8953f;color:white;font-weight:800;box-shadow:0 3px 12px #0002;">Install App</button>
 
     <div class="kitchen-banner" id="kitchenClosedBanner">⚠️ The Kitchen is currently CLOSED. Preorders are temporarily paused.</div>
 
@@ -930,36 +924,19 @@
 
         let cartTotalCached = 0.0;
 
-        let menuLoadPromise = null;
         async function loadMenuAndCart() {
-            if (menuLoadPromise) return menuLoadPromise;
-            const overlay = document.getElementById('menuLoadingOverlay');
-            if (overlay && menuItems.length === 0) overlay.classList.remove('hidden');
-            menuLoadPromise = (async () => {
-                try {
-                    const res = await fetch('/api/menu', { cache: 'no-store' });
-                    if (!res.ok) throw new Error(`Menu request failed (${res.status})`);
-                    const data = await res.json();
-                    menuItems = data.items || [];
-                    categoriesList = data.categories || [];
-                    cartData = data.cart || {};
-                    localMenuVersion = data.menu_version;
-                    cartTotalCached = data.total_price || 0.0;
-                    renderCategoryButtons();
-                    updateCartUI(cartTotalCached);
-                    renderMenu();
-                } catch (err) {
-                    const container = document.getElementById('menuContainer');
-                    if (container && menuItems.length === 0) {
-                        container.innerHTML = '<div class="menu-loading-error">Could not load the menu. Please check your connection and refresh.</div>';
-                    }
-                    console.error('Menu loading failed:', err);
-                } finally {
-                    if (overlay) overlay.classList.add('hidden');
-                    menuLoadPromise = null;
-                }
-            })();
-            return menuLoadPromise;
+            try {
+                const res = await fetch('/api/menu');
+                const data = await res.json();
+                menuItems = data.items || [];
+                categoriesList = data.categories || [];
+                cartData = data.cart || {};
+                localMenuVersion = data.menu_version;
+                cartTotalCached = data.total_price || 0.0;
+                renderCategoryButtons();
+                updateCartUI(cartTotalCached);
+                renderMenu();
+            } catch (err) {}
         }
 
         function renderCategoryButtons() {
@@ -1036,7 +1013,7 @@
 
                 card.innerHTML = `
                     <div class="photo-container">
-                        <img src="${item.photo_url || 'https://via.placeholder.com/600x400'}" alt="${item.item_name}" loading="lazy" decoding="async">
+                        <img src="${item.photo_url || 'https://via.placeholder.com/600x400'}" alt="${item.item_name}">
                         <span class="status-dot ${item.is_active ? 'active' : 'inactive'}"></span>
                         ${actionHtml}
                     </div>
@@ -1178,7 +1155,27 @@
         }
         init();
     </script>
-
-
-</body>
+<script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("/service-worker.js").catch(err => console.warn("App setup unavailable", err)));
+    }
+    let foodAppInstallPrompt;
+    window.addEventListener("beforeinstallprompt", event => {
+      event.preventDefault();
+      foodAppInstallPrompt = event;
+      const button = document.getElementById("installFoodAppButton");
+      if (button) button.hidden = false;
+    });
+    async function installFoodApp() {
+      if (!foodAppInstallPrompt) {
+        alert("To install: open your browser menu and choose 'Install app' or 'Add to Home screen'.");
+        return;
+      }
+      foodAppInstallPrompt.prompt();
+      await foodAppInstallPrompt.userChoice;
+      foodAppInstallPrompt = null;
+      const button = document.getElementById("installFoodAppButton");
+      if (button) button.hidden = true;
+    }
+</script>\n</body>
 </html>

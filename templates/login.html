@@ -77,8 +77,11 @@
         .btn-submit:hover { background: #0369a1; }
         .error-msg { color: #f87171; font-size: 0.85rem; margin-top: 0.75rem; }
     </style>
+    <meta name="theme-color" content="#b8953f">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" href="/static/app-icon.svg" type="image/svg+xml">
 </head>
-<body>
+<body>\n<button id="installFoodAppButton" hidden onclick="installFoodApp()" style="position:fixed;z-index:9999;top:12px;right:12px;border:0;border-radius:999px;padding:9px 13px;background:#b8953f;color:white;font-weight:800;box-shadow:0 3px 12px #0002;">Install App</button>
 
 <div class="card">
     <h1>Hotel Food Preorder</h1>
@@ -86,8 +89,6 @@
 
     <!-- STEP 1: Google One-Click Login -->
     <div id="googleSection">
-        <button id="nativeGoogleButton" type="button" class="btn-submit hidden" onclick="FoodNative.startGoogleSignIn()">Continue with Google</button>
-        <div id="webGoogleSignIn">
         <div id="g_id_onload"
              data-client_id="{{ google_client_id }}"
              data-callback="handleCredentialResponse"
@@ -95,7 +96,6 @@
         </div>
         <div class="google-btn-container">
             <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="filled_black" data-text="signin_with" data-size="large"></div>
-        </div>
         </div>
     </div>
 
@@ -119,41 +119,14 @@
 <script>
     let verifiedEmail = "";
 
-    // Android app: use Google's native sign-in UI instead of GIS inside WebView.
-    // Chrome/browser users continue using the existing Google Identity Services button.
-    if (window.FoodNative && typeof window.FoodNative.startGoogleSignIn === "function") {
-        document.getElementById("webGoogleSignIn").classList.add("hidden");
-        document.getElementById("nativeGoogleButton").classList.remove("hidden");
-    }
-
     async function handleCredentialResponse(response) {
-        return handleGoogleCredential(response.credential);
-    }
-
-    window.handleNativeGoogleCredential = async function(token) {
-    if (!token) {
-        document.getElementById("errorBox").textContent =
-            "Google sign-in did not return a token. Please try again.";
-        return;
-    }
-
-    await handleGoogleCredential(token);
-};
-
-window.handleNativeGoogleError = function(message) {
-    document.getElementById("errorBox").textContent =
-        message || "Google sign-in failed. Please try again.";
-};
-
-    async function handleGoogleCredential(credential) {
         document.getElementById("errorBox").textContent = "";
 
         try {
             const res = await fetch("/api/auth/google", {
                 method: "POST",
-                credentials: "same-origin",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ credential: credential })
+                body: JSON.stringify({ credential: response.credential })
             });
 
             const data = await res.json();
@@ -204,5 +177,27 @@ window.handleNativeGoogleError = function(message) {
         }
     }
 </script>
-</body>
+<script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("/service-worker.js").catch(err => console.warn("App setup unavailable", err)));
+    }
+    let foodAppInstallPrompt;
+    window.addEventListener("beforeinstallprompt", event => {
+      event.preventDefault();
+      foodAppInstallPrompt = event;
+      const button = document.getElementById("installFoodAppButton");
+      if (button) button.hidden = false;
+    });
+    async function installFoodApp() {
+      if (!foodAppInstallPrompt) {
+        alert("To install: open your browser menu and choose 'Install app' or 'Add to Home screen'.");
+        return;
+      }
+      foodAppInstallPrompt.prompt();
+      await foodAppInstallPrompt.userChoice;
+      foodAppInstallPrompt = null;
+      const button = document.getElementById("installFoodAppButton");
+      if (button) button.hidden = true;
+    }
+</script>\n</body>
 </html>

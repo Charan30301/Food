@@ -1,24 +1,60 @@
-# Food Ordering Website + Android customer app (no third-party push)
+# Grand Palace Hotel - Food Preordering & Kitchen Management System
 
-This project contains the Flask/PostgreSQL food-ordering website and an Android Studio app wrapper for customer pages. The admin dashboard remains accessible in a regular browser and is blocked inside the Android app.
+A web-based restaurant food preordering and kitchen operations management system built with Flask and PostgreSQL, styled with an embedded luxury champagne gold and ivory theme.
 
-## Notifications without Firebase
+---
 
-The Android app uses Android's local notification API and polls the authenticated backend every 20 seconds while the app is active. It notifies when an order status changes to `delivered`. No Firebase Cloud Messaging, VAPID, or third-party push credentials are used.
+## Key Features
 
-**Important:** notification permission allows an app to show notifications; it does not cause a Render server to send updates to a closed app. This no-third-party version does not guarantee notifications when the app is closed or suspended. Reliable remote notifications while closed require some delivery mechanism such as a push service or a continuously running connection/service with Android background limitations.
+- **Customer Ordering & Tracking**:
+  - Live food menu filtered by categories (`Tiffins`, `Fast Food`, `Meals`).
+  - Mobile bottom-sheet food details on card click.
+  - Cart item synchronization using encoded database cart strings.
+  - 60-second real-time kitchen acceptance window with automatic timeout cancellation.
+  - Persistent acceptance timer across page reloads and navigation.
+  - Interactive 4-stage live stepper tracker with emerald-green status dots (`Accepted` → `Preparing` → `Prepared` → `Delivered`).
+  - Themed modal notifications for kitchen updates and cancellation notices with custom kitchen reasons.
+  - Fixed-footer slide-out profile sidebar with pinned logout and order history.
 
-## Deploy website/backend
+- **Kitchen Operations (Admin Dashboard)**:
+  - Dual-view orders manager separated into sub-tabs: **New Requests** and **In-Progress Orders**.
+  - Dynamic 60-second countdown badge on each new incoming request card.
+  - Full-card solid red highlighting for orders pending payment.
+  - Single-step themed confirmation modal before updating order lifecycle states.
+  - Responsive menu management: desktop table and touch-optimized mobile cards.
+  - Mobile-responsive bottom-sheet modal for adding and updating food items.
+  - Master kitchen operational toggle (`Kitchen: OPEN` / `Kitchen: CLOSED`).
+  - Orphaned media management tool for browsing and deleting files in `static/uploads/`.
+  - Automatic client-side menu synchronization using database version bumps.
 
-1. Push the updated `app.py`, `requirements.txt`, and `schema.sql` to the GitHub repository connected to Render.
-2. Confirm Render has the required existing environment variables for Flask, PostgreSQL, Google sign-in and payment features.
-3. Wait for the Render deployment to finish and test the website in a browser.
-4. No Firebase environment variables or `google-services.json` are needed.
+---
 
-## Build Android app
+## Tech Stack
 
-Follow `android-app/README.md`. Set the live HTTPS Render URL in `android-app/app/src/main/java/com/localfood/foodapp/MainActivity.kt`, open the `android-app` folder in Android Studio, sync Gradle, then choose **Build > Build APK(s)**.
+- **Backend**: Python 3.10+, Flask
+- **Database**: PostgreSQL (psycopg v3 with `dict_row`)
+- **Authentication**: Google One-Tap Identity Services OAuth 2.0 (Customer), scrypt hashed credentials (Admin)
+- **Payment Processing**: Razorpay Gateway (Live mode) & Instant Bypass Controller (Test mode)
+- **Frontend**: Vanilla HTML5, CSS3 (inlined luxury ivory/gold responsive styles), JavaScript (ES6+ Fetch API)
 
+---
 
-## Android app Google Sign-In fix
-The `android-app` now uses native Google Sign-In rather than loading Google's GIS login flow inside Android WebView. Configure `GOOGLE_WEB_CLIENT_ID` in `MainActivity.kt` to match the Render `GOOGLE_CLIENT_ID` Web OAuth client, and register the Android OAuth client in Google Cloud using package `com.localfood.foodapp` and the installed APK's SHA-1. This does not add Firebase Cloud Messaging or change the Flask login endpoints. See `android-app/README.md`.
+## Database Setup
+
+1. Log into your PostgreSQL instance:
+   ```bash
+   psql -U postgres
+
+## New: Order Statistics and Installable Customer App
+
+- The admin dashboard includes **Statistics** with Today, Last 30 Days, and Last 6 Months filters. Each view shows order rows, order count, order value, and paid amount.
+- Order history cleanup now retains up to 12 months so six-month statistics can be calculated.
+- Customer login, menu, and cart pages support installation as a Progressive Web App (PWA). The installed app and website use the same Flask backend, database, login session, menu, cart, and order APIs, so customer orders from either place appear in the same admin Orders Manager.
+- The admin dashboard is not part of the customer app navigation and remains accessed through the website's `/admin` page.
+- The PWA requires an HTTPS deployment (such as Render) for service-worker installation on phones. Install from the browser's **Install app** / **Add to Home screen** option. Order placement still requires a network connection to the deployed server; this is not offline ordering.
+
+### Deploy/update notes
+1. Commit and push the changed project files to the GitHub repository connected to Render.
+2. Wait for Render to finish deploying.
+3. Open the website on the phone, then use the browser menu to install/add it to the home screen.
+4. Existing database tables do not need a new table for these changes. The app now retains order records for up to 12 months; older records are still removed by the existing cleanup routine.

@@ -205,9 +205,6 @@
             box-shadow: 0 2px 8px rgba(90,70,30,0.05);
             white-space: nowrap;
         }
-        /* Cooking orders are now managed on the dedicated /admin/cooking page. */
-        #btnSubInProg, #inprogOrdersSection { display: none !important; }
-
         .sub-order-btn.active-new {
             background: #fffbeb !important;
             border-color: var(--amber) !important;
@@ -533,18 +530,15 @@
         }
 
         @media (max-width: 768px) {
-            .modal-overlay { align-items: center !important; justify-content: center !important; padding: 12px !important; }
+            .modal-overlay { align-items: flex-end !important; padding: 0 !important; }
             .modal-box {
-                width: min(100%, 480px) !important;
-                max-width: 480px !important;
-                max-height: 88vh !important;
-                overflow-y: auto !important;
-                border-radius: 18px !important;
-                border: 1px solid #ded3b8 !important;
-                padding: 1.25rem 1rem !important;
-                animation: modalPop 0.18s ease-out;
+                max-width: 100% !important;
+                border-radius: 20px 20px 0 0 !important;
+                border-bottom: none !important;
+                padding: 1.25rem 1rem calc(1.5rem + env(safe-area-inset-bottom, 0px)) !important;
+                animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             }
-            @keyframes modalPop { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: scale(1); } }
+            @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         }
 
         .modal-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
@@ -624,6 +618,21 @@
             font-weight: 700;
             cursor: pointer;
         }
+
+        .stats-periods { display:flex; flex-wrap:wrap; gap:.55rem; margin:.9rem 0 1rem; }
+        .stats-period-btn { border:1px solid var(--card-border); background:#fff; color:var(--text-main); border-radius:999px; padding:.7rem 1rem; font-weight:800; cursor:pointer; }
+        .stats-period-btn.active { background:var(--primary); color:white; border-color:var(--primary-dark); }
+        .stats-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.7rem; margin-bottom:1rem; }
+        .stats-card { padding:1rem; background:#fff; border:1px solid var(--card-border); border-radius:13px; display:flex; flex-direction:column; gap:.35rem; }
+        .stats-card span { color:var(--text-muted); font-size:.82rem; }
+        .stats-card strong { font-size:1.35rem; color:var(--primary-dark); overflow-wrap:anywhere; }
+        .stats-table { width:100%; min-width:760px; }
+        .stats-table td { padding:.75rem; border-bottom:1px solid var(--card-border); font-size:.84rem; }
+        .admin-toast { position:fixed; right:18px; bottom:18px; z-index:20000; padding:.9rem 1.1rem; max-width:min(420px,calc(100vw - 36px)); background:#173d2d; color:#fff; border-radius:13px; box-shadow:0 12px 35px #0003; display:none; font-weight:700; }
+        .admin-toast.show { display:block; animation:toastIn .2s ease-out; }
+        @keyframes toastIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        @media(max-width:600px) { .stats-summary { grid-template-columns:1fr; } .stats-card { padding:.8rem; } .stats-card strong { font-size:1.2rem; } }
+
     </style>
 </head>
 <body>
@@ -643,12 +652,6 @@
                 <span class="admin-btn-caret">▼</span>
             </button>
             <div class="profile-dropdown-menu" id="profileDropdown">
-                <button class="dropdown-item" onclick="window.location.href='/admin/statistics'">
-                    <span>📊 Statistics</span>
-                </button>
-                <button class="dropdown-item" onclick="window.location.href='/admin/cooking'">
-                    <span>🍳 Cooking Orders</span>
-                </button>
                 <button class="dropdown-item" onclick="openCategoriesModal()">
                     <span>🏷️ Category List</span>
                 </button>
@@ -683,6 +686,9 @@
             </button>
             <button class="main-tab-btn" id="menuMainTabBtn" onclick="switchMainTab('menuTab')">
                 <span>Menu Item Catalog</span>
+            </button>
+            <button class="main-tab-btn" id="statsMainTabBtn" onclick="switchMainTab('statsTab')">
+                <span>📊 Statistics</span>
             </button>
         </div>
 
@@ -743,7 +749,31 @@
             </div>
         </section>
 
-        <!-- TAB 2: MENU CATALOGUE -->
+        <!-- TAB 2: ORDER STATISTICS -->
+        <section id="statsTab" style="display:none;">
+            <div class="section-box">
+                <div class="section-header"><div class="section-title">📊 Order Statistics</div></div>
+                <div class="stats-periods">
+                    <button class="stats-period-btn active" onclick="loadStatistics('today', this)">Today’s Orders</button>
+                    <button class="stats-period-btn" onclick="loadStatistics('30days', this)">Last 30 Days</button>
+                    <button class="stats-period-btn" onclick="loadStatistics('6months', this)">Last 6 Months</button>
+                </div>
+                <div class="stats-summary">
+                    <div class="stats-card"><span>Total Orders</span><strong id="statsOrderCount">—</strong></div>
+                    <div class="stats-card"><span>Order Value</span><strong id="statsTotalAmount">₹0.00</strong></div>
+                    <div class="stats-card"><span>Paid Amount</span><strong id="statsPaidAmount">₹0.00</strong></div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="desktop-menu-table stats-table">
+                        <thead><tr><th>Order</th><th>Customer</th><th>Date &amp; Time</th><th>Type</th><th>Status</th><th>Payment</th><th>Total</th></tr></thead>
+                        <tbody id="statsOrdersBody"><tr><td colspan="7">Loading orders…</td></tr></tbody>
+                    </table>
+                </div>
+                <p id="statsEmpty" style="display:none;padding:1rem;color:var(--text-muted);">No orders found for this period.</p>
+            </div>
+        </section>
+
+        <!-- TAB 3: MENU CATALOGUE -->
         <section id="menuTab" style="display:none;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
                 <h3 style="font-size:1.15rem; font-weight:800; color:#302a20;">Restaurant Menu</h3>
@@ -1019,13 +1049,54 @@
         };
 
         function switchMainTab(tabId) {
-            document.getElementById("ordersTab").style.display = tabId === 'ordersTab' ? 'block' : 'none';
-            document.getElementById("menuTab").style.display = tabId === 'menuTab' ? 'block' : 'none';
-            document.getElementById("ordersMainTabBtn").classList.toggle("active", tabId === 'ordersMainTabBtn');
-            document.getElementById("menuMainTabBtn").classList.toggle("active", tabId === 'menuMainTabBtn');
+            ['ordersTab','menuTab','statsTab'].forEach(id => {
+                document.getElementById(id).style.display = id === tabId ? 'block' : 'none';
+            });
+            [['ordersMainTabBtn','ordersTab'],['menuMainTabBtn','menuTab'],['statsMainTabBtn','statsTab']].forEach(([btn,tab]) => {
+                document.getElementById(btn).classList.toggle('active', tabId === tab);
+            });
             document.getElementById("profileDropdown").classList.remove("show");
             if (tabId === 'ordersTab') loadAdminOrders();
             if (tabId === 'menuTab') loadAdminMenu();
+            if (tabId === 'statsTab') loadStatistics('today', document.querySelector('.stats-period-btn'));
+        }
+
+        let toastTimeout;
+        function showAdminToast(message, success = true) {
+            const toast = document.getElementById('adminToast');
+            if (!toast) return;
+            toast.textContent = message;
+            toast.style.background = success ? '#173d2d' : '#8f2525';
+            toast.classList.add('show');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => toast.classList.remove('show'), 3200);
+        }
+
+        async function loadStatistics(period, button) {
+            document.querySelectorAll('.stats-period-btn').forEach(b => b.classList.toggle('active', b === button));
+            const body = document.getElementById('statsOrdersBody');
+            body.innerHTML = '<tr><td colspan="7">Loading orders…</td></tr>';
+            try {
+                const response = await fetch('/api/admin/statistics?period=' + encodeURIComponent(period));
+                const data = await response.json();
+                if (!response.ok || !data.success) throw new Error(data.error || 'Could not load statistics');
+                document.getElementById('statsOrderCount').textContent = data.order_count;
+                document.getElementById('statsTotalAmount').textContent = '₹' + Number(data.total_amount).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+                document.getElementById('statsPaidAmount').textContent = '₹' + Number(data.paid_amount).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+                document.getElementById('statsEmpty').style.display = data.orders.length ? 'none' : 'block';
+                if (!data.orders.length) { body.innerHTML = ''; return; }
+                body.innerHTML = data.orders.map(o => `<tr>
+                    <td>#${o.token || o.id}</td><td>${escapeStatsText(o.username)}<br><small>${escapeStatsText(o.email)}</small></td>
+                    <td>${escapeStatsText(o.created_at)}</td><td>${o.order_type === 'parcel' ? 'Parcel' : 'Dine in'}</td>
+                    <td>${escapeStatsText(o.status)}</td><td>${escapeStatsText(o.payment_status)}</td><td>₹${Number(o.total).toFixed(2)}</td>
+                </tr>`).join('');
+            } catch (error) {
+                body.innerHTML = '<tr><td colspan="7">Unable to load statistics. Please retry.</td></tr>';
+                showAdminToast(error.message || 'Could not load statistics', false);
+            }
+        }
+        function escapeStatsText(value) {
+            return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
         }
 
         let currentSubSection = 'new';
@@ -1247,7 +1318,7 @@
 
         async function loadAdminOrders() {
             try {
-                const res = await fetch("/api/admin/orders", { cache: "no-store" });
+                const res = await fetch("/api/admin/orders");
                 const data = await res.json();
                 updateKitchenUI(data.kitchen_open);
 
@@ -1270,6 +1341,7 @@
                 document.getElementById("totalQueueBadge").textContent = currentNew + (data.active_count || 0);
 
                 const newGrid = document.getElementById("newOrdersGrid");
+                const activeGrid = document.getElementById("activeOrdersGrid");
                 const counterGrid = document.getElementById("counterOrdersGrid");
 
                 // 1. Render New Incoming Orders
@@ -1312,7 +1384,57 @@
                     });
                 }
 
-                // Accepted/cooking orders are rendered only on /admin/cooking.
+                // 2. Render In-Progress Orders
+                if (!data.active_orders || data.active_orders.length === 0) {
+                    activeGrid.innerHTML = '<div style="color:var(--text-muted); padding:0.85rem;">No active orders in kitchen.</div>';
+                } else {
+                    activeGrid.innerHTML = "";
+                    data.active_orders.forEach(order => {
+                        const card = document.createElement("div");
+                        const isPaid = order.payment_status === 'paid';
+                        card.className = "order-card" + (isPaid ? "" : " order-card-unpaid");
+
+                        const itemsHtml = order.items.map(i => `<div class="order-item-line"><span>${i.name} × ${i.quantity}</span><span>₹${i.subtotal.toFixed(2)}</span></div>`).join('');
+                        const dotClass = isPaid ? 'dot-paid' : 'dot-pending';
+                        const typeBadge = order.order_type === 'parcel' 
+                            ? `<span class="order-type-badge parcel">📦 Parcel</span>`
+                            : `<span class="order-type-badge dine_in">🍽️ Dine In</span>`;
+
+                        let payMethodBadge = '';
+                        if (order.payment_method === 'counter') {
+                            payMethodBadge = `<span class="order-pay-method-badge counter">💵 Counter</span>`;
+                        } else if (order.payment_method === 'online') {
+                            payMethodBadge = `<span class="order-pay-method-badge online">📱 Online</span>`;
+                        }
+
+                        card.innerHTML = `
+                            <div class="order-head">
+                                <div>
+                                    <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.3rem; margin-bottom:0.25rem;">
+                                        <span class="token-tag" style="background:#10b981;">Token #${order.daily_order_number}</span>
+                                        ${typeBadge}
+                                        ${payMethodBadge}
+                                    </div>
+                                    <div style="font-weight:700; margin-top:0.2rem; font-size:0.92rem;">${order.username}</div>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:0.4rem;">
+                                    <span class="payment-dot ${dotClass}"></span>
+                                    <span style="font-size:0.75rem; font-weight:800; color:${isPaid ? 'var(--success)' : 'var(--danger)'};">
+                                        ${isPaid ? 'PAID' : 'PENDING'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="order-items-box">${itemsHtml}</div>
+                            <div class="order-total-line"><span>Total</span><span>₹${order.total_amount.toFixed(2)}</span></div>
+                            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:0.35rem; margin-top:0.35rem;">
+                                <button class="btn-action btn-prep ${order.order_status === 'preparing' ? 'active' : ''}" onclick="confirmAndUpdateStatus(${order.id}, 'preparing')">Prep</button>
+                                <button class="btn-action btn-ready ${order.order_status === 'prepared' ? 'active' : ''}" onclick="confirmAndUpdateStatus(${order.id}, 'prepared')">Ready</button>
+                                <button class="btn-action btn-deliver" onclick="confirmAndUpdateStatus(${order.id}, 'delivered')">Done</button>
+                            </div>
+                        `;
+                        activeGrid.appendChild(card);
+                    });
+                }
 
                 // 3. Render Counter Bills
                 if (!data.counter_bills || data.counter_bills.length === 0) {
@@ -1363,9 +1485,10 @@
                 });
                 const data = await res.json();
                 if (data.success) {
+                    showAdminToast('Payment marked as completed.');
                     loadAdminOrders();
-                }
-            } catch (err) {}
+                } else showAdminToast(data.error || 'Could not update payment.', false);
+            } catch (err) { showAdminToast('Network error while updating payment.', false); }
         }
 
         async function confirmAndUpdateStatus(orderId, status) {
@@ -1383,9 +1506,10 @@
                 });
                 const data = await res.json();
                 if (data.success) {
+                    showAdminToast(`Order #${orderId} updated to ${status}.`);
                     loadAdminOrders();
-                }
-            } catch (err) {}
+                } else showAdminToast(data.error || 'Could not update order status.', false);
+            } catch (err) { showAdminToast('Network error while updating order.', false); }
         }
 
         async function cancelOrderWithPrompt(orderId) {
@@ -1400,9 +1524,10 @@
                 });
                 const data = await res.json();
                 if (data.success) {
+                    showAdminToast(`Order #${orderId} cancelled.`);
                     loadAdminOrders();
-                }
-            } catch (err) {}
+                } else showAdminToast(data.error || 'Could not cancel order.', false);
+            } catch (err) { showAdminToast('Network error while cancelling order.', false); }
         }
 
         let currentMenuItems = [];
@@ -1591,5 +1716,6 @@
         loadAdminOrders();
         setInterval(loadAdminOrders, 4000);
     </script>
+<div id="adminToast" class="admin-toast" role="status" aria-live="polite"></div>
 </body>
 </html>
