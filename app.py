@@ -6,11 +6,11 @@ import hashlib
 import importlib
 from urllib.parse import urlencode
 from urllib.request import urlopen
+from datetime import timezone
+from zoneinfo import ZoneInfo
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from zoneinfo import ZoneInfo
-from datetime import timezone
 
 try:
     psycopg = importlib.import_module("psycopg")
@@ -51,8 +51,7 @@ IST = ZoneInfo("Asia/Kolkata")
 def to_ist(dt):
     if not dt:
         return None
-    # If dt has no timezone info, treat it as UTC first, then convert to IST
-    if dt.tzinfo is None:
+    if getattr(dt, "tzinfo", None) is None:
         dt = dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(IST)
 
@@ -119,7 +118,7 @@ def get_next_daily_order_number(cur):
     cur.execute("""
         SELECT COALESCE(MAX(daily_order_number), -1) + 1 AS next_num
         FROM orders
-        WHERE created_at >= CURRENT_DATE;
+        WHERE (created_at AT TIME ZONE 'Asia/Kolkata')::date = (NOW() AT TIME ZONE 'Asia/Kolkata')::date;
     """)
     row = cur.fetchone()
     return row["next_num"] if row else 0
@@ -211,7 +210,6 @@ def admin_delete_category():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Settings: Service Tax Percent
 @app.route("/api/admin/settings/service-tax", methods=["GET", "POST"])
 def admin_service_tax_setting():
     if request.method == "GET":
@@ -521,7 +519,6 @@ def submit_order_request():
         "order_type": order_type
     })
 
-# Select payment method & compute dynamic service tax for online payments
 @app.route("/api/order/select-payment-method", methods=["POST"])
 def select_payment_method():
     data = request.get_json() or {}
@@ -727,7 +724,6 @@ def check_active_order():
             order = cur.fetchone()
 
             if order:
-                # 30-Minute Automatic Cancellation for Unpaid Accepted Orders
                 if order["order_status"] in ['accepted', 'preparing'] and order["payment_status"] != 'paid' and order["seconds_since_update"] >= 1800:
                     cur.execute("""
                         UPDATE orders
@@ -885,7 +881,8 @@ def admin_get_orders():
             cur.execute("""
                 SELECT o.id, o.user_email, COALESCE(u.username, 'Customer') AS username,
                        o.items_code, o.total_amount::float, o.payment_status,
-                       o.order_status, o.daily_order_number, o.created_at,
+                       o.order_status, o.daily_order_number,
+                       o.created_at,
                        COALESCE(o.order_type, 'dine_in') AS order_type,
                        COALESCE(o.payment_method, 'unselected') AS payment_method,
                        EXTRACT(EPOCH FROM (NOW() - o.created_at))::int AS seconds_elapsed
@@ -957,11 +954,11 @@ def admin_cooking_orders():
             cur.execute("SELECT id, item_name, price::float, photo_url FROM menu_items;")
             menu_map = {row["id"]: row for row in cur.fetchall()}
             
-            # Wiped on 'prepared': only show 'accepted' and 'preparing' orders that are paid
             cur.execute("""
                 SELECT o.id, o.user_email, COALESCE(u.username, 'Customer') AS username,
                        o.items_code, o.total_amount::float, o.payment_status, o.order_status,
-                       o.daily_order_number, o.created_at,
+                       o.daily_order_number,
+                       o.created_at,
                        COALESCE(o.order_type, 'dine_in') AS order_type,
                        COALESCE(o.payment_method, 'unselected') AS payment_method
                 FROM orders o
@@ -1018,11 +1015,10 @@ def admin_statistics():
                         ), 0)::float AS online_received,
                         COALESCE(SUM(tax_amount) FILTER (WHERE payment_status = 'paid'), 0)::float AS tax_collected
                     FROM orders
-                    WHERE created_at >= CURRENT_DATE AND created_at < CURRENT_DATE + INTERVAL '1 day';
+                    WHERE (created_at AT TIME ZONE 'Asia/Kolkata')::date = (NOW() AT TIME ZONE 'Asia/Kolkata')::date;
                 """)
                 today_row = cur.fetchone()
 
-                # Detailed list of all orders placed today, including cancelled orders.
                 cur.execute("""
                     SELECT o.id, o.daily_order_number,
                            COALESCE(u.username, o.user_email, 'Customer') AS username,
@@ -1032,8 +1028,7 @@ def admin_statistics():
                            COALESCE(o.tax_amount, 0)::float AS tax_amount
                     FROM orders o
                     LEFT JOIN users u ON o.user_email = u.email
-                    WHERE o.created_at >= CURRENT_DATE
-                      AND o.created_at < CURRENT_DATE + INTERVAL '1 day'
+                    WHERE (o.created_at AT TIME ZONE 'Asia/Kolkata')::date = (NOW() AT TIME ZONE 'Asia/Kolkata')::date
                     ORDER BY o.created_at DESC;
                 """)
                 today_orders_rows = cur.fetchall()
@@ -1048,10 +1043,9 @@ def admin_statistics():
                                WHERE o.payment_status = 'paid' AND o.payment_method = 'online'
                            ), 0)::float AS online_received,
                            COALESCE(SUM(o.tax_amount) FILTER (WHERE o.payment_status = 'paid'), 0)::float AS tax_collected
-                    FROM generate_series(CURRENT_DATE - INTERVAL '29 days',
-                                         CURRENT_DATE, INTERVAL '1 day') AS d(day)
-                    LEFT JOIN orders o ON o.created_at >= d.day
-                                      AND o.created_at < d.day + INTERVAL '1 day'
+                    FROM generate_series((NOW() AT TIME ZONE 'Asia/Kolkata')::date - INTERVAL '29 days',
+                                         (NOW() AT TIME ZONE 'Asia/Kolkata')::date, INTERVAL '1 day') AS d(day)
+                    LEFT JOIN orders o ON (o.created_at AT TIME ZONE 'Asia/Kolkata')::date = d.day::date
                     GROUP BY d.day
                     ORDER BY d.day;
                 """)
@@ -1068,12 +1062,11 @@ def admin_statistics():
                            ), 0)::float AS online_received,
                            COALESCE(SUM(o.tax_amount) FILTER (WHERE o.payment_status = 'paid'), 0)::float AS tax_collected
                     FROM generate_series(
-                        date_trunc('month', CURRENT_DATE) - INTERVAL '5 months',
-                        date_trunc('month', CURRENT_DATE),
+                        date_trunc('month', (NOW() AT TIME ZONE 'Asia/Kolkata')::date) - INTERVAL '5 months',
+                        date_trunc('month', (NOW() AT TIME ZONE 'Asia/Kolkata')::date),
                         INTERVAL '1 month'
                     ) AS m(month_start)
-                    LEFT JOIN orders o ON o.created_at >= m.month_start
-                                      AND o.created_at < m.month_start + INTERVAL '1 month'
+                    LEFT JOIN orders o ON date_trunc('month', (o.created_at AT TIME ZONE 'Asia/Kolkata')::date) = m.month_start
                     GROUP BY m.month_start
                     ORDER BY m.month_start;
                 """)
@@ -1098,7 +1091,7 @@ def admin_statistics():
             "id": row["id"],
             "daily_order_number": row["daily_order_number"],
             "username": row["username"],
-            "time": row["created_at"].strftime("%I:%M %p") if row["created_at"] else "—",
+            "time": to_ist(row["created_at"]).strftime("%I:%M %p") if row["created_at"] else "—",
             "status": row["order_status"],
             "payment_status": row["payment_status"],
             "payment_method": row["payment_method"],
@@ -1109,7 +1102,6 @@ def admin_statistics():
     except Exception as exc:
         app.logger.exception("Could not build admin statistics")
         return jsonify({"error": "Could not load statistics. Check the database schema and connection."}), 500
-
 
 @app.route("/api/admin/kitchen-toggle", methods=["POST"])
 def admin_toggle_kitchen():
@@ -1277,7 +1269,7 @@ def get_user_orders():
     for order in orders_rows:
         parsed_code = parse_cart_code(order["items_code"])
         item_summaries = [f"{items_map.get(i_id, f'Dish #{i_id}')} x{qty}" for i_id, qty in parsed_code.items()]
-        created_ist = to_ist(order["created_at"])
+        created_ist = to_ist(order.get("created_at"))
         formatted_orders.append({
             "id": order["id"],
             "daily_order_number": order["daily_order_number"],
