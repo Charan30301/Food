@@ -2,5 +2,20 @@ package com.localfood.chef;
 
 import android.app.PendingIntent; import android.content.Intent; import androidx.core.app.NotificationCompat; import androidx.core.app.NotificationManagerCompat; import com.google.firebase.messaging.FirebaseMessagingService; import com.google.firebase.messaging.RemoteMessage;
 public class AppFirebaseMessagingService extends FirebaseMessagingService {
- @Override public void onNewToken(String token) { getSharedPreferences("fcm",MODE_PRIVATE).edit().putString("token",token).apply(); }
- @Override public void onMessageReceived(RemoteMessage m) { String title=m.getNotification()!=null&&m.getNotification().getTitle()!=null?m.getNotification().getTitle():"Order update"; String body=m.getNotification()!=null&&m.getNotification().getBody()!=null?m.getNotification().getBody():"You have a new update."; Intent i=new Intent(this,MainActivity.class); i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP); PendingIntent p=PendingIntent.getActivity(this,100,i,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE); NotificationCompat.Builder b=new NotificationCompat.Builder(this,"orders").setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle(title).setContentText(body).setStyle(new NotificationCompat.BigTextStyle().bigText(body)).setPriority(NotificationCompat.PRIORITY_HIGH).setAutoCancel(true).setContentIntent(p); if(android.os.Build.VERSION.SDK_INT<33||androidx.core.content.ContextCompat.checkSelfPermission(this,android.Manifest.permission.POST_NOTIFICATIONS)==android.content.pm.PackageManager.PERMISSION_GRANTED) NotificationManagerCompat.from(this).notify((int)(System.currentTimeMillis()&0x7fffffff),b.build()); }
+ @Override
+ public void onNewToken(String token) {
+  getSharedPreferences("fcm", MODE_PRIVATE).edit().putString("token", token).apply();
+ }
+
+ @Override
+ public void onMessageReceived(RemoteMessage m) {
+  String title = m.getNotification() != null && m.getNotification().getTitle() != null ? m.getNotification().getTitle() : "Order update";
+  String body = m.getNotification() != null && m.getNotification().getBody() != null ? m.getNotification().getBody() : "You have a new update.";
+  Intent i = new Intent(this, MainActivity.class);
+  i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+  PendingIntent p = PendingIntent.getActivity(this, 100, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+  NotificationCompat.Builder b = new NotificationCompat.Builder(this, "orders").setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle(title).setContentText(body).setStyle(new NotificationCompat.BigTextStyle().bigText(body)).setPriority(NotificationCompat.PRIORITY_HIGH).setAutoCancel(true).setContentIntent(p);
+  if (android.os.Build.VERSION.SDK_INT < 33 || androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED)
+   NotificationManagerCompat.from(this).notify((int) (System.currentTimeMillis() & 0x7fffffff), b.build());
+ }
+}
