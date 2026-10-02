@@ -909,6 +909,7 @@ def admin_get_orders():
             "subtotal": round(menu_map.get(i_id, {"price": 0.0})["price"] * qty, 2)
         } for i_id, qty in parsed_code.items()]
 
+        created_ist = to_ist(o.get("created_at"))
         seconds_remaining = max(0, 60 - o["seconds_elapsed"]) if o["order_status"] == 'placed' else 0
 
         order_dict = {
@@ -974,6 +975,7 @@ def admin_cooking_orders():
     orders = []
     for order in rows:
         parsed = parse_cart_code(order["items_code"])
+        created_ist = to_ist(order.get("created_at"))
         orders.append({
             "id": order["id"],
             "daily_order_number": order["daily_order_number"],
