@@ -1,5 +1,8 @@
 R_DEF: Internal format may change without notice
 local
+drawable ic_launcher
+drawable ic_launcher_background
+drawable ic_launcher_foreground
 string app_name
 string app_role
 string default_web_client_id

@@ -1,21 +1,69 @@
 package com.localfood.customer;
 
-import android.app.PendingIntent; import android.content.Intent; import androidx.core.app.NotificationCompat; import androidx.core.app.NotificationManagerCompat; import com.google.firebase.messaging.FirebaseMessagingService; import com.google.firebase.messaging.RemoteMessage;
-public class AppFirebaseMessagingService extends FirebaseMessagingService {
- @Override
- public void onNewToken(String token) {
-  getSharedPreferences("fcm", MODE_PRIVATE).edit().putString("token", token).apply();
- }
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Intent;
+import androidx.annotation.NonNull;
+import androidx.core.app.NotificationCompat;
+import com.google.firebase.messaging.FirebaseMessagingService;
+import com.google.firebase.messaging.RemoteMessage;
 
- @Override
- public void onMessageReceived(RemoteMessage m) {
-  String title = m.getNotification() != null && m.getNotification().getTitle() != null ? m.getNotification().getTitle() : "Order update";
-  String body = m.getNotification() != null && m.getNotification().getBody() != null ? m.getNotification().getBody() : "You have a new update.";
-  Intent i = new Intent(this, MainActivity.class);
-  i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-  PendingIntent p = PendingIntent.getActivity(this, 100, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-  NotificationCompat.Builder b = new NotificationCompat.Builder(this, "orders").setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle(title).setContentText(body).setStyle(new NotificationCompat.BigTextStyle().bigText(body)).setPriority(NotificationCompat.PRIORITY_HIGH).setAutoCancel(true).setContentIntent(p);
-  if (android.os.Build.VERSION.SDK_INT < 33 || androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED)
-   NotificationManagerCompat.from(this).notify((int) (System.currentTimeMillis() & 0x7fffffff), b.build());
- }
+public class AppFirebaseMessagingService extends FirebaseMessagingService {
+
+    @Override
+    public void onNewToken(@NonNull String token) {
+        super.onNewToken(token);
+        getSharedPreferences("fcm", MODE_PRIVATE)
+                .edit()
+                .putString("token", token)
+                .apply();
+    }
+
+    @Override
+    public void onMessageReceived(@NonNull RemoteMessage message) {
+        super.onMessageReceived(message);
+
+        String title = "Order Update";
+        String body = "Your order status has changed.";
+
+        if (message.getNotification() != null) {
+            if (message.getNotification().getTitle() != null) {
+                title = message.getNotification().getTitle();
+            }
+            if (message.getNotification().getBody() != null) {
+                body = message.getNotification().getBody();
+            }
+        } else if (!message.getData().isEmpty()) {
+            if (message.getData().containsKey("title")) {
+                title = message.getData().get("title");
+            }
+            if (message.getData().containsKey("body")) {
+                body = message.getData().get("body");
+            } else if (message.getData().containsKey("message")) {
+                body = message.getData().get("message");
+            }
+        }
+
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                this,
+                (int) System.currentTimeMillis(),
+                intent,
+                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "orders")
+                .setSmallIcon(R.drawable.ic_launcher)
+                .setContentTitle(title)
+                .setContentText(body)
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setContentIntent(pendingIntent);
+
+        NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        if (manager != null) {
+            manager.notify((int) System.currentTimeMillis(), builder.build());
+        }
+    }
 }

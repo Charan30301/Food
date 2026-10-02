@@ -1,0 +1,18 @@
+[
+    {
+        "merged": "C:\\Users\\manoh\\.gradle\\daemon\\9.3.0\\com.localfood.customer.app-debug-35:\\drawable_ic_launcher_foreground.xml.flat",
+        "source": "C:\\Users\\manoh\\.gradle\\daemon\\9.3.0\\com.localfood.customer.app-main-37:\\drawable\\ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "C:\\Users\\manoh\\.gradle\\daemon\\9.3.0\\com.localfood.customer.app-debug-35:\\drawable_ic_launcher_background.xml.flat",
+        "source": "C:\\Users\\manoh\\.gradle\\daemon\\9.3.0\\com.localfood.customer.app-main-37:\\drawable\\ic_launcher_background.xml"
+    },
+    {
+        "merged": "com.localfood.customer.app-debug-35:/drawable_ic_launcher.xml.flat",
+        "source": "com.localfood.customer.app-main-37:/drawable/ic_launcher.xml"
+    },
+    {
+        "merged": "C:\\Users\\manoh\\.gradle\\daemon\\9.3.0\\com.localfood.customer.app-debug-35:\\mipmap_ic_launcher.xml.flat",
+        "source": "C:\\Users\\manoh\\.gradle\\daemon\\9.3.0\\com.localfood.customer.app-main-37:\\mipmap\\ic_launcher.xml"
+    }
+]

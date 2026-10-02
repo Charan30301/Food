@@ -5,15 +5,19 @@ import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.view.ViewGroup;
 import android.webkit.CookieManager;
-import android.webkit.JavascriptInterface;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
@@ -21,30 +25,63 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import org.json.JSONObject;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
     private WebView webView;
     private static final int REQ = 7001;
+    private final Handler pollHandler = new Handler(Looper.getMainLooper());
+    private Runnable pollRunnable;
+    private SharedPreferences prefs;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        prefs = getSharedPreferences("order_tracker", MODE_PRIVATE);
         createChannel();
         requestPermission();
 
-        webView = new WebView(this);
-        setContentView(webView);
+        // 1. Root container that prevents merging with camera notch and status bar
+        FrameLayout rootLayout = new FrameLayout(this);
+        rootLayout.setLayoutParams(new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        ));
 
-        // Cookie configuration
+        webView = new WebView(this);
+        webView.setLayoutParams(new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        ));
+        rootLayout.addView(webView);
+        setContentView(rootLayout);
+
+        // Apply insets for notch and status bar
+        ViewCompat.setOnApplyWindowInsetsListener(rootLayout, (v, insets) -> {
+            int topInset = insets.getInsets(WindowInsetsCompat.Type.statusBars() | WindowInsetsCompat.Type.displayCutout()).top;
+            int bottomInset = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
+            v.setPadding(0, topInset, 0, bottomInset);
+            return insets;
+        });
+
+        // 2. Cookie setup
         CookieManager cookieManager = CookieManager.getInstance();
         cookieManager.setAcceptCookie(true);
         cookieManager.setAcceptThirdPartyCookies(webView, true);
 
-        // WebSettings configuration
+        // 3. WebSettings configuration
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
@@ -56,13 +93,13 @@ public class MainActivity extends AppCompatActivity {
             settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         }
 
-        // Remove the "; wv" marker so Google OAuth does not block the WebView user agent
+        // Clean user-agent so Google OAuth works properly
         String customUserAgent = settings.getUserAgentString()
                 .replace("; wv", "")
                 .replaceAll("Version/[0-9.]+\\s", "");
         settings.setUserAgentString(customUserAgent);
 
-        // Support window.open popups used by OAuth logins
+        // 4. Handle popups for Google OAuth
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
@@ -92,7 +129,6 @@ public class MainActivity extends AppCompatActivity {
                         String url = request.getUrl().toString();
                         String baseServerUrl = getString(R.string.server_url);
 
-                        // If redirected back to the app server, load in the main WebView and dismiss popup
                         if (url.startsWith(baseServerUrl)) {
                             dialog.dismiss();
                             webView.loadUrl(url);
@@ -116,11 +152,6 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onPageFinished(WebView v, String u) {
-                injectRegistration();
-            }
-
-            @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 super.onReceivedError(view, request, error);
             }
@@ -128,32 +159,94 @@ public class MainActivity extends AppCompatActivity {
             @SuppressLint("WebViewClientOnReceivedSslError")
             @Override
             public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-                handler.proceed(); // Allows local/self-signed SSL development certificates
+                handler.proceed();
             }
         });
 
-        webView.addJavascriptInterface(new Bridge(), "AndroidFCM");
         webView.loadUrl(getString(R.string.server_url) + getString(R.string.start_path));
+
+        // 5. Start Polling for Order Updates (No FCM required)
+        startOrderStatusPolling();
     }
 
-    private void injectRegistration() {
-        String js = "javascript:(function(){" +
-                "if(window.__fcmBridgeInstalled)return;" +
-                "window.__fcmBridgeInstalled=true;" +
-                "async function r(){" +
-                "try{" +
-                "const t=window.AndroidFCM.getToken();" +
-                "if(!t)return;" +
-                "await fetch('/api/fcm/register',{" +
-                "method:'POST'," +
-                "headers:{'Content-Type':'application/json'}," +
-                "credentials:'include'," +
-                "body:JSON.stringify({token:t,role:'" + getString(R.string.app_role) + "',package_name:'" + getPackageName() + "'})" +
-                "});" +
-                "}catch(e){}" +
-                "}r();setInterval(r,4000);" +
-                "})();";
-        webView.evaluateJavascript(js, null);
+    private void startOrderStatusPolling() {
+        pollRunnable = new Runnable() {
+            @Override
+            public void run() {
+                checkForOrderUpdates();
+                pollHandler.postDelayed(this, 5000); // Polls every 5 seconds
+            }
+        };
+        pollHandler.post(pollRunnable);
+    }
+
+    private void checkForOrderUpdates() {
+        new Thread(() -> {
+            try {
+                String serverUrl = getString(R.string.server_url) + "/api/orders/latest-status";
+                URL url = new URL(serverUrl);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setConnectTimeout(4000);
+                conn.setReadTimeout(4000);
+
+                // Pass WebView session cookies to the request
+                String cookie = CookieManager.getInstance().getCookie(serverUrl);
+                if (cookie != null) {
+                    conn.setRequestProperty("Cookie", cookie);
+                }
+
+                if (conn.getResponseCode() == 200) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+                    reader.close();
+
+                    JSONObject json = new JSONObject(response.toString());
+                    if (json.has("hasUpdate") && json.getBoolean("hasUpdate")) {
+                        String orderId = json.optString("order_id", "");
+                        String status = json.optString("status", "");
+                        String title = json.optString("title", "Order Update");
+                        String message = json.optString("message", "Your order status has changed.");
+
+                        String lastKnownStatus = prefs.getString("last_status_" + orderId, "");
+                        if (!status.equals(lastKnownStatus)) {
+                            prefs.edit().putString("last_status_" + orderId, status).apply();
+                            runOnUiThread(() -> showLocalNotification(title, message));
+                        }
+                    }
+                }
+                conn.disconnect();
+            } catch (Exception ignored) {
+            }
+        }).start();
+    }
+
+    private void showLocalNotification(String title, String message) {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                this,
+                (int) System.currentTimeMillis(),
+                intent,
+                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "orders")
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent);
+
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (manager != null) {
+            manager.notify((int) System.currentTimeMillis(), builder.build());
+        }
     }
 
     private void requestPermission() {
@@ -167,15 +260,19 @@ public class MainActivity extends AppCompatActivity {
             NotificationChannel c = new NotificationChannel("orders", "Orders", NotificationManager.IMPORTANCE_HIGH);
             c.setDescription("Order and status notifications");
             c.enableVibration(true);
-            getSystemService(NotificationManager.class).createNotificationChannel(c);
+            NotificationManager nm = getSystemService(NotificationManager.class);
+            if (nm != null) {
+                nm.createNotificationChannel(c);
+            }
         }
     }
 
-    public class Bridge {
-        @JavascriptInterface
-        public String getToken() {
-            return getSharedPreferences("fcm", MODE_PRIVATE).getString("token", "");
+    @Override
+    protected void onDestroy() {
+        if (pollHandler != null && pollRunnable != null) {
+            pollHandler.removeCallbacks(pollRunnable);
         }
+        super.onDestroy();
     }
 
     @Override

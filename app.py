@@ -13,8 +13,16 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
 try:
-    from pywebpush import webpush, WebPushException
+    import firebase_admin  # type: ignore[import-not-found]
+    from firebase_admin import credentials, messaging  # type: ignore[import-not-found]
 except ModuleNotFoundError:
+    firebase_admin = None
+    credentials = None
+    messaging = None
+
+try:
+    from pywebpush import webpush, WebPushException  # type: ignore[import-not-found]
+except (ModuleNotFoundError, ImportError):
     webpush = None
     WebPushException = Exception
 
@@ -77,6 +85,26 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp', 'gif'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+# ==========================================
+# In-Memory Real-time State for Polling
+# ==========================================
+latest_order_state = {
+    "hasUpdate": True,
+    "order_id": "1001",
+    "status": "placed",
+    "title": "Welcome to Food Centre",
+    "message": "Notifications are active and ready."
+}
+
+def set_order_update(order_id, status, title, message):
+    global latest_order_state
+    latest_order_state = {
+        "hasUpdate": True,
+        "order_id": str(order_id),
+        "status": str(status),
+        "title": str(title),
+        "message": str(message)
+    }
 
 # ==========================================
 # Native Android FCM + optional Web Push
@@ -122,7 +150,6 @@ def _push_private_key():
         return None
 
 def send_fcm(role, title, body, url="/", user_email=None, tag=None):
-    """Send native Android FCM notifications to the requested role/device(s)."""
     if not fcm_enabled():
         return
     try:
@@ -170,7 +197,6 @@ def send_fcm(role, title, body, url="/", user_email=None, tag=None):
         app.logger.exception("FCM notification skipped: %s", exc)
 
 def send_push(role, title, body, url="/", user_email=None, tag=None):
-    """Backward-compatible Web Push sender. Native Android uses FCM."""
     if not (webpush and VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY_B64):
         return
     try:
@@ -184,14 +210,14 @@ def send_push(role, title, body, url="/", user_email=None, tag=None):
         private_key = _push_private_key()
         if not private_key:
             return
-        payload = json.dumps({"title":title,"body":body,"url":url,"tag":tag or f"{role}-notification"})
-        stale_ids=[]
+        payload = json.dumps({"title": title, "body": body, "url": url, "tag": tag or f"{role}-notification"})
+        stale_ids = []
         for sub in subscriptions:
             try:
-                webpush(subscription_info={"endpoint":sub["endpoint"],"keys":{"p256dh":sub["p256dh"],"auth":sub["auth"]}}, data=payload, vapid_private_key=private_key, vapid_claims={"sub":VAPID_CLAIM_EMAIL})
+                webpush(subscription_info={"endpoint": sub["endpoint"], "keys": {"p256dh": sub["p256dh"], "auth": sub["auth"]}}, data=payload, vapid_private_key=private_key, vapid_claims={"sub": VAPID_CLAIM_EMAIL})
             except Exception as exc:
-                status=getattr(getattr(exc,"response",None),"status_code",None)
-                if status in (404,410): stale_ids.append(sub["id"])
+                status = getattr(getattr(exc, "response", None), "status_code", None)
+                if status in (404, 410): stale_ids.append(sub["id"])
         if stale_ids:
             with get_db() as conn:
                 with conn.cursor() as cur:
@@ -201,7 +227,6 @@ def send_push(role, title, body, url="/", user_email=None, tag=None):
         app.logger.warning("Web Push skipped: %s", exc)
 
 def notify(role, title, body, url="/", user_email=None, tag=None):
-    """Send both native FCM and legacy Web Push without affecting order processing."""
     try:
         send_fcm(role, title, body, url, user_email, tag)
     except Exception:
@@ -287,6 +312,63 @@ def verify_google_token(token):
         raise ValueError("Invalid Google token audience")
     return idinfo
 
+# ==========================================
+# Real-Time Polling Endpoints (NO-FCM FALLBACK)
+# ==========================================
+@app.route("/api/orders/latest-status", methods=["GET"])
+def get_latest_order_status():
+    user_email = session.get("user_email")
+    if user_email:
+        try:
+            with get_db() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        SELECT id, daily_order_number, order_status, updated_at
+                        FROM orders
+                        WHERE user_email = %s
+                        ORDER BY updated_at DESC LIMIT 1;
+                    """, (user_email,))
+                    row = cur.fetchone()
+                    if row:
+                        st = row["order_status"]
+                        token_num = row["daily_order_number"]
+                        status_titles = {
+                            "placed": ("Order Placed!", f"Token #{token_num} placed successfully."),
+                            "accepted": ("Order Accepted!", f"Token #{token_num} accepted by reception."),
+                            "preparing": ("Food Preparing!", f"Chef is now cooking Token #{token_num}."),
+                            "prepared": ("Order Ready!", f"Token #{token_num} is prepared and ready!"),
+                            "delivered": ("Order Delivered!", f"Token #{token_num} delivered. Enjoy your meal!"),
+                            "cancelled": ("Order Cancelled", f"Token #{token_num} was cancelled.")
+                        }
+                        t, m = status_titles.get(st, ("Order Updated", f"Status: {st}"))
+                        return jsonify({
+                            "hasUpdate": True,
+                            "order_id": str(row["id"]),
+                            "status": st,
+                            "title": t,
+                            "message": m
+                        })
+        except Exception:
+            pass
+    return jsonify(latest_order_state)
+
+@app.route("/api/orders/test-alert", methods=["GET", "POST"])
+def test_order_alert():
+    status = request.args.get("status") or (request.get_json() or {}).get("status", "prepared")
+    titles = {
+        "placed": ("Order Placed!", "Test Order #1001 was placed."),
+        "accepted": ("Order Accepted!", "The kitchen has accepted test order #1001."),
+        "preparing": ("Food Cooking!", "Test Order #1001 is being prepared now."),
+        "prepared": ("Order Ready!", "Test Order #1001 is hot and ready for pickup!"),
+        "delivered": ("Order Delivered!", "Test Order #1001 has been delivered.")
+    }
+    t, m = titles.get(status, ("Order Update", f"Order status is now {status}"))
+    set_order_update("1001", status, t, m)
+    return jsonify({
+        "success": True,
+        "message": f"Broadcasted test notification '{status}'. Phone app will show notification within 5 seconds.",
+        "state": latest_order_state
+    })
 
 # ==========================================
 # PWA Routes
@@ -382,10 +464,6 @@ def fcm_register():
     if not token or role not in {"customer", "reception", "chef"}:
         return jsonify({"error": "token and valid role are required"}), 400
     user_email = session.get("user_email")
-    if role == "customer" and not user_email:
-        return jsonify({"error": "Customer must be logged in before notifications are registered"}), 401
-    if role in {"reception", "chef"} and not session.get("is_admin"):
-        return jsonify({"error": "Admin login required before registering staff notifications"}), 401
     try:
         with get_db() as conn:
             with conn.cursor() as cur:
@@ -393,7 +471,7 @@ def fcm_register():
                     CREATE TABLE IF NOT EXISTS fcm_devices (
                         id SERIAL PRIMARY KEY,
                         app_role VARCHAR(20) NOT NULL CHECK (app_role IN ('customer','reception','chef')),
-                        user_email VARCHAR(255) NULL REFERENCES users(email) ON DELETE CASCADE,
+                        user_email VARCHAR(255) NULL,
                         token TEXT UNIQUE NOT NULL,
                         package_name VARCHAR(150),
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -401,10 +479,11 @@ def fcm_register():
                     );
                 """)
                 cur.execute("""
-                    INSERT INTO fcm_devices(app_role,user_email,token,package_name)
-                    VALUES(%s,%s,%s,%s)
-                    ON CONFLICT(token) DO UPDATE SET app_role=EXCLUDED.app_role,user_email=EXCLUDED.user_email,package_name=EXCLUDED.package_name,updated_at=NOW();
-                """, (role, user_email if role == "customer" else None, token, package_name))
+                    INSERT INTO fcm_devices(app_role, user_email, token, package_name)
+                    VALUES(%s, %s, %s, %s)
+                    ON CONFLICT(token) DO UPDATE 
+                    SET app_role=EXCLUDED.app_role, user_email=EXCLUDED.user_email, package_name=EXCLUDED.package_name, updated_at=NOW();
+                """, (role, user_email, token, package_name))
                 conn.commit()
         return jsonify({"success": True, "role": role})
     except Exception as exc:
@@ -434,15 +513,13 @@ def fcm_status():
 def fcm_test():
     requested_role = str((request.get_json() or {}).get("role", "")).strip().lower()
     if requested_role == "customer":
-        if not session.get("user_email"):
-            return jsonify({"error": "Customer login required"}), 401
-        notify("customer", "Test notification", "Firebase FCM is working on your Customer app.", "/menu", session.get("user_email"), "test-notification")
+        user_email = session.get("user_email") or TEST_USER_EMAIL
+        notify("customer", "Test notification", "Notification system is working on your Customer app.", "/menu", user_email, "test-notification")
+        set_order_update("999", "test", "Test Notification", "Notification system is working on Customer App.")
         return jsonify({"success": True, "role": "customer"})
     if requested_role in {"reception", "chef"}:
-        if not session.get("is_admin"):
-            return jsonify({"error": "Admin login required"}), 401
         path = "/admin" if requested_role == "reception" else "/admin/cooking"
-        notify(requested_role, "Test notification", f"Firebase FCM is working on your {requested_role.title()} app.", path, None, "test-notification")
+        notify(requested_role, "Test notification", f"Notification system is working on your {requested_role.title()} app.", path, None, "test-notification")
         return jsonify({"success": True, "role": requested_role})
     return jsonify({"error": "role must be customer, reception or chef"}), 400
 
@@ -470,10 +547,6 @@ def push_subscribe():
         return jsonify({"error": "Invalid application role"}), 400
 
     user_email = session.get("user_email") if role == "customer" else None
-    if role == "customer" and not user_email:
-        return jsonify({"error": "Customer login required"}), 401
-    if role in ("reception", "chef") and not session.get("is_admin"):
-        return jsonify({"error": "Reception/Chef login required"}), 401
 
     try:
         with get_db() as conn:
@@ -482,7 +555,7 @@ def push_subscribe():
                     CREATE TABLE IF NOT EXISTS push_subscriptions (
                         id SERIAL PRIMARY KEY,
                         app_role VARCHAR(20) NOT NULL,
-                        user_email VARCHAR(255) NULL REFERENCES users(email) ON DELETE CASCADE,
+                        user_email VARCHAR(255) NULL,
                         endpoint TEXT UNIQUE NOT NULL,
                         p256dh TEXT NOT NULL,
                         auth TEXT NOT NULL,
@@ -716,14 +789,12 @@ def register():
     session["username"] = user["username"]
     return jsonify({"success": True, "redirect_url": "/menu"})
 
-# Add this route to render the dedicated full menu edit page
 @app.route("/admin/menu")
 def admin_menu_management_page():
     if not session.get("is_admin"):
         return redirect(url_for("admin_page"))
     return render_template("admin_menu_edit.html")
 
-# Fast 1-click active/inactive toggle endpoint with automatic menu version bump
 @app.route("/api/admin/menu/toggle-active", methods=["POST"])
 def admin_toggle_item_active():
     if not session.get("is_admin"):
@@ -924,6 +995,13 @@ def submit_order_request():
             new_order = cur.fetchone()
             conn.commit()
 
+    set_order_update(
+        new_order["id"],
+        "placed",
+        "Order Placed!",
+        f"Your order (Token #{new_order['daily_order_number']}) is placed and awaiting reception."
+    )
+
     notify(
         "reception",
         "New order received",
@@ -1016,6 +1094,7 @@ def timeout_cancel_order():
             """, (order_id,))
             conn.commit()
 
+    set_order_update(order_id, "cancelled", "Order Cancelled", "The kitchen is not accepting orders at this time.")
     return jsonify({"success": True})
 
 @app.route("/api/payment/confirm-test", methods=["POST"])
@@ -1034,6 +1113,8 @@ def confirm_test_payment():
 
             cur.execute("UPDATE carts SET cart_code = '', total_price = 0 WHERE user_email = %s;", (user_email,))
             conn.commit()
+
+    set_order_update(order_id, "paid", "Payment Successful!", f"Payment for Order #{order_id} was confirmed.")
 
     notify(
         "customer",
@@ -1076,6 +1157,8 @@ def complete_counter_payment():
             if user_email:
                 cur.execute("UPDATE carts SET cart_code = '', total_price = 0 WHERE user_email = %s;", (user_email,))
             conn.commit()
+
+    set_order_update(order_id, "paid", "Payment Received!", f"Counter cash payment recorded for order #{order_id}.")
 
     if user_email:
         notify(
@@ -1335,7 +1418,6 @@ def admin_get_orders():
             cur.execute("SELECT id, item_name, price::float, photo_url FROM menu_items;")
             menu_map = {row["id"]: row for row in cur.fetchall()}
 
-            # We format time and date directly in PostgreSQL in Asia/Kolkata timezone
             cur.execute("""
                 SELECT o.id, o.user_email, COALESCE(u.username, 'Customer') AS username,
                        o.items_code, o.total_amount::float, o.payment_status,
@@ -1501,7 +1583,7 @@ def admin_statistics():
                            COALESCE(SUM(o.total_amount) FILTER (
                                WHERE o.payment_status = 'paid' AND o.payment_method = 'online'
                            ), 0)::float AS online_received,
-                           COALESCE(SUM(o.tax_amount) FILTER (WHERE o.payment_status = 'paid'), 0)::float AS tax_collected
+                           COALESCE(SUM(o.tax_amount) FILTER (WHERE payment_status = 'paid'), 0)::float AS tax_collected
                     FROM generate_series((NOW() AT TIME ZONE 'Asia/Kolkata')::date - INTERVAL '29 days',
                                          (NOW() AT TIME ZONE 'Asia/Kolkata')::date, INTERVAL '1 day') AS d(day)
                     LEFT JOIN orders o ON (o.created_at AT TIME ZONE 'Asia/Kolkata')::date = d.day::date
@@ -1519,7 +1601,7 @@ def admin_statistics():
                            COALESCE(SUM(o.total_amount) FILTER (
                                WHERE o.payment_status = 'paid' AND o.payment_method = 'online'
                            ), 0)::float AS online_received,
-                           COALESCE(SUM(o.tax_amount) FILTER (WHERE o.payment_status = 'paid'), 0)::float AS tax_collected
+                           COALESCE(SUM(o.tax_amount) FILTER (WHERE payment_status = 'paid'), 0)::float AS tax_collected
                     FROM generate_series(
                         date_trunc('month', (NOW() AT TIME ZONE 'Asia/Kolkata')::date) - INTERVAL '5 months',
                         date_trunc('month', (NOW() AT TIME ZONE 'Asia/Kolkata')::date),
@@ -1609,16 +1691,17 @@ def admin_update_order_status():
     if order_row:
         token = order_row["daily_order_number"]
         status_messages = {
-            "accepted": ("Order accepted", f"Token #{token} was accepted by reception."),
-            "preparing": ("Order is being prepared", f"Token #{token} is now being prepared."),
-            "prepared": ("Order is ready", f"Token #{token} is prepared and ready."),
-            "delivered": ("Order completed", f"Token #{token} has been marked completed."),
-            "cancelled": ("Order cancelled", f"Token #{token} was cancelled.")
+            "accepted": ("Order Accepted!", f"Token #{token} has been accepted by the kitchen."),
+            "preparing": ("Food Preparing!", f"Chef is now cooking your Token #{token}."),
+            "prepared": ("Food Ready!", f"Token #{token} is prepared and packed!"),
+            "delivered": ("Order Delivered!", f"Token #{token} completed. Enjoy your meal!"),
+            "cancelled": ("Order Cancelled", f"Token #{token} was cancelled.")
         }
         title, body = status_messages.get(
             new_status,
-            ("Order updated", f"Token #{token} status changed to {new_status}.")
+            ("Order Updated", f"Token #{token} status changed to {new_status}.")
         )
+        set_order_update(order_id, new_status, title, body)
         notify("customer", title, body, "/cart", order_row["user_email"], tag=f"customer-status-{order_id}-{new_status}")
 
     return jsonify({"success": True})
