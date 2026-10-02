@@ -878,11 +878,13 @@ def admin_get_orders():
             cur.execute("SELECT id, item_name, price::float, photo_url FROM menu_items;")
             menu_map = {row["id"]: row for row in cur.fetchall()}
 
+            # We format time and date directly in PostgreSQL in Asia/Kolkata timezone
             cur.execute("""
                 SELECT o.id, o.user_email, COALESCE(u.username, 'Customer') AS username,
                        o.items_code, o.total_amount::float, o.payment_status,
                        o.order_status, o.daily_order_number,
-                       o.created_at,
+                       to_char(o.created_at AT TIME ZONE 'Asia/Kolkata', 'DD Mon YYYY') AS order_date,
+                       to_char(o.created_at AT TIME ZONE 'Asia/Kolkata', 'HH12:MI AM') AS order_time,
                        COALESCE(o.order_type, 'dine_in') AS order_type,
                        COALESCE(o.payment_method, 'unselected') AS payment_method,
                        EXTRACT(EPOCH FROM (NOW() - o.created_at))::int AS seconds_elapsed
@@ -906,7 +908,6 @@ def admin_get_orders():
             "subtotal": round(menu_map.get(i_id, {"price": 0.0})["price"] * qty, 2)
         } for i_id, qty in parsed_code.items()]
 
-        created_ist = to_ist(o.get("created_at"))
         seconds_remaining = max(0, 60 - o["seconds_elapsed"]) if o["order_status"] == 'placed' else 0
 
         order_dict = {
@@ -920,8 +921,8 @@ def admin_get_orders():
             "order_type": o.get("order_type", "dine_in"),
             "payment_method": o.get("payment_method", "unselected"),
             "seconds_left": seconds_remaining,
-            "date": created_ist.strftime("%d %b %Y") if created_ist else "",
-            "time": created_ist.strftime("%I:%M %p") if created_ist else "",
+            "date": o["order_date"] or "",
+            "time": o["order_time"] or "",
             "items": items_detail
         }
 
@@ -958,7 +959,8 @@ def admin_cooking_orders():
                 SELECT o.id, o.user_email, COALESCE(u.username, 'Customer') AS username,
                        o.items_code, o.total_amount::float, o.payment_status, o.order_status,
                        o.daily_order_number,
-                       o.created_at,
+                       to_char(o.created_at AT TIME ZONE 'Asia/Kolkata', 'DD Mon YYYY') AS order_date,
+                       to_char(o.created_at AT TIME ZONE 'Asia/Kolkata', 'HH12:MI AM') AS order_time,
                        COALESCE(o.order_type, 'dine_in') AS order_type,
                        COALESCE(o.payment_method, 'unselected') AS payment_method
                 FROM orders o
@@ -972,7 +974,6 @@ def admin_cooking_orders():
     orders = []
     for order in rows:
         parsed = parse_cart_code(order["items_code"])
-        created_ist = to_ist(order.get("created_at"))
         orders.append({
             "id": order["id"],
             "daily_order_number": order["daily_order_number"],
@@ -983,8 +984,8 @@ def admin_cooking_orders():
             "order_status": order["order_status"],
             "order_type": order.get("order_type", "dine_in"),
             "payment_method": order.get("payment_method", "unselected"),
-            "date": created_ist.strftime("%d %b %Y") if created_ist else "",
-            "time": created_ist.strftime("%I:%M %p") if created_ist else "",
+            "date": order["order_date"] or "",
+            "time": order["order_time"] or "",
             "items": [{
                 "name": menu_map.get(item_id, {"item_name": f"Dish #{item_id}"})["item_name"],
                 "photo_url": menu_map.get(item_id, {}).get("photo_url", ""),
@@ -1022,7 +1023,8 @@ def admin_statistics():
                 cur.execute("""
                     SELECT o.id, o.daily_order_number,
                            COALESCE(u.username, o.user_email, 'Customer') AS username,
-                           o.created_at, o.order_status, o.payment_status,
+                           to_char(o.created_at AT TIME ZONE 'Asia/Kolkata', 'HH12:MI AM') AS order_time,
+                           o.order_status, o.payment_status,
                            COALESCE(o.payment_method, 'unselected') AS payment_method,
                            COALESCE(o.total_amount, 0)::float AS total_amount,
                            COALESCE(o.tax_amount, 0)::float AS tax_amount
@@ -1091,7 +1093,7 @@ def admin_statistics():
             "id": row["id"],
             "daily_order_number": row["daily_order_number"],
             "username": row["username"],
-            "time": to_ist(row["created_at"]).strftime("%I:%M %p") if row["created_at"] else "—",
+            "time": row["order_time"] or "—",
             "status": row["order_status"],
             "payment_status": row["payment_status"],
             "payment_method": row["payment_method"],
@@ -1256,7 +1258,9 @@ def get_user_orders():
 
             cur.execute("""
                 SELECT id, items_code, total_amount::float, payment_status, order_status, 
-                       cancellation_reason, daily_order_number, created_at,
+                       cancellation_reason, daily_order_number,
+                       to_char(created_at AT TIME ZONE 'Asia/Kolkata', 'DD Mon YYYY') AS order_date,
+                       to_char(created_at AT TIME ZONE 'Asia/Kolkata', 'HH12:MI AM') AS order_time,
                        COALESCE(order_type, 'dine_in') AS order_type,
                        COALESCE(payment_method, 'unselected') AS payment_method
                 FROM orders
@@ -1269,12 +1273,11 @@ def get_user_orders():
     for order in orders_rows:
         parsed_code = parse_cart_code(order["items_code"])
         item_summaries = [f"{items_map.get(i_id, f'Dish #{i_id}')} x{qty}" for i_id, qty in parsed_code.items()]
-        created_ist = to_ist(order.get("created_at"))
         formatted_orders.append({
             "id": order["id"],
             "daily_order_number": order["daily_order_number"],
-            "date": created_ist.strftime("%d %b %Y") if created_ist else "N/A",
-            "time": created_ist.strftime("%I:%M %p") if created_ist else "N/A",
+            "date": order["order_date"] or "N/A",
+            "time": order["order_time"] or "N/A",
             "items": item_summaries,
             "total_amount": order["total_amount"],
             "order_status": order["order_status"],
