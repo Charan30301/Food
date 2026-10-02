@@ -9,6 +9,8 @@ from urllib.request import urlopen
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from zoneinfo import ZoneInfo
+from datetime import timezone
 
 try:
     psycopg = importlib.import_module("psycopg")
@@ -44,10 +46,23 @@ DB_CONFIG = {
     "port": int(os.environ.get("DB_PORT", 5432))
 }
 
+IST = ZoneInfo("Asia/Kolkata")
+
+def to_ist(dt):
+    if not dt:
+        return None
+    # If dt has no timezone info, treat it as UTC first, then convert to IST
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(IST)
+
 def get_db():
     if psycopg is None or dict_row is None:
         raise RuntimeError("Install psycopg: pip install psycopg[binary]")
-    return psycopg.connect(**DB_CONFIG, row_factory=dict_row)
+    conn = psycopg.connect(**DB_CONFIG, row_factory=dict_row)
+    with conn.cursor() as cur:
+        cur.execute("SET TIME ZONE 'Asia/Kolkata';")
+    return conn
 
 UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -858,14 +873,13 @@ def admin_get_orders():
     if not session.get("is_admin"):
         return jsonify({"error": "Unauthorized"}), 401
 
-    # Do not run full-table cleanup on every dashboard poll; this endpoint refreshes frequently.
     kitchen_open = get_setting("kitchen_open", "true") == "true"
 
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_type VARCHAR(20) DEFAULT 'dine_in';")
             cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(30) DEFAULT 'unselected';")
-            cur.execute("SELECT id, item_name, price::float FROM menu_items;")
+            cur.execute("SELECT id, item_name, price::float, photo_url FROM menu_items;")
             menu_map = {row["id"]: row for row in cur.fetchall()}
 
             cur.execute("""
@@ -890,6 +904,7 @@ def admin_get_orders():
         parsed_code = parse_cart_code(o["items_code"])
         items_detail = [{
             "name": menu_map.get(i_id, {"item_name": f"Dish #{i_id}"})["item_name"],
+            "photo_url": menu_map.get(i_id, {}).get("photo_url", ""),
             "quantity": qty,
             "subtotal": round(menu_map.get(i_id, {"price": 0.0})["price"] * qty, 2)
         } for i_id, qty in parsed_code.items()]
@@ -907,7 +922,8 @@ def admin_get_orders():
             "order_type": o.get("order_type", "dine_in"),
             "payment_method": o.get("payment_method", "unselected"),
             "seconds_left": seconds_remaining,
-            "time": o["created_at"].strftime("%I:%M %p") if o["created_at"] else "",
+            "date": created_ist.strftime("%d %b %Y") if created_ist else "",
+            "time": created_ist.strftime("%I:%M %p") if created_ist else "",
             "items": items_detail
         }
 
@@ -927,6 +943,57 @@ def admin_get_orders():
         "counter_count": len(counter_bills),
         "kitchen_open": kitchen_open
     })
+
+@app.route("/api/admin/cooking-orders", methods=["GET"])
+def admin_cooking_orders():
+    if not session.get("is_admin"):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_type VARCHAR(20) DEFAULT 'dine_in';")
+            cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(30) DEFAULT 'unselected';")
+            cur.execute("SELECT id, item_name, price::float, photo_url FROM menu_items;")
+            menu_map = {row["id"]: row for row in cur.fetchall()}
+            
+            # Wiped on 'prepared': only show 'accepted' and 'preparing' orders that are paid
+            cur.execute("""
+                SELECT o.id, o.user_email, COALESCE(u.username, 'Customer') AS username,
+                       o.items_code, o.total_amount::float, o.payment_status, o.order_status,
+                       o.daily_order_number, o.created_at,
+                       COALESCE(o.order_type, 'dine_in') AS order_type,
+                       COALESCE(o.payment_method, 'unselected') AS payment_method
+                FROM orders o
+                LEFT JOIN users u ON o.user_email = u.email
+                WHERE o.order_status IN ('accepted', 'preparing')
+                  AND o.payment_status = 'paid'
+                ORDER BY o.created_at ASC;
+            """)
+            rows = cur.fetchall()
+
+    orders = []
+    for order in rows:
+        parsed = parse_cart_code(order["items_code"])
+        orders.append({
+            "id": order["id"],
+            "daily_order_number": order["daily_order_number"],
+            "username": order["username"],
+            "user_email": order["user_email"],
+            "total_amount": order["total_amount"],
+            "payment_status": order["payment_status"],
+            "order_status": order["order_status"],
+            "order_type": order.get("order_type", "dine_in"),
+            "payment_method": order.get("payment_method", "unselected"),
+            "date": created_ist.strftime("%d %b %Y") if created_ist else "",
+            "time": created_ist.strftime("%I:%M %p") if created_ist else "",
+            "items": [{
+                "name": menu_map.get(item_id, {"item_name": f"Dish #{item_id}"})["item_name"],
+                "photo_url": menu_map.get(item_id, {}).get("photo_url", ""),
+                "quantity": qty,
+                "subtotal": round(menu_map.get(item_id, {"price": 0.0})["price"] * qty, 2)
+            } for item_id, qty in parsed.items()]
+        })
+    return jsonify({"orders": orders})
 
 @app.route("/api/admin/statistics", methods=["GET"])
 def admin_statistics():
@@ -1041,55 +1108,6 @@ def admin_statistics():
         app.logger.exception("Could not build admin statistics")
         return jsonify({"error": "Could not load statistics. Check the database schema and connection."}), 500
 
-
-@app.route("/api/admin/cooking-orders", methods=["GET"])
-def admin_cooking_orders():
-    if not session.get("is_admin"):
-        return jsonify({"error": "Unauthorized"}), 401
-
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_type VARCHAR(20) DEFAULT 'dine_in';")
-            cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(30) DEFAULT 'unselected';")
-            cur.execute("SELECT id, item_name, price::float FROM menu_items;")
-            menu_map = {row["id"]: row for row in cur.fetchall()}
-            
-            # REQUIREMENT: Wait until payment is done (payment_status = 'paid')
-            cur.execute("""
-                SELECT o.id, o.user_email, COALESCE(u.username, 'Customer') AS username,
-                       o.items_code, o.total_amount::float, o.payment_status, o.order_status,
-                       o.daily_order_number, o.created_at,
-                       COALESCE(o.order_type, 'dine_in') AS order_type,
-                       COALESCE(o.payment_method, 'unselected') AS payment_method
-                FROM orders o
-                LEFT JOIN users u ON o.user_email = u.email
-                WHERE o.order_status IN ('accepted', 'preparing', 'prepared')
-                  AND o.payment_status = 'paid'
-                ORDER BY o.created_at ASC;
-            """)
-            rows = cur.fetchall()
-
-    orders = []
-    for order in rows:
-        parsed = parse_cart_code(order["items_code"])
-        orders.append({
-            "id": order["id"],
-            "daily_order_number": order["daily_order_number"],
-            "username": order["username"],
-            "user_email": order["user_email"],
-            "total_amount": order["total_amount"],
-            "payment_status": order["payment_status"],
-            "order_status": order["order_status"],
-            "order_type": order.get("order_type", "dine_in"),
-            "payment_method": order.get("payment_method", "unselected"),
-            "time": order["created_at"].strftime("%I:%M %p") if order["created_at"] else "",
-            "items": [{
-                "name": menu_map.get(item_id, {"item_name": f"Dish #{item_id}"})["item_name"],
-                "quantity": qty,
-                "subtotal": round(menu_map.get(item_id, {"price": 0.0})["price"] * qty, 2)
-            } for item_id, qty in parsed.items()]
-        })
-    return jsonify({"orders": orders})
 
 @app.route("/api/admin/kitchen-toggle", methods=["POST"])
 def admin_toggle_kitchen():
@@ -1257,12 +1275,12 @@ def get_user_orders():
     for order in orders_rows:
         parsed_code = parse_cart_code(order["items_code"])
         item_summaries = [f"{items_map.get(i_id, f'Dish #{i_id}')} x{qty}" for i_id, qty in parsed_code.items()]
-        created = order["created_at"]
+        created_ist = to_ist(order["created_at"])
         formatted_orders.append({
             "id": order["id"],
             "daily_order_number": order["daily_order_number"],
-            "date": created.strftime("%d %b %Y") if created else "N/A",
-            "time": created.strftime("%I:%M %p") if created else "N/A",
+            "date": created_ist.strftime("%d %b %Y") if created_ist else "N/A",
+            "time": created_ist.strftime("%I:%M %p") if created_ist else "N/A",
             "items": item_summaries,
             "total_amount": order["total_amount"],
             "order_status": order["order_status"],
