@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#16865f">
+<link rel="manifest" href="/manifest/chef.webmanifest">
+<title>Chef Login</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:linear-gradient(180deg,#fffdf8,#f4efe2);font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#302a20;padding:20px}
+.card{width:min(390px,100%);background:#fffdf7;border:1px solid #ded3b8;border-radius:20px;padding:28px;box-shadow:0 18px 50px #00000012}
+.icon{font-size:48px;text-align:center}.title{text-align:center;margin:8px 0 4px}.sub{text-align:center;color:#766d5d;font-size:.9rem;margin-bottom:22px}
+label{display:block;font-weight:700;font-size:.82rem;margin-bottom:6px}input{width:100%;padding:13px;border:1px solid #cfc3a8;border-radius:10px;font-size:1rem;background:#fff}
+button{width:100%;margin-top:14px;padding:13px;border:0;border-radius:10px;background:#16865f;color:#fff;font-weight:800;font-size:1rem;cursor:pointer}
+.error{color:#b42318;font-size:.82rem;margin-top:10px;text-align:center;min-height:20px}.back{display:block;text-align:center;margin-top:16px;color:#6b4f1d;text-decoration:none;font-weight:700;font-size:.85rem}
+</style>
+<script src="/static/js/pwa.js" defer></script>
+</head>
+<body data-pwa-role="chef">
+<div class="card">
+<div class="icon">🍳</div><h1 class="title">Chef Application</h1><div class="sub">Enter the kitchen password to continue.</div>
+<form id="loginForm"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required autofocus><button>Open Cooking Orders</button><div id="error" class="error"></div></form>
+<a class="back" href="/installs">← App installations</a>
+</div>
+<script>
+document.getElementById('loginForm').addEventListener('submit',async e=>{
+ e.preventDefault(); const error=document.getElementById('error'); error.textContent='';
+ try{
+  const res=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:document.getElementById('password').value})});
+  const data=await res.json();
+  if(!res.ok||!data.success) throw new Error(data.error||'Incorrect password');
+  location.href='/chef';
+ }catch(err){error.textContent=err.message}
+});
+</script>
+</body></html>

@@ -541,6 +541,7 @@
             font-size: 0.82rem;
         }
     </style>
+<script src="/static/js/pwa.js" defer></script>
 </head>
 <body>
 
@@ -943,6 +944,7 @@
             document.getElementById("confirmDialogTitle").textContent = title;
             document.getElementById("confirmDialogMessage").textContent = message;
             document.getElementById("adminConfirmModal").classList.add("open");
+            if (window.appPopupNotification) window.appPopupNotification(title, message, "/admin");
             return new Promise(resolve => { confirmResolve = resolve; });
         }
         function closeAdminConfirm(result) {

@@ -57,3 +57,60 @@ Run the updated `schema.sql` against the existing PostgreSQL database (or deploy
 
 ### Statistics definitions
 Order counts exclude cancelled orders. Cash/counter and online received totals include only orders marked `paid`. Online payments are currently recorded under the generic `online` method; the current code does not identify PhonePe separately. Tax is summed from the tax amount saved against each paid order.
+
+
+# Three Installable Applications (PWA)
+
+This project now provides three separate installable Progressive Web Apps from the same Flask website:
+
+- **Customer App** — customer login, menu, cart and ordering flow.
+- **Reception App** — protected reception/admin area, including dashboard, orders, statistics and menu management.
+- **Chef App** — protected kitchen app showing `cooking_orders`; the same admin password is used.
+
+## Install page
+
+Open:
+
+`/installs`
+
+The three application install cards are displayed in one row on desktop and stack on small screens. Each card opens a dedicated installer page.
+
+## Background notifications
+
+The apps use the browser Push API and a service worker. This allows push notifications to be delivered while the installed app is not open, subject to the device/browser notification settings.
+
+Set these environment variables in production:
+
+- `VAPID_PUBLIC_KEY`
+- `VAPID_PRIVATE_KEY_B64`
+- `VAPID_CLAIM_EMAIL` (example: `mailto:you@example.com`)
+
+Generate a key pair with:
+
+```bash
+python scripts/generate_vapid.py
+```
+
+The script prints the two values needed for the environment variables. Keep the private key secret.
+
+For Render, add the three variables under the service's Environment settings and redeploy.
+
+## Notification flow
+
+- New customer order → Reception push.
+- Customer order accepted/preparing/prepared/delivered/cancelled → Customer push.
+- Customer payment confirmed/counter payment received → Customer push.
+- Paid order entering the cooking queue → Chef push.
+- Foreground custom popups can also create a browser notification when permission has been granted.
+
+The existing in-page sounds and popup UI are preserved.
+
+## PWA requirements
+
+For install and background push notifications, production must be served over **HTTPS**. `localhost` is also treated as a secure context by browsers for local development.
+
+If a browser does not offer an install prompt, use its browser menu and choose its **Install app / Add to Home screen** option.
+
+## Database
+
+`schema.sql` now includes a `push_subscriptions` table. The subscription endpoint also creates that table automatically if an older deployed database has not yet been migrated.

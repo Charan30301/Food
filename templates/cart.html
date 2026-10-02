@@ -361,6 +361,7 @@
         }
         .tax-line { display: flex; justify-content: space-between; color: var(--espresso); }
     </style>
+<script src="/static/js/pwa.js" defer></script>
 </head>
 <body>
 <div class="page-loading-overlay" id="cartLoadingOverlay" role="status" aria-live="polite">
@@ -491,6 +492,7 @@
         }
 
         dialogCallback = onResolve;
+        if (window.appPopupNotification) window.appPopupNotification(title, message, "/cart");
         document.getElementById("customDialogModal").classList.add("open");
     }
 

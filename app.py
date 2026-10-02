@@ -8,9 +8,17 @@ from urllib.parse import urlencode
 from urllib.request import urlopen
 from datetime import timezone
 from zoneinfo import ZoneInfo
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, Response
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+
+try:
+    pywebpush = importlib.import_module("pywebpush")
+    webpush = pywebpush.webpush
+    WebPushException = pywebpush.WebPushException
+except ModuleNotFoundError:
+    webpush = None
+    WebPushException = Exception
 
 try:
     psycopg = importlib.import_module("psycopg")
@@ -70,6 +78,99 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp', 'gif'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+# ==========================================
+# PWA / Web Push
+# ==========================================
+VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "").strip()
+VAPID_PRIVATE_KEY_B64 = os.environ.get("VAPID_PRIVATE_KEY_B64", "").strip()
+VAPID_CLAIM_EMAIL = os.environ.get("VAPID_CLAIM_EMAIL", "mailto:admin@example.com").strip()
+
+def push_enabled():
+    return bool(webpush and VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY_B64)
+
+def _push_private_key():
+    if not VAPID_PRIVATE_KEY_B64:
+        return None
+    try:
+        import base64
+        return base64.b64decode(VAPID_PRIVATE_KEY_B64).decode("utf-8")
+    except Exception:
+        return None
+
+def send_push(role, title, body, url="/", user_email=None, tag=None):
+    """Send a Web Push notification to all matching active subscriptions.
+    Failures are isolated so a notification problem never breaks an order request.
+    """
+    if not push_enabled():
+        return
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                if role == "customer":
+                    cur.execute("""
+                        SELECT id, endpoint, p256dh, auth
+                        FROM push_subscriptions
+                        WHERE app_role = 'customer' AND user_email = %s;
+                    """, (user_email,))
+                else:
+                    cur.execute("""
+                        SELECT id, endpoint, p256dh, auth
+                        FROM push_subscriptions
+                        WHERE app_role = %s;
+                    """, (role,))
+                subscriptions = cur.fetchall()
+
+        payload = json.dumps({
+            "title": title,
+            "body": body,
+            "url": url,
+            "tag": tag or f"{role}-notification",
+            "timestamp": int(__import__("time").time() * 1000)
+        })
+        private_key = _push_private_key()
+        if not private_key:
+            return
+
+        stale_ids = []
+        for sub in subscriptions:
+            try:
+                webpush(
+                    subscription_info={
+                        "endpoint": sub["endpoint"],
+                        "keys": {"p256dh": sub["p256dh"], "auth": sub["auth"]}
+                    },
+                    data=payload,
+                    vapid_private_key=private_key,
+                    vapid_claims={"sub": VAPID_CLAIM_EMAIL}
+                )
+            except Exception as exc:
+                status = getattr(getattr(exc, "response", None), "status_code", None)
+                if status in (404, 410):
+                    stale_ids.append(sub["id"])
+                app.logger.warning("Push failed for subscription %s: %s", sub["id"], exc)
+
+        if stale_ids:
+            with get_db() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("DELETE FROM push_subscriptions WHERE id = ANY(%s::int[]);", (stale_ids,))
+                    conn.commit()
+    except Exception as exc:
+        app.logger.warning("Push notification skipped: %s", exc)
+
+def notify_roles_for_order(order_id, title, body, customer_url="/cart"):
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT user_email, daily_order_number FROM orders WHERE id = %s;", (order_id,))
+                row = cur.fetchone()
+        if not row:
+            return
+        token = row["daily_order_number"]
+        send_push("customer", title, body, customer_url, row["user_email"], f"customer-order-{order_id}")
+    except Exception as exc:
+        app.logger.warning("Could not notify customer for order %s: %s", order_id, exc)
 
 def clean_old_orders():
     try:
@@ -146,6 +247,160 @@ def verify_google_token(token):
     if idinfo.get("aud") != GOOGLE_CLIENT_ID:
         raise ValueError("Invalid Google token audience")
     return idinfo
+
+
+# ==========================================
+# PWA Routes
+# ==========================================
+PWA_ROLES = {
+    "customer": {
+        "name": "Food Centre Customer",
+        "short_name": "Customer",
+        "start_url": "/app/customer",
+        "home_url": "/menu",
+        "description": "Browse the menu, manage your cart and place food orders.",
+        "theme": "#b8953f"
+    },
+    "reception": {
+        "name": "Food Centre Reception",
+        "short_name": "Reception",
+        "start_url": "/app/reception",
+        "home_url": "/admin",
+        "description": "Reception order management, statistics and menu administration.",
+        "theme": "#6b4f1d"
+    },
+    "chef": {
+        "name": "Food Centre Chef",
+        "short_name": "Chef",
+        "start_url": "/app/chef",
+        "home_url": "/chef",
+        "description": "Kitchen cooking orders and preparation status.",
+        "theme": "#16865f"
+    }
+}
+
+@app.route("/installs")
+def installs_page():
+    return render_template("installs.html", roles=PWA_ROLES)
+
+@app.route("/installs/<role>")
+def install_role_page(role):
+    if role not in PWA_ROLES:
+        return redirect(url_for("installs_page"))
+    return render_template("pwa_install.html", role=role, app_info=PWA_ROLES[role])
+
+@app.route("/manifest/<role>.webmanifest")
+def pwa_manifest(role):
+    info = PWA_ROLES.get(role)
+    if not info:
+        return jsonify({"error": "Unknown application"}), 404
+    manifest = {
+        "id": f"/app/{role}",
+        "name": info["name"],
+        "short_name": info["short_name"],
+        "description": info["description"],
+        "start_url": info["start_url"],
+        "scope": "/",
+        "display": "standalone",
+        "orientation": "portrait-primary",
+        "background_color": "#fffdf7",
+        "theme_color": info["theme"],
+        "icons": [
+            {"src": f"/static/icons/{role}-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+            {"src": f"/static/icons/{role}-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+        ]
+    }
+    return Response(json.dumps(manifest), mimetype="application/manifest+json")
+
+@app.route("/app/<role>")
+def pwa_start(role):
+    if role == "customer":
+        return redirect(url_for("menu_page") if session.get("user_email") else url_for("index"))
+    if role == "reception":
+        return redirect(url_for("admin_page"))
+    if role == "chef":
+        return redirect(url_for("chef_page"))
+    return redirect(url_for("installs_page"))
+
+@app.route("/service-worker.js")
+def service_worker():
+    sw_path = os.path.join(app.root_path, "static", "service-worker.js")
+    with open(sw_path, "r", encoding="utf-8") as f:
+        return Response(f.read(), mimetype="application/javascript",
+                        headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
+
+@app.route("/api/push/config")
+def push_config():
+    return jsonify({
+        "enabled": bool(VAPID_PUBLIC_KEY),
+        "public_key": VAPID_PUBLIC_KEY
+    })
+
+@app.route("/api/push/subscribe", methods=["POST"])
+def push_subscribe():
+    data = request.get_json() or {}
+    subscription = data.get("subscription") or {}
+    endpoint = str(subscription.get("endpoint", "")).strip()
+    keys = subscription.get("keys") or {}
+    p256dh = str(keys.get("p256dh", "")).strip()
+    auth = str(keys.get("auth", "")).strip()
+    role = str(data.get("role", "")).strip().lower()
+
+    if not endpoint or not p256dh or not auth:
+        return jsonify({"error": "Invalid push subscription"}), 400
+
+    if role not in PWA_ROLES:
+        return jsonify({"error": "Invalid application role"}), 400
+
+    user_email = session.get("user_email") if role == "customer" else None
+    if role == "customer" and not user_email:
+        return jsonify({"error": "Customer login required"}), 401
+    if role in ("reception", "chef") and not session.get("is_admin"):
+        return jsonify({"error": "Reception/Chef login required"}), 401
+
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS push_subscriptions (
+                        id SERIAL PRIMARY KEY,
+                        app_role VARCHAR(20) NOT NULL,
+                        user_email VARCHAR(255) NULL REFERENCES users(email) ON DELETE CASCADE,
+                        endpoint TEXT UNIQUE NOT NULL,
+                        p256dh TEXT NOT NULL,
+                        auth TEXT NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                """)
+                cur.execute("""
+                    INSERT INTO push_subscriptions
+                        (app_role, user_email, endpoint, p256dh, auth, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, NOW())
+                    ON CONFLICT (endpoint)
+                    DO UPDATE SET app_role = EXCLUDED.app_role,
+                                  user_email = EXCLUDED.user_email,
+                                  p256dh = EXCLUDED.p256dh,
+                                  auth = EXCLUDED.auth,
+                                  updated_at = NOW();
+                """, (role, user_email, endpoint, p256dh, auth))
+                conn.commit()
+        return jsonify({"success": True})
+    except Exception as exc:
+        app.logger.exception("Could not save push subscription")
+        return jsonify({"error": "Could not save notification subscription"}), 500
+
+@app.route("/api/push/unsubscribe", methods=["POST"])
+def push_unsubscribe():
+    data = request.get_json() or {}
+    endpoint = str(data.get("endpoint", "")).strip()
+    if not endpoint:
+        return jsonify({"success": True})
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM push_subscriptions WHERE endpoint = %s;", (endpoint,))
+            conn.commit()
+    return jsonify({"success": True})
 
 # ==========================================
 # Category & Settings Endpoints
@@ -552,6 +807,14 @@ def submit_order_request():
             new_order = cur.fetchone()
             conn.commit()
 
+    send_push(
+        "reception",
+        "New order received",
+        f"Token #{new_order['daily_order_number']} is waiting for reception.",
+        "/admin",
+        tag=f"reception-new-order-{new_order['id']}"
+    )
+
     return jsonify({
         "success": True,
         "order_id": new_order["id"],
@@ -655,6 +918,21 @@ def confirm_test_payment():
             cur.execute("UPDATE carts SET cart_code = '', total_price = 0 WHERE user_email = %s;", (user_email,))
             conn.commit()
 
+    send_push(
+        "customer",
+        "Payment confirmed",
+        f"Your order #{order_id} payment was confirmed.",
+        "/cart",
+        user_email,
+        tag=f"customer-payment-{order_id}"
+    )
+    send_push(
+        "chef",
+        "New cooking order",
+        f"Order #{order_id} has been paid and is ready for the kitchen queue.",
+        "/chef",
+        tag=f"chef-order-{order_id}"
+    )
     return jsonify({"success": True})
 
 @app.route("/api/admin/order/complete-counter-payment", methods=["POST"])
@@ -682,6 +960,22 @@ def complete_counter_payment():
                 cur.execute("UPDATE carts SET cart_code = '', total_price = 0 WHERE user_email = %s;", (user_email,))
             conn.commit()
 
+    if user_email:
+        send_push(
+            "customer",
+            "Payment received",
+            f"Counter payment received for order #{order_id}.",
+            "/cart",
+            user_email,
+            tag=f"customer-payment-{order_id}"
+        )
+    send_push(
+        "chef",
+        "New cooking order",
+        f"Order #{order_id} has been paid and is ready for the kitchen queue.",
+        "/chef",
+        tag=f"chef-order-{order_id}"
+    )
     return jsonify({"success": True})
 
 @app.route("/api/order/ack-alert", methods=["POST"])
@@ -857,7 +1151,13 @@ def admin_statistics_page():
 def admin_cooking_page():
     if not session.get("is_admin"):
         return redirect(url_for("admin_page"))
-    return render_template("cooking_orders.html")
+    return render_template("cooking_orders.html", pwa_role="chef")
+
+@app.route("/chef")
+def chef_page():
+    if not session.get("is_admin"):
+        return render_template("chef_login.html")
+    return render_template("cooking_orders.html", pwa_role="chef")
 
 @app.route("/api/admin/login", methods=["POST"])
 def admin_login():
@@ -1177,6 +1477,8 @@ def admin_update_order_status():
 
     with get_db() as conn:
         with conn.cursor() as cur:
+            cur.execute("SELECT user_email, daily_order_number FROM orders WHERE id = %s;", (order_id,))
+            order_row = cur.fetchone()
             cur.execute("""
                 UPDATE orders 
                 SET order_status = %s, 
@@ -1186,6 +1488,21 @@ def admin_update_order_status():
                 WHERE id = %s;
             """, (new_status, new_status, reason, order_id))
             conn.commit()
+
+    if order_row:
+        token = order_row["daily_order_number"]
+        status_messages = {
+            "accepted": ("Order accepted", f"Token #{token} was accepted by reception."),
+            "preparing": ("Order is being prepared", f"Token #{token} is now being prepared."),
+            "prepared": ("Order is ready", f"Token #{token} is prepared and ready."),
+            "delivered": ("Order completed", f"Token #{token} has been marked completed."),
+            "cancelled": ("Order cancelled", f"Token #{token} was cancelled.")
+        }
+        title, body = status_messages.get(
+            new_status,
+            ("Order updated", f"Token #{token} status changed to {new_status}.")
+        )
+        send_push("customer", title, body, "/cart", order_row["user_email"], tag=f"customer-status-{order_id}-{new_status}")
 
     return jsonify({"success": True})
 

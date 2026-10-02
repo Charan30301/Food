@@ -290,6 +290,7 @@
         .toast.show { opacity: 1; transform: translate(-50%, 0); }
         .toast.error { background: #b42318; }
     </style>
+<script src="/static/js/pwa.js" defer></script>
 </head>
 <body>
     <header>
@@ -422,6 +423,7 @@
             document.getElementById('confirmTitle').textContent = title;
             document.getElementById('confirmMsg').textContent = message;
             document.getElementById('confirmModal').classList.add('show');
+            if (window.appPopupNotification) window.appPopupNotification(title, message, "/chef");
             return new Promise(resolve => { confirmResolve = resolve; });
         }
 

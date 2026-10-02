@@ -126,3 +126,23 @@ CREATE INDEX IF NOT EXISTS idx_orders_created_status_payment
     ON orders(created_at, order_status, payment_status, payment_method);
 
 ALTER DATABASE hotel_db_aza2 SET timezone TO 'Asia/Kolkata';
+
+-- ==========================================
+-- 7. Web Push Notification Subscriptions
+-- ==========================================
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id SERIAL PRIMARY KEY,
+    app_role VARCHAR(20) NOT NULL CHECK (app_role IN ('customer','reception','chef')),
+    user_email VARCHAR(255) NULL REFERENCES users(email) ON DELETE CASCADE,
+    endpoint TEXT UNIQUE NOT NULL,
+    p256dh TEXT NOT NULL,
+    auth TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_role
+    ON push_subscriptions(app_role);
+
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_customer
+    ON push_subscriptions(app_role, user_email);
