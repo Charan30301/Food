@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="manifest" href="/manifest/customer.webmanifest">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Grand Palace Hotel - Menu</title>
     <style>
         :root {
@@ -727,6 +728,11 @@
                 </div>
             </div>
 
+            <div class="profile-card" style="margin-top:0.75rem;">
+                <button id="menuNotificationButton" type="button" style="width:100%; border:1px solid var(--gold-border); border-radius:10px; padding:10px 12px; background:#302a20; color:#fff; font-weight:800; cursor:pointer;">🔔 Enable notifications</button>
+                <div style="margin-top:6px; font-size:0.72rem; color:var(--brown-light);">Receive order updates even when the app is closed.</div>
+            </div>
+
             <div>
                 <h4 style="margin-bottom:0.55rem; color:var(--espresso); font-size:0.92rem;">Past Orders</h4>
                 <div id="ordersHistoryList" style="display:flex; flex-direction:column; gap:0.65rem;"></div>
@@ -1229,6 +1235,9 @@
             await loadMenuAndCart();
             await checkOrderStatus();
             setInterval(checkOrderStatus, 2000);
+            if (window.bindAppNotificationButton) {
+                window.bindAppNotificationButton(document.getElementById('menuNotificationButton'));
+            }
         }
         init();
     </script>

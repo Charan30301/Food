@@ -75,35 +75,55 @@
   registerSW();
 
 
-  function addNotificationPill() {
-    if (location.pathname.startsWith('/installs') || location.pathname.startsWith('/manifest')) return;
-    if (document.title.toLowerCase().includes('login')) return;
-    if (!('Notification' in window) || !('PushManager' in window)) return;
-    if (Notification.permission === 'granted') return;
+  function updateNotificationButton(button) {
+    if (!button || !('Notification' in window)) return;
+    const statusEl = button.querySelector('[data-notification-status]');
+    const setLabel = (text) => {
+      if (statusEl) statusEl.textContent = text;
+      else button.textContent = text;
+    };
+    if (Notification.permission === 'granted') {
+      setLabel('Notifications ON');
+      button.dataset.enabled = '1';
+      button.disabled = false;
+      return;
+    }
+    if (Notification.permission === 'denied') {
+      setLabel('Notifications blocked');
+      button.dataset.enabled = '0';
+      button.disabled = false;
+      return;
+    }
+    setLabel('Enable notifications');
+    button.dataset.enabled = '0';
+    button.disabled = false;
+  }
 
-    const pill = document.createElement('button');
-    pill.type = 'button';
-    pill.textContent = '🔔 Enable notifications';
-    Object.assign(pill.style, {
-      position:'fixed', right:'12px', bottom:'12px', zIndex:'99999',
-      border:'0', borderRadius:'999px', padding:'10px 14px',
-      background:'#302a20', color:'#fff', fontWeight:'800',
-      boxShadow:'0 8px 25px rgba(0,0,0,.18)', cursor:'pointer'
-    });
-    pill.addEventListener('click', async () => {
-      pill.disabled = true;
+  async function bindNotificationButton(button) {
+    if (!button) return;
+    updateNotificationButton(button);
+    button.addEventListener('click', async () => {
+      if (Notification.permission === 'granted') {
+        updateNotificationButton(button);
+        return;
+      }
+      button.disabled = true;
       try {
         await subscribeNotifications();
-        pill.textContent = '✓ Notifications enabled';
-        setTimeout(() => pill.remove(), 1800);
+        const statusEl = button.querySelector('[data-notification-status]');
+        if (statusEl) statusEl.textContent = 'Notifications ON';
+        else button.textContent = '🔔 Notifications ON';
+        button.dataset.enabled = '1';
       } catch (e) {
-        pill.disabled = false;
-        pill.textContent = '🔔 Enable notifications';
+        button.disabled = false;
+        updateNotificationButton(button);
         console.warn(e);
       }
     });
-    document.body.appendChild(pill);
   }
+
+  window.updateAppNotificationButton = updateNotificationButton;
+  window.bindAppNotificationButton = bindNotificationButton;
 
   document.addEventListener('DOMContentLoaded', () => {
     const installButton = document.getElementById('installButton');
@@ -140,18 +160,7 @@
     }
 
     if (notificationButton) {
-      notificationButton.addEventListener('click', async () => {
-        notificationButton.disabled = true;
-        try {
-          await subscribeNotifications();
-          notificationButton.textContent = '✓ Notifications Enabled';
-          if (status) status.textContent = 'Notifications are enabled for this application.';
-        } catch (e) {
-          notificationButton.disabled = false;
-          if (status) status.textContent = e.message || 'Could not enable notifications.';
-        }
-      });
+      bindNotificationButton(notificationButton);
     }
-    addNotificationPill();
   });
 })();

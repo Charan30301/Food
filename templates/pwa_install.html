@@ -25,9 +25,8 @@ window.PWA_ROLE="{{ role }}";
 <div class="icon">{{ '🛒' if role == 'customer' else ('🧾' if role == 'reception' else '🍳') }}</div>
 <h1 class="title">{{ app_info.name }}</h1><div class="sub">{{ app_info.description }}</div>
 <button id="installButton">Install {{ app_info.short_name }} App</button>
-<button id="notificationButton" style="background:#302a20">Enable Notifications</button>
 <div id="status" class="status">Checking installation support…</div>
-<div class="permission">For background notifications, install the app and allow notifications. Reception and Chef must first sign in before their notification subscription can be saved.</div>
+<div class="permission">After installing the app, notification controls are available inside the application.</div>
 <a class="secondary" href="/installs">← Back to all applications</a>
 </div>
 </body></html>

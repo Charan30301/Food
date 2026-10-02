@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="manifest" href="/manifest/reception.webmanifest">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Hotel Kitchen Operations</title>
     <style>
         :root {
@@ -565,6 +566,10 @@
                 <button class="dropdown-item" onclick="window.location.href='/admin/menu'"><span>📋 Edit Menu & Add Food</span></button>
                 <button class="dropdown-item" onclick="openCategoriesModal()"><span>🏷 Category List</span></button>
                 <button class="dropdown-item" onclick="openTaxModal()"><span>💰 Digital Service Tax</span></button>
+                <button class="dropdown-item" id="adminNotificationButton" type="button">
+                    <span>🔔 Notifications</span>
+                    <strong data-notification-status style="color:var(--success);">Enable</strong>
+                </button>
                 <button class="dropdown-item" onclick="toggleSoundSetting()">
                     <span>🔔 Alert Chime</span>
                     <strong id="soundStatusBadge" style="color:var(--success);">ON</strong>
@@ -816,6 +821,12 @@
                 osc2.stop(now + 0.7);
             } catch (e) {}
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.bindAppNotificationButton) {
+                window.bindAppNotificationButton(document.getElementById('adminNotificationButton'));
+            }
+        });
 
         function toggleSoundSetting() {
             soundEnabled = !soundEnabled;

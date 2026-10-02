@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'food-centre-pwa-v1';
+const CACHE_NAME = 'food-centre-pwa-v2';
 const APP_SHELL = [
   '/static/icons/customer-192.png',
   '/static/icons/reception-192.png',

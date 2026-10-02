@@ -13,9 +13,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
 try:
-    pywebpush = importlib.import_module("pywebpush")
-    webpush = pywebpush.webpush
-    WebPushException = pywebpush.WebPushException
+    from pywebpush import webpush, WebPushException
 except ModuleNotFoundError:
     webpush = None
     WebPushException = Exception
@@ -257,6 +255,7 @@ PWA_ROLES = {
         "name": "Food Centre Customer",
         "short_name": "Customer",
         "start_url": "/app/customer",
+        "id": "/pwa/customer",
         "home_url": "/menu",
         "description": "Browse the menu, manage your cart and place food orders.",
         "theme": "#b8953f"
@@ -265,6 +264,7 @@ PWA_ROLES = {
         "name": "Food Centre Reception",
         "short_name": "Reception",
         "start_url": "/app/reception",
+        "id": "/pwa/reception",
         "home_url": "/admin",
         "description": "Reception order management, statistics and menu administration.",
         "theme": "#6b4f1d"
@@ -273,6 +273,7 @@ PWA_ROLES = {
         "name": "Food Centre Chef",
         "short_name": "Chef",
         "start_url": "/app/chef",
+        "id": "/pwa/chef",
         "home_url": "/chef",
         "description": "Kitchen cooking orders and preparation status.",
         "theme": "#16865f"
@@ -295,12 +296,14 @@ def pwa_manifest(role):
     if not info:
         return jsonify({"error": "Unknown application"}), 404
     manifest = {
-        "id": f"/app/{role}",
+        "id": info["id"],
         "name": info["name"],
         "short_name": info["short_name"],
         "description": info["description"],
         "start_url": info["start_url"],
         "scope": "/",
+        "display_override": ["window-controls-overlay", "standalone"],
+        "prefer_related_applications": False,
         "display": "standalone",
         "orientation": "portrait-primary",
         "background_color": "#fffdf7",
@@ -310,7 +313,7 @@ def pwa_manifest(role):
             {"src": f"/static/icons/{role}-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
         ]
     }
-    return Response(json.dumps(manifest), mimetype="application/manifest+json")
+    return Response(json.dumps(manifest), mimetype="application/manifest+json", headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
 
 @app.route("/app/<role>")
 def pwa_start(role):
@@ -1151,7 +1154,7 @@ def admin_statistics_page():
 def admin_cooking_page():
     if not session.get("is_admin"):
         return redirect(url_for("admin_page"))
-    return render_template("cooking_orders.html", pwa_role="chef")
+    return render_template("cooking_orders.html", pwa_role="reception")
 
 @app.route("/chef")
 def chef_page():

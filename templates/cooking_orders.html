@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link id="appManifest" rel="manifest" href="/manifest/{{ "chef" if pwa_role == "chef" else "reception" }}.webmanifest">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Cooking Orders</title>
     <style>
         :root {
@@ -290,12 +291,14 @@
         .toast.show { opacity: 1; transform: translate(-50%, 0); }
         .toast.error { background: #b42318; }
     </style>
+<script>window.PWA_ROLE="{{ pwa_role|default('chef') }}";</script>
 <script src="/static/js/pwa.js" defer></script>
 </head>
 <body>
     <header>
         <h1>🍳 Cooking Orders <span id="count" class="badge">0</span></h1>
         <div class="header-actions">
+            <button class="sound-badge" id="cookingNotificationButton" type="button">🔔 Enable notifications</button>
             <button class="sound-badge" id="soundBtn" onclick="toggleSound()">🔔 Sound: ON</button>
             <a href="/admin" class="btn-link">&larr; Admin</a>
             <button class="btn-action-top" onclick="loadOrders()">&#8635; Refresh</button>
@@ -544,6 +547,11 @@
 
         loadOrders();
         setInterval(loadOrders, 4000);
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.bindAppNotificationButton) {
+                window.bindAppNotificationButton(document.getElementById('cookingNotificationButton'));
+            }
+        });
     </script>
 </body>
 </html>
