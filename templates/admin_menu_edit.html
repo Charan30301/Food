@@ -269,6 +269,22 @@
     <script>
         let menuItems = [];
         let categories = [];
+        const syncChannel = window.BroadcastChannel ? new BroadcastChannel('food_catalog_sync_channel') : null;
+
+        // Auto-refresh when Item Status tab in Admin Dashboard toggles any dish
+        if (syncChannel) {
+            syncChannel.onmessage = (e) => {
+                if (e.data === 'sync_catalog') loadDishes();
+            };
+        }
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'catalog_version_sync') loadDishes();
+        });
+
+        function notifyCatalogSync() {
+            if (syncChannel) syncChannel.postMessage('sync_catalog');
+            localStorage.setItem('catalog_version_sync', Date.now());
+        }
 
         async function loadCategories() {
             try {
@@ -283,7 +299,7 @@
         async function loadDishes() {
             const container = document.getElementById("dishesContainer");
             try {
-                const res = await fetch("/api/admin/menu/items");
+                const res = await fetch("/api/admin/menu/items", { cache: "no-store" });
                 const data = await res.json();
                 menuItems = data.items || [];
 
@@ -354,6 +370,7 @@
                 const data = await res.json();
                 if (data.success) {
                     closeItemModal();
+                    notifyCatalogSync();
                     loadDishes();
                 } else {
                     alert(data.error || "Failed to save dish.");
@@ -375,12 +392,17 @@
                     body: JSON.stringify({ id })
                 });
                 const data = await res.json();
-                if (data.success) loadDishes();
+                if (data.success) {
+                    notifyCatalogSync();
+                    loadDishes();
+                }
             } catch (e) {}
         }
 
         loadCategories();
         loadDishes();
+        // Background check to catch changes made on other tabs
+        setInterval(loadDishes, 5000);
     </script>
 </body>
 </html>

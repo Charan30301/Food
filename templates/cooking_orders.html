@@ -46,6 +46,8 @@
         }
 
         h1 { font-size: 1.05rem; margin: 0; }
+        .header-actions { display: flex; align-items: center; gap: 6px; }
+
         .btn-link, .btn-action-top {
             color: #49391a;
             font-weight: 700;
@@ -57,6 +59,16 @@
             cursor: pointer;
             font-size: 0.8rem;
             white-space: nowrap;
+        }
+
+        .sound-badge {
+            font-size: 0.72rem;
+            font-weight: 800;
+            padding: 5px 8px;
+            border-radius: 999px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: #fffaf0;
         }
 
         main {
@@ -125,7 +137,6 @@
             font-size: 0.92rem;
         }
 
-        /* 2-Button Row (Zero Overlap on Mobile) */
         .actions {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -177,7 +188,6 @@
             border-radius: 12px;
         }
 
-        /* 2-Column Item Modal Grid */
         .items-2col-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -284,7 +294,8 @@
 <body>
     <header>
         <h1>🍳 Cooking Orders <span id="count" class="badge">0</span></h1>
-        <div style="display:flex; gap:6px;">
+        <div class="header-actions">
+            <button class="sound-badge" id="soundBtn" onclick="toggleSound()">🔔 Sound: ON</button>
             <a href="/admin" class="btn-link">&larr; Admin</a>
             <button class="btn-action-top" onclick="loadOrders()">&#8635; Refresh</button>
         </div>
@@ -299,7 +310,7 @@
     <!-- Confirmation Modal -->
     <div id="confirmModal" class="modal-backdrop">
         <div class="modal" onclick="event.stopPropagation()">
-            <div style="font-size:1.8rem; margin-bottom:4px;">⚠️</div>
+            <div style="font-size:1.8rem; margin-bottom:4px;">⚠️️</div>
             <h3 id="confirmTitle" style="font-size:1.1rem; margin-bottom:4px;">Confirm Action</h3>
             <p id="confirmMsg" style="color:var(--muted); font-size:0.85rem; margin-bottom:12px;"></p>
             <div class="modal-actions" style="justify-content:center;">
@@ -328,6 +339,7 @@
         let toastTimeout = null;
         let confirmResolve = null;
         let audioCtx = null;
+        let soundEnabled = true;
         let lastCookingCount = null;
 
         function escapeHtml(str) {
@@ -339,41 +351,63 @@
                 .replace(/'/g, '&#39;');
         }
 
-        function playKitchenChime() {
-            try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                const now = audioCtx.currentTime;
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) audioCtx = new AudioContextClass();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
 
+        // Unlock audio context on initial page touch or click
+        ['click', 'touchstart', 'keydown'].forEach(ev => {
+            window.addEventListener(ev, () => { initAudio(); }, { once: true });
+        });
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            initAudio();
+            const btn = document.getElementById('soundBtn');
+            btn.textContent = soundEnabled ? '🔔 Sound: ON' : '🔕 Sound: OFF';
+            btn.style.color = soundEnabled ? 'var(--green)' : 'var(--red)';
+            if (soundEnabled) playKitchenChime();
+        }
+
+        function playKitchenChime() {
+            if (!soundEnabled) return;
+            initAudio();
+            if (!audioCtx) return;
+
+            try {
+                const now = audioCtx.currentTime;
+                // High-visibility kitchen chime: 587.33Hz (D5) -> 880Hz (A5)
                 const osc1 = audioCtx.createOscillator();
                 const gain1 = audioCtx.createGain();
-                osc1.type = 'sine';
+                osc1.type = 'triangle';
                 osc1.frequency.setValueAtTime(587.33, now);
-                gain1.gain.setValueAtTime(0.35, now);
-                gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                gain1.gain.setValueAtTime(0.4, now);
+                gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
                 osc1.connect(gain1);
                 gain1.connect(audioCtx.destination);
                 osc1.start(now);
-                osc1.stop(now + 0.45);
+                osc1.stop(now + 0.5);
 
                 const osc2 = audioCtx.createOscillator();
                 const gain2 = audioCtx.createGain();
-                osc2.type = 'sine';
-                osc2.frequency.setValueAtTime(880, now + 0.15);
-                gain2.gain.setValueAtTime(0.4, now + 0.15);
-                gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+                osc2.type = 'triangle';
+                osc2.frequency.setValueAtTime(880, now + 0.18);
+                gain2.gain.setValueAtTime(0.5, now + 0.18);
+                gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.75);
                 osc2.connect(gain2);
                 gain2.connect(audioCtx.destination);
-                osc2.start(now + 0.15);
-                osc2.stop(now + 0.7);
-            } catch (e) {}
+                osc2.start(now + 0.18);
+                osc2.stop(now + 0.8);
+            } catch (e) {
+                console.error("Audio playback error:", e);
+            }
         }
-
-        window.addEventListener('click', function unlockAudio() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            window.removeEventListener('click', unlockAudio);
-        }, { once: true });
 
         function showToast(message, isError = false) {
             const el = document.getElementById('toast');
@@ -454,6 +488,7 @@
                 const currentCount = cachedOrders.length;
                 document.getElementById('count').textContent = currentCount;
 
+                // Sound triggers whenever new paid cooking orders arrive
                 if (lastCookingCount !== null && currentCount > lastCookingCount) {
                     playKitchenChime();
                 }
@@ -506,7 +541,7 @@
         }
 
         loadOrders();
-        setInterval(loadOrders, 5000);
+        setInterval(loadOrders, 4000);
     </script>
 </body>
 </html>

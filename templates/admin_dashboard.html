@@ -872,27 +872,32 @@
             }
         }
 
-        async function promptToggleItemStatus(id, name, currentActive) {
-            const nextState = currentActive ? 'INACTIVE (Hidden from user menu)' : 'ACTIVE (Available for user orders)';
-            const confirmed = await showAdminConfirm("Toggle Item Status", `Change "${name}" to ${nextState}?`);
-            if (!confirmed) return;
+        const syncChannel = window.BroadcastChannel ? new BroadcastChannel('food_catalog_sync_channel') : null;
 
-            try {
-                const res = await fetch("/api/admin/menu/toggle-active", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ id })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    loadItemStatusList();
-                } else {
-                    alert(data.error || "Failed to update item status.");
-                }
-            } catch (e) {
-                alert("Network error updating status.");
-            }
+async function promptToggleItemStatus(id, name, currentActive) {
+    const nextState = currentActive ? 'INACTIVE (Hidden from user menu)' : 'ACTIVE (Available for user orders)';
+    const confirmed = await showAdminConfirm("Toggle Item Status", `Change "${name}" to ${nextState}?`);
+    if (!confirmed) return;
+
+    try {
+        const res = await fetch("/api/admin/menu/toggle-active", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id })
+        });
+        const data = await res.json();
+        if (data.success) {
+            // Instantly notifies admin_menu_edit.html without manual refresh
+            if (syncChannel) syncChannel.postMessage('sync_catalog');
+            localStorage.setItem('catalog_version_sync', Date.now());
+            loadItemStatusList();
+        } else {
+            alert(data.error || "Failed to update item status.");
         }
+    } catch (e) {
+        alert("Network error updating status.");
+    }
+}
 
         function openOrderItemsModal(orderId) {
             const order = allCachedAdminOrders.find(o => o.id === orderId);
