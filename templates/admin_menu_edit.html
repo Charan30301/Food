@@ -269,20 +269,24 @@
     <script>
         let menuItems = [];
         let categories = [];
-        const syncChannel = window.BroadcastChannel ? new BroadcastChannel('food_catalog_sync_channel') : null;
 
-        // Auto-refresh when Item Status tab in Admin Dashboard toggles any dish
-        if (syncChannel) {
-            syncChannel.onmessage = (e) => {
-                if (e.data === 'sync_catalog') loadDishes();
+        // BroadcastChannel to instantly alert the Admin Dashboard
+        const catalogSyncChannel = window.BroadcastChannel ? new BroadcastChannel('food_catalog_sync_channel') : null;
+        if (catalogSyncChannel) {
+            catalogSyncChannel.onmessage = (e) => {
+                if (e.data === 'sync_catalog') {
+                    loadDishes();
+                }
             };
         }
         window.addEventListener('storage', (e) => {
-            if (e.key === 'catalog_version_sync') loadDishes();
+            if (e.key === 'catalog_version_sync') {
+                loadDishes();
+            }
         });
 
         function notifyCatalogSync() {
-            if (syncChannel) syncChannel.postMessage('sync_catalog');
+            if (catalogSyncChannel) catalogSyncChannel.postMessage('sync_catalog');
             localStorage.setItem('catalog_version_sync', Date.now());
         }
 
@@ -401,8 +405,8 @@
 
         loadCategories();
         loadDishes();
-        // Background check to catch changes made on other tabs
-        setInterval(loadDishes, 5000);
+        // Regular sync to mirror changes made on the Dashboard
+        setInterval(loadDishes, 4000);
     </script>
 </body>
 </html>

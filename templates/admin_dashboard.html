@@ -370,7 +370,7 @@
             text-transform: uppercase;
         }
 
-        /* 2-Column Food Grid with Photos for Modals */
+        /* 2-Columns Item Grid with Photos for Modals */
         .items-2col-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -413,7 +413,7 @@
             word-break: break-word;
         }
 
-        /* QUICK ITEM STATUS TOGGLE ROW LIST */
+        /* ITEM STATUS TOGGLE ROW LIST */
         .status-items-list {
             display: flex;
             flex-direction: column;
@@ -554,7 +554,7 @@
             <button class="kitchen-toggle-btn kitchen-open" id="kitchenToggleBtn" onclick="toggleKitchenStatus()">Kitchen: OPEN</button>
 
             <button class="admin-profile-btn" onclick="toggleDropdown()" title="Options">
-                <span>⚙️️</span>
+                <span>⚙</span>
                 <span class="admin-btn-text">Options</span>
                 <span class="admin-btn-caret">▼</span>
             </button>
@@ -761,7 +761,30 @@
         let currentSubSection = 'new';
         let allCachedAdminOrders = [];
 
-        // Dual-tone audio chime for new orders arriving
+        // Real-time synchronization bus between Dashboard & Menu Edit Page
+        const catalogSyncChannel = window.BroadcastChannel ? new BroadcastChannel('food_catalog_sync_channel') : null;
+        if (catalogSyncChannel) {
+            catalogSyncChannel.onmessage = (e) => {
+                if (e.data === 'sync_catalog') {
+                    if (document.getElementById('itemStatusTab').style.display !== 'none') {
+                        loadItemStatusList();
+                    }
+                }
+            };
+        }
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'catalog_version_sync') {
+                if (document.getElementById('itemStatusTab').style.display !== 'none') {
+                    loadItemStatusList();
+                }
+            }
+        });
+
+        function notifyCatalogSync() {
+            if (catalogSyncChannel) catalogSyncChannel.postMessage('sync_catalog');
+            localStorage.setItem('catalog_version_sync', Date.now());
+        }
+
         function playKitchenChime() {
             if (!soundEnabled) return;
             try {
@@ -838,9 +861,7 @@
             document.getElementById("btnSubCounter").className = "sub-order-btn" + (sub === 'counter' ? " active-counter" : "");
         }
 
-        // ==========================================
-        // ITEM STATUS 1-CLICK TOGGLE LIST
-        // ==========================================
+        // Load & dynamically display all food items with immediate availability toggle
         async function loadItemStatusList() {
             const container = document.getElementById("statusItemsContainer");
             try {
@@ -854,7 +875,7 @@
                 }
 
                 container.innerHTML = items.map(item => `
-                    <div class="status-item-card" onclick="promptToggleItemStatus(${item.id}, '${item.item_name.replace(/'/g, "\\'")}', ${item.is_active})">
+                    <div class="status-item-card">
                         <div class="status-item-info">
                             <img src="${item.photo_url || 'https://via.placeholder.com/48'}" class="status-item-img" alt="${item.item_name}" onerror="this.src='https://via.placeholder.com/48'"/>
                             <div>
@@ -862,7 +883,7 @@
                                 <div class="status-item-meta">${item.category} · ₹${Number(item.price).toFixed(2)}</div>
                             </div>
                         </div>
-                        <button class="btn-status-toggle ${item.is_active ? 'btn-status-active' : 'btn-status-inactive'}" onclick="event.stopPropagation(); promptToggleItemStatus(${item.id}, '${item.item_name.replace(/'/g, "\\'")}', ${item.is_active})">
+                        <button class="btn-status-toggle ${item.is_active ? 'btn-status-active' : 'btn-status-inactive'}" onclick="promptToggleItemStatus(${item.id}, '${item.item_name.replace(/'/g, "\\'")}', ${item.is_active})">
                             ${item.is_active ? '🟢 ACTIVE' : '🔴 INACTIVE'}
                         </button>
                     </div>
@@ -872,32 +893,28 @@
             }
         }
 
-        const syncChannel = window.BroadcastChannel ? new BroadcastChannel('food_catalog_sync_channel') : null;
+        async function promptToggleItemStatus(id, name, currentActive) {
+            const nextState = currentActive ? 'INACTIVE (Hidden from user menu)' : 'ACTIVE (Available on user menu)';
+            const confirmed = await showAdminConfirm("Toggle Item Status", `Change "${name}" to ${nextState}?`);
+            if (!confirmed) return;
 
-async function promptToggleItemStatus(id, name, currentActive) {
-    const nextState = currentActive ? 'INACTIVE (Hidden from user menu)' : 'ACTIVE (Available for user orders)';
-    const confirmed = await showAdminConfirm("Toggle Item Status", `Change "${name}" to ${nextState}?`);
-    if (!confirmed) return;
-
-    try {
-        const res = await fetch("/api/admin/menu/toggle-active", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id })
-        });
-        const data = await res.json();
-        if (data.success) {
-            // Instantly notifies admin_menu_edit.html without manual refresh
-            if (syncChannel) syncChannel.postMessage('sync_catalog');
-            localStorage.setItem('catalog_version_sync', Date.now());
-            loadItemStatusList();
-        } else {
-            alert(data.error || "Failed to update item status.");
+            try {
+                const res = await fetch("/api/admin/menu/toggle-active", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    notifyCatalogSync();
+                    loadItemStatusList();
+                } else {
+                    alert(data.error || "Failed to update item status.");
+                }
+            } catch (e) {
+                alert("Network error updating status.");
+            }
         }
-    } catch (e) {
-        alert("Network error updating status.");
-    }
-}
 
         function openOrderItemsModal(orderId) {
             const order = allCachedAdminOrders.find(o => o.id === orderId);
