@@ -79,14 +79,38 @@ def allowed_file(filename):
 
 
 # ==========================================
-# PWA / Web Push
+# Native Android FCM + optional Web Push
 # ==========================================
 VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "").strip()
 VAPID_PRIVATE_KEY_B64 = os.environ.get("VAPID_PRIVATE_KEY_B64", "").strip()
 VAPID_CLAIM_EMAIL = os.environ.get("VAPID_CLAIM_EMAIL", "mailto:admin@example.com").strip()
+FIREBASE_SERVICE_ACCOUNT_JSON = os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON", "").strip()
+FIREBASE_SERVICE_ACCOUNT_JSON_B64 = os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON_B64", "").strip()
 
-def push_enabled():
-    return bool(webpush and VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY_B64)
+_firebase_app = None
+
+def _init_firebase():
+    global _firebase_app
+    if _firebase_app is not None or firebase_admin is None:
+        return _firebase_app
+    try:
+        raw = FIREBASE_SERVICE_ACCOUNT_JSON
+        if not raw and FIREBASE_SERVICE_ACCOUNT_JSON_B64:
+            import base64
+            raw = base64.b64decode(FIREBASE_SERVICE_ACCOUNT_JSON_B64).decode("utf-8")
+        if not raw:
+            app.logger.warning("FCM disabled: Firebase service-account environment variable is missing")
+            return None
+        info = json.loads(raw)
+        _firebase_app = firebase_admin.initialize_app(credentials.Certificate(info))
+        app.logger.info("Firebase Admin initialized for FCM")
+        return _firebase_app
+    except Exception as exc:
+        app.logger.exception("Could not initialize Firebase Admin: %s", exc)
+        return None
+
+def fcm_enabled():
+    return bool(_init_firebase() and messaging)
 
 def _push_private_key():
     if not VAPID_PRIVATE_KEY_B64:
@@ -97,78 +121,95 @@ def _push_private_key():
     except Exception:
         return None
 
-def send_push(role, title, body, url="/", user_email=None, tag=None):
-    """Send a Web Push notification to all matching active subscriptions.
-    Failures are isolated so a notification problem never breaks an order request.
-    """
-    if not push_enabled():
+def send_fcm(role, title, body, url="/", user_email=None, tag=None):
+    """Send native Android FCM notifications to the requested role/device(s)."""
+    if not fcm_enabled():
         return
     try:
         with get_db() as conn:
             with conn.cursor() as cur:
                 if role == "customer":
                     cur.execute("""
-                        SELECT id, endpoint, p256dh, auth
-                        FROM push_subscriptions
+                        SELECT id, token FROM fcm_devices
                         WHERE app_role = 'customer' AND user_email = %s;
                     """, (user_email,))
                 else:
                     cur.execute("""
-                        SELECT id, endpoint, p256dh, auth
-                        FROM push_subscriptions
+                        SELECT id, token FROM fcm_devices
                         WHERE app_role = %s;
                     """, (role,))
-                subscriptions = cur.fetchall()
+                devices = cur.fetchall()
+        stale_ids = []
+        for device in devices:
+            try:
+                message = messaging.Message(
+                    notification=messaging.Notification(title=title, body=body),
+                    data={"url": str(url), "role": str(role), "tag": str(tag or f"{role}-notification")},
+                    android=messaging.AndroidConfig(
+                        priority="high",
+                        notification=messaging.AndroidNotification(
+                            channel_id="orders",
+                            sound="default",
+                            default_sound=True,
+                        ),
+                    ),
+                    token=device["token"],
+                )
+                messaging.send(message)
+            except Exception as exc:
+                text = str(exc)
+                app.logger.warning("FCM failed for device %s: %s", device["id"], text)
+                if "UNREGISTERED" in text.upper() or "NOT_FOUND" in text.upper():
+                    stale_ids.append(device["id"])
+        if stale_ids:
+            with get_db() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("DELETE FROM fcm_devices WHERE id = ANY(%s::int[]);", (stale_ids,))
+                    conn.commit()
+    except Exception as exc:
+        app.logger.exception("FCM notification skipped: %s", exc)
 
-        payload = json.dumps({
-            "title": title,
-            "body": body,
-            "url": url,
-            "tag": tag or f"{role}-notification",
-            "timestamp": int(__import__("time").time() * 1000)
-        })
+def send_push(role, title, body, url="/", user_email=None, tag=None):
+    """Backward-compatible Web Push sender. Native Android uses FCM."""
+    if not (webpush and VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY_B64):
+        return
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                if role == "customer":
+                    cur.execute("SELECT id, endpoint, p256dh, auth FROM push_subscriptions WHERE app_role='customer' AND user_email=%s;", (user_email,))
+                else:
+                    cur.execute("SELECT id, endpoint, p256dh, auth FROM push_subscriptions WHERE app_role=%s;", (role,))
+                subscriptions = cur.fetchall()
         private_key = _push_private_key()
         if not private_key:
             return
-
-        stale_ids = []
+        payload = json.dumps({"title":title,"body":body,"url":url,"tag":tag or f"{role}-notification"})
+        stale_ids=[]
         for sub in subscriptions:
             try:
-                webpush(
-                    subscription_info={
-                        "endpoint": sub["endpoint"],
-                        "keys": {"p256dh": sub["p256dh"], "auth": sub["auth"]}
-                    },
-                    data=payload,
-                    vapid_private_key=private_key,
-                    vapid_claims={"sub": VAPID_CLAIM_EMAIL}
-                )
+                webpush(subscription_info={"endpoint":sub["endpoint"],"keys":{"p256dh":sub["p256dh"],"auth":sub["auth"]}}, data=payload, vapid_private_key=private_key, vapid_claims={"sub":VAPID_CLAIM_EMAIL})
             except Exception as exc:
-                status = getattr(getattr(exc, "response", None), "status_code", None)
-                if status in (404, 410):
-                    stale_ids.append(sub["id"])
-                app.logger.warning("Push failed for subscription %s: %s", sub["id"], exc)
-
+                status=getattr(getattr(exc,"response",None),"status_code",None)
+                if status in (404,410): stale_ids.append(sub["id"])
         if stale_ids:
             with get_db() as conn:
                 with conn.cursor() as cur:
                     cur.execute("DELETE FROM push_subscriptions WHERE id = ANY(%s::int[]);", (stale_ids,))
                     conn.commit()
     except Exception as exc:
-        app.logger.warning("Push notification skipped: %s", exc)
+        app.logger.warning("Web Push skipped: %s", exc)
 
-def notify_roles_for_order(order_id, title, body, customer_url="/cart"):
+def notify(role, title, body, url="/", user_email=None, tag=None):
+    """Send both native FCM and legacy Web Push without affecting order processing."""
     try:
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT user_email, daily_order_number FROM orders WHERE id = %s;", (order_id,))
-                row = cur.fetchone()
-        if not row:
-            return
-        token = row["daily_order_number"]
-        send_push("customer", title, body, customer_url, row["user_email"], f"customer-order-{order_id}")
-    except Exception as exc:
-        app.logger.warning("Could not notify customer for order %s: %s", order_id, exc)
+        send_fcm(role, title, body, url, user_email, tag)
+    except Exception:
+        app.logger.exception("Native FCM notification failed")
+    try:
+        send_push(role, title, body, url, user_email, tag)
+    except Exception:
+        app.logger.exception("Web Push notification failed")
 
 def clean_old_orders():
     try:
@@ -331,6 +372,79 @@ def service_worker():
     with open(sw_path, "r", encoding="utf-8") as f:
         return Response(f.read(), mimetype="application/javascript",
                         headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
+
+@app.route("/api/fcm/register", methods=["POST"])
+def fcm_register():
+    data = request.get_json() or {}
+    token = str(data.get("token", "")).strip()
+    role = str(data.get("role", "")).strip().lower()
+    package_name = str(data.get("package_name", "")).strip()[:150]
+    if not token or role not in {"customer", "reception", "chef"}:
+        return jsonify({"error": "token and valid role are required"}), 400
+    user_email = session.get("user_email")
+    if role == "customer" and not user_email:
+        return jsonify({"error": "Customer must be logged in before notifications are registered"}), 401
+    if role in {"reception", "chef"} and not session.get("is_admin"):
+        return jsonify({"error": "Admin login required before registering staff notifications"}), 401
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS fcm_devices (
+                        id SERIAL PRIMARY KEY,
+                        app_role VARCHAR(20) NOT NULL CHECK (app_role IN ('customer','reception','chef')),
+                        user_email VARCHAR(255) NULL REFERENCES users(email) ON DELETE CASCADE,
+                        token TEXT UNIQUE NOT NULL,
+                        package_name VARCHAR(150),
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                """)
+                cur.execute("""
+                    INSERT INTO fcm_devices(app_role,user_email,token,package_name)
+                    VALUES(%s,%s,%s,%s)
+                    ON CONFLICT(token) DO UPDATE SET app_role=EXCLUDED.app_role,user_email=EXCLUDED.user_email,package_name=EXCLUDED.package_name,updated_at=NOW();
+                """, (role, user_email if role == "customer" else None, token, package_name))
+                conn.commit()
+        return jsonify({"success": True, "role": role})
+    except Exception as exc:
+        app.logger.exception("Could not register FCM device")
+        return jsonify({"error": "Could not register notification device"}), 500
+
+@app.route("/api/fcm/unregister", methods=["POST"])
+def fcm_unregister():
+    data = request.get_json() or {}
+    token = str(data.get("token", "")).strip()
+    if not token:
+        return jsonify({"success": True})
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM fcm_devices WHERE token=%s", (token,))
+                conn.commit()
+        return jsonify({"success": True})
+    except Exception:
+        return jsonify({"success": False}), 500
+
+@app.route("/api/fcm/status")
+def fcm_status():
+    return jsonify({"enabled": fcm_enabled()})
+
+@app.route("/api/fcm/test", methods=["POST"])
+def fcm_test():
+    requested_role = str((request.get_json() or {}).get("role", "")).strip().lower()
+    if requested_role == "customer":
+        if not session.get("user_email"):
+            return jsonify({"error": "Customer login required"}), 401
+        notify("customer", "Test notification", "Firebase FCM is working on your Customer app.", "/menu", session.get("user_email"), "test-notification")
+        return jsonify({"success": True, "role": "customer"})
+    if requested_role in {"reception", "chef"}:
+        if not session.get("is_admin"):
+            return jsonify({"error": "Admin login required"}), 401
+        path = "/admin" if requested_role == "reception" else "/admin/cooking"
+        notify(requested_role, "Test notification", f"Firebase FCM is working on your {requested_role.title()} app.", path, None, "test-notification")
+        return jsonify({"success": True, "role": requested_role})
+    return jsonify({"error": "role must be customer, reception or chef"}), 400
 
 @app.route("/api/push/config")
 def push_config():
@@ -810,7 +924,7 @@ def submit_order_request():
             new_order = cur.fetchone()
             conn.commit()
 
-    send_push(
+    notify(
         "reception",
         "New order received",
         f"Token #{new_order['daily_order_number']} is waiting for reception.",
@@ -921,7 +1035,7 @@ def confirm_test_payment():
             cur.execute("UPDATE carts SET cart_code = '', total_price = 0 WHERE user_email = %s;", (user_email,))
             conn.commit()
 
-    send_push(
+    notify(
         "customer",
         "Payment confirmed",
         f"Your order #{order_id} payment was confirmed.",
@@ -929,7 +1043,7 @@ def confirm_test_payment():
         user_email,
         tag=f"customer-payment-{order_id}"
     )
-    send_push(
+    notify(
         "chef",
         "New cooking order",
         f"Order #{order_id} has been paid and is ready for the kitchen queue.",
@@ -964,7 +1078,7 @@ def complete_counter_payment():
             conn.commit()
 
     if user_email:
-        send_push(
+        notify(
             "customer",
             "Payment received",
             f"Counter payment received for order #{order_id}.",
@@ -972,7 +1086,7 @@ def complete_counter_payment():
             user_email,
             tag=f"customer-payment-{order_id}"
         )
-    send_push(
+    notify(
         "chef",
         "New cooking order",
         f"Order #{order_id} has been paid and is ready for the kitchen queue.",
@@ -1505,7 +1619,7 @@ def admin_update_order_status():
             new_status,
             ("Order updated", f"Token #{token} status changed to {new_status}.")
         )
-        send_push("customer", title, body, "/cart", order_row["user_email"], tag=f"customer-status-{order_id}-{new_status}")
+        notify("customer", title, body, "/cart", order_row["user_email"], tag=f"customer-status-{order_id}-{new_status}")
 
     return jsonify({"success": True})
 

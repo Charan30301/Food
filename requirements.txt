@@ -4,3 +4,4 @@ werkzeug>=3.0.1
 razorpay>=1.4.1
 pywebpush>=2.0.0
 cryptography>=42.0.0
+firebase-admin>=7.1.0

@@ -146,3 +146,19 @@ CREATE INDEX IF NOT EXISTS idx_push_subscriptions_role
 
 CREATE INDEX IF NOT EXISTS idx_push_subscriptions_customer
     ON push_subscriptions(app_role, user_email);
+
+
+-- ==========================================
+-- 8. Native Android Firebase Cloud Messaging devices
+-- ==========================================
+CREATE TABLE IF NOT EXISTS fcm_devices (
+    id SERIAL PRIMARY KEY,
+    app_role VARCHAR(20) NOT NULL CHECK (app_role IN ('customer','reception','chef')),
+    user_email VARCHAR(255) NULL REFERENCES users(email) ON DELETE CASCADE,
+    token TEXT UNIQUE NOT NULL,
+    package_name VARCHAR(150),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_fcm_devices_role ON fcm_devices(app_role);
+CREATE INDEX IF NOT EXISTS idx_fcm_devices_customer ON fcm_devices(app_role, user_email);

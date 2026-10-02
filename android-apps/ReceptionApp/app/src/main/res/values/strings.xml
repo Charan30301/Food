@@ -1,0 +1,6 @@
+<resources>
+<string name="app_name">Reception App</string>
+<string name="server_url">https://YOUR-RENDER-DOMAIN.onrender.com</string>
+<string name="start_path">/admin</string>
+<string name="app_role">reception</string>
+</resources>

@@ -35,3 +35,6 @@ ehthumbs.db
 # Database & Runtime Logs
 *.log
 *.sqlite3
+google-services.json
+
+firebase-service-account.json
