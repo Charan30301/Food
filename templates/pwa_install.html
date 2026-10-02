@@ -10,7 +10,7 @@
 *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:linear-gradient(180deg,#fffdf8,#f4efe2);font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#302a20;padding:18px}
 .card{width:min(470px,100%);background:#fffdf7;border:1px solid #ded3b8;border-radius:22px;padding:26px;box-shadow:0 18px 60px #00000014;text-align:center}
 .icon{width:96px;height:96px;border-radius:22px;margin:auto;display:grid;place-items:center;background:#f5ecd8;font-size:48px}.title{margin:15px 0 5px}.sub{color:#766d5d;font-size:.9rem;line-height:1.45}
-button{width:100%;border:0;border-radius:12px;padding:13px;margin-top:18px;background:{{ app_info.theme }};color:#fff;font-weight:800;font-size:1rem;cursor:pointer}
+button{width:100%;border:0;border-radius:12px;padding:13px;margin-top:18px;background:var(--app-theme);color:#fff;font-weight:800;font-size:1rem;cursor:pointer}
 .secondary{display:block;margin-top:12px;color:#6b4f1d;text-decoration:none;font-weight:700;font-size:.85rem}
 .status{margin-top:14px;color:#766d5d;font-size:.8rem;min-height:20px}
 .permission{margin-top:14px;padding:12px;border-radius:11px;background:#fff9eb;border:1px dashed #d8bd70;font-size:.8rem;line-height:1.4}
@@ -20,7 +20,7 @@ window.PWA_ROLE="{{ role }}";
 </script>
 <script src="/static/js/pwa.js" defer></script>
 </head>
-<body data-pwa-role="{{ role }}">
+<body data-pwa-role="{{ role }}" style="--app-theme: {{ app_info.theme }};">
 <div class="card">
 <div class="icon">{{ '🛒' if role == 'customer' else ('🧾' if role == 'reception' else '🍳') }}</div>
 <h1 class="title">{{ app_info.name }}</h1><div class="sub">{{ app_info.description }}</div>
