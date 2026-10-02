@@ -38,3 +38,8 @@ ehthumbs.db
 google-services.json
 
 firebase-service-account.json
+
+# Firebase private credentials
+*firebase-adminsdk*.json
+firebase-service-account.json
+google-services.json
