@@ -2,79 +2,345 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Order Statistics</title>
 <style>
-:root{--bg:#f8f5ec;--card:#fffdf7;--border:#ded3b8;--ink:#302a20;--muted:#766d5d;--gold:#b8953f;--green:#16865f;--blue:#356ac3;--purple:#7852b8}
-*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#fffdf8,#f4efe2);color:var(--ink);font-family:Segoe UI,system-ui,sans-serif}
-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px clamp(14px,3vw,32px);background:#fffdf7;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:3}
-.quick-nav{position:sticky;top:66px;z-index:2;display:flex;gap:10px;overflow-x:auto;padding:12px clamp(14px,3vw,32px);background:#f8f5ecef;border-bottom:1px solid var(--border);backdrop-filter:blur(10px)}.quick-nav .jump{white-space:nowrap}.quick-nav .jump.active{background:var(--gold);color:#fff;border-color:var(--gold)}.section{scroll-margin-top:135px}
-h1{font-size:1.25rem;margin:0}a,.btn{color:#49391a;font-weight:700;text-decoration:none;border:1px solid var(--border);border-radius:10px;padding:9px 12px;background:#fffaf0;cursor:pointer}
-main{max-width:1300px;margin:22px auto;padding:0 14px 40px}.section{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px;margin-bottom:20px;box-shadow:0 5px 18px #5a46120d}
-.section h2{font-size:1.08rem;margin:0 0 14px}.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-.metric{background:#fff;border:1px solid #e7dfcd;border-radius:14px;padding:15px;min-width:0}.metric span{display:block;color:var(--muted);font-size:.82rem;font-weight:650}.metric strong{display:block;font-size:1.45rem;margin-top:7px;overflow-wrap:anywhere}.metric.orders strong{color:var(--gold)}.metric.cash strong{color:var(--green)}.metric.online strong{color:var(--blue)}.metric.tax strong{color:var(--purple)}
-.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:720px}th,td{text-align:right;padding:11px 9px;border-bottom:1px solid #eee7d8;font-size:.88rem;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{color:var(--muted);font-size:.78rem;background:#faf6eb}tbody tr:last-child td{border-bottom:0}.hint{color:var(--muted);font-size:.82rem;line-height:1.5;margin:0 0 12px}.status{color:var(--muted);padding:18px;text-align:center}.spinner{width:34px;height:34px;border:4px solid #e8dec4;border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}@keyframes spin{to{transform:rotate(360deg)}}@media(max-width:760px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.section{padding:13px}.metric strong{font-size:1.2rem}header{align-items:flex-start}h1{font-size:1.05rem}}
+:root {
+  --bg: #f8f5ec;
+  --card: #fffdf7;
+  --border: #ded3b8;
+  --ink: #302a20;
+  --muted: #766d5d;
+  --gold: #b8953f;
+  --green: #16865f;
+  --blue: #356ac3;
+  --purple: #7852b8;
+}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+body {
+  background: linear-gradient(180deg, #fffdf8, #f4efe2);
+  color: var(--ink);
+  min-height: 100vh;
+}
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
+  background: #fffdf7;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+h1 { font-size: 1.1rem; }
+a, .btn {
+  color: #49391a;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  background: #fffaf0;
+  cursor: pointer;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.quick-nav {
+  position: sticky;
+  top: 50px;
+  z-index: 5;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 8px 12px;
+  background: rgba(248, 245, 236, 0.95);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  scrollbar-width: none;
+}
+.quick-nav::-webkit-scrollbar { display: none; }
+.quick-nav .jump {
+  font-size: 0.76rem;
+  padding: 5px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.quick-nav .jump.active {
+  background: var(--gold);
+  color: #fff;
+  border-color: var(--gold);
+}
+main {
+  max-width: 1300px;
+  margin: 12px auto;
+  padding: 0 10px 40px;
+}
+.section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+  margin-bottom: 14px;
+  box-shadow: 0 4px 14px rgba(90, 70, 18, 0.05);
+  scroll-margin-top: 105px;
+}
+.section h2 {
+  font-size: 0.98rem;
+  margin-bottom: 10px;
+}
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+@media (max-width: 768px) {
+  .cards { grid-template-columns: repeat(2, 1fr); }
+}
+.metric {
+  background: #ffffff;
+  border: 1px solid #e7dfcd;
+  border-radius: 10px;
+  padding: 10px 8px;
+  min-width: 0;
+}
+.metric span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.metric strong {
+  display: block;
+  font-size: 1.15rem;
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+}
+.metric.orders strong { color: var(--gold); }
+.metric.cash strong { color: var(--green); }
+.metric.online strong { color: var(--blue); }
+.metric.tax strong { color: var(--purple); }
+
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 8px;
+  border: 1px solid #eee7d8;
+  margin-top: 8px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+}
+th, td {
+  text-align: right;
+  padding: 8px 8px;
+  border-bottom: 1px solid #eee7d8;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+th:first-child, td:first-child { text-align: left; }
+th {
+  color: var(--muted);
+  font-size: 0.72rem;
+  background: #faf6eb;
+}
+.hint {
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.35;
+  margin-bottom: 8px;
+}
+.status {
+  color: var(--muted);
+  padding: 18px;
+  text-align: center;
+  font-size: 0.82rem;
+}
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #e8dec4;
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 8px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
-<header><h1>📊 Order Statistics</h1><div style="display:flex;gap:8px;flex-wrap:wrap"><a href="/admin">← Admin Dashboard</a><button class="btn" onclick="loadStatistics()">↻ Refresh</button></div></header>
+<header>
+  <h1>📊 Statistics</h1>
+  <div style="display:flex; gap:6px;">
+    <a href="/admin">← Dashboard</a>
+    <button class="btn" onclick="loadStatistics()">↻ Refresh</button>
+  </div>
+</header>
+
 <nav class="quick-nav" aria-label="Statistics sections">
-<a class="jump active" href="#todayOrders">📅 Today Orders</a>
-<a class="jump" href="#dailySection">🗓️ Last 30 Days</a>
-<a class="jump" href="#monthlySection">📈 Last 6 Months</a>
+  <a class="jump active" href="#todayOrders">📅 Today Orders</a>
+  <a class="jump" href="#dailySection">🗓️ Last 30 Days</a>
+  <a class="jump" href="#monthlySection">📈 Last 6 Months</a>
 </nav>
+
 <main>
-<section class="section" id="todaySection">
-<h2>Today — <span id="todayDate">Loading…</span></h2>
-<div id="todayMetrics" class="cards"><div class="status" style="grid-column:1/-1"><div class="spinner"></div>Loading today's totals…</div></div>
-<h2 id="todayOrders" style="margin-top:22px;scroll-margin-top:140px">All Orders Placed Today</h2>
-<p class="hint">All orders placed today are listed below, including cancelled orders, with status, payment method, total and recorded tax.</p>
-<div class="table-wrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Time</th><th>Status</th><th>Payment status</th><th>Method</th><th>Total</th><th>Tax</th></tr></thead><tbody id="todayOrderRows"><tr><td colspan="8" class="status">Loading today’s orders…</td></tr></tbody></table></div>
-</section>
-<section class="section" id="dailySection">
-<h2>Last 30 Days — Day by Day</h2>
-<p class="hint">Includes today and the previous 29 calendar days. Orders exclude cancelled orders. Payment totals include only orders marked paid.</p>
-<div class="table-wrap"><table><thead><tr><th>Date</th><th>Orders</th><th>Cash received</th><th>Online received</th><th>Tax collected</th></tr></thead><tbody id="dailyRows"><tr><td colspan="5" class="status">Loading…</td></tr></tbody></table></div>
-</section>
-<section class="section" id="monthlySection">
-<h2>Last 6 Calendar Months — Month by Month</h2>
-<p class="hint">Each month is calculated from the first day of that month up to (but not including) the first day of the next month. The current month is included.</p>
-<div class="table-wrap"><table><thead><tr><th>Month</th><th>Orders</th><th>Cash received</th><th>Online received</th><th>Tax collected</th></tr></thead><tbody id="monthlyRows"><tr><td colspan="5" class="status">Loading…</td></tr></tbody></table></div>
-</section>
-<p class="hint">“Online received” reflects the website's recorded online payment method; the current database stores it as <code>online</code>, not a specific PhonePe provider. Historical tax before tax amounts were saved may appear as ₹0 because the old schema did not store tax per order.</p>
+  <section class="section" id="todaySection">
+    <h2>Today — <span id="todayDate">Loading…</span></h2>
+    <div id="todayMetrics" class="cards">
+      <div class="status" style="grid-column: 1 / -1;"><div class="spinner"></div>Loading totals…</div>
+    </div>
+
+    <h2 id="todayOrders" style="margin-top:16px;">Today's Orders</h2>
+    <p class="hint">Includes all orders placed today in IST.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Order</th>
+            <th>Customer</th>
+            <th>Time</th>
+            <th>Status</th>
+            <th>Payment</th>
+            <th>Method</th>
+            <th>Total</th>
+            <th>Tax</th>
+          </tr>
+        </thead>
+        <tbody id="todayOrderRows">
+          <tr><td colspan="8" class="status">Loading today’s orders…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section" id="dailySection">
+    <h2>Last 30 Days</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Orders</th>
+            <th>Cash (₹)</th>
+            <th>Online (₹)</th>
+            <th>Tax (₹)</th>
+          </tr>
+        </thead>
+        <tbody id="dailyRows">
+          <tr><td colspan="5" class="status">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section" id="monthlySection">
+    <h2>Last 6 Months</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>Orders</th>
+            <th>Cash (₹)</th>
+            <th>Online (₹)</th>
+            <th>Tax (₹)</th>
+          </tr>
+        </thead>
+        <tbody id="monthlyRows">
+          <tr><td colspan="5" class="status">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
 </main>
+
 <script>
-const money = n => '₹' + Number(n || 0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
-const fmtDate = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); };
-const fmtMonth = s => { const [y,m]=s.split('-').map(Number); return new Date(y,m-1,1).toLocaleDateString('en-IN',{month:'long',year:'numeric'}); };
-const safe = value => String(value ?? '—').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-function todayOrdersHTML(rows){if(!rows.length)return '<tr><td colspan="8" class="status">No orders placed today.</td></tr>';return rows.map(o=>`<tr><td>#${safe(o.daily_order_number ?? o.id)}</td><td>${safe(o.username)}</td><td>${safe(o.time)}</td><td>${safe(o.status)}</td><td>${safe(o.payment_status)}</td><td>${safe(o.payment_method==='counter'?'Cash / counter':o.payment_method==='online'?'Online':o.payment_method)}</td><td>${money(o.total_amount)}</td><td>${money(o.tax_amount)}</td></tr>`).join('');}
-function metric(label,value,cls){return `<div class="metric ${cls}"><span>${label}</span><strong>${value}</strong></div>`;}
-function rowsHTML(rows, monthly=false){if(!rows.length)return '<tr><td colspan="5" class="status">No data found.</td></tr>';return rows.map(r=>`<tr><td>${monthly?fmtMonth(r.period):fmtDate(r.period)}</td><td>${r.orders}</td><td>${money(r.cash_received)}</td><td>${money(r.online_received)}</td><td>${money(r.tax_collected)}</td></tr>`).join('');}
-async function loadStatistics(){
- document.getElementById('todayMetrics').innerHTML='<div class="status" style="grid-column:1/-1"><div class="spinner"></div>Loading statistics…</div>';
- try{
-  const res=await fetch('/api/admin/statistics',{cache:'no-store'});
-  if(!res.ok)throw new Error('Unable to load statistics');
-  const data=await res.json(); if(data.error)throw new Error(data.error);
-  document.getElementById('todayDate').textContent=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
-  const t=data.today||{};
-  document.getElementById('todayMetrics').innerHTML=
-   metric('Total orders',t.orders,'orders')+
-   metric('Cash / counter received',money(t.cash_received),'cash')+
-   metric('Online received',money(t.online_received),'online')+
-   metric('Tax collected',money(t.tax_collected),'tax');
-  document.getElementById('todayOrderRows').innerHTML=todayOrdersHTML(data.today_orders||[]);
-  document.getElementById('dailyRows').innerHTML=rowsHTML(data.daily||[]);
-  document.getElementById('monthlyRows').innerHTML=rowsHTML(data.monthly||[],true);
- }catch(e){
-  document.getElementById('todayMetrics').innerHTML=`<div class="status" style="grid-column:1/-1">${e.message||'Could not load statistics.'}</div>`;
-  document.getElementById('todayOrderRows').innerHTML='<tr><td colspan="8" class="status">Could not load today’s orders.</td></tr>';
-  document.getElementById('dailyRows').innerHTML='<tr><td colspan="5" class="status">Could not load statistics.</td></tr>';
-  document.getElementById('monthlyRows').innerHTML='<tr><td colspan="5" class="status">Could not load statistics.</td></tr>';
- }
+const money = n => '₹' + Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtDate = s => {
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+};
+const fmtMonth = s => {
+  const [y, m] = s.split('-').map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+};
+const safe = value => String(value ?? '—').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+
+function todayOrdersHTML(rows) {
+  if (!rows.length) return '<tr><td colspan="8" class="status">No orders placed today.</td></tr>';
+  return rows.map(o => `
+    <tr>
+      <td>#${safe(o.daily_order_number ?? o.id)}</td>
+      <td>${safe(o.username)}</td>
+      <td>${safe(o.time)}</td>
+      <td>${safe(o.status)}</td>
+      <td>${safe(o.payment_status)}</td>
+      <td>${safe(o.payment_method === 'counter' ? 'Counter' : o.payment_method === 'online' ? 'Online' : o.payment_method)}</td>
+      <td>${money(o.total_amount)}</td>
+      <td>${money(o.tax_amount)}</td>
+    </tr>
+  `).join('');
 }
-document.querySelectorAll('.quick-nav .jump').forEach(link=>link.addEventListener('click',()=>{document.querySelectorAll('.quick-nav .jump').forEach(item=>item.classList.remove('active'));link.classList.add('active');}));
+
+function metric(label, value, cls) {
+  return `<div class="metric ${cls}"><span>${label}</span><strong>${value}</strong></div>`;
+}
+
+function rowsHTML(rows, monthly = false) {
+  if (!rows.length) return '<tr><td colspan="5" class="status">No data found.</td></tr>';
+  return rows.map(r => `
+    <tr>
+      <td>${monthly ? fmtMonth(r.period) : fmtDate(r.period)}</td>
+      <td>${r.orders}</td>
+      <td>${money(r.cash_received)}</td>
+      <td>${money(r.online_received)}</td>
+      <td>${money(r.tax_collected)}</td>
+    </tr>
+  `).join('');
+}
+
+async function loadStatistics() {
+  document.getElementById('todayMetrics').innerHTML = '<div class="status" style="grid-column: 1 / -1;"><div class="spinner"></div>Loading statistics…</div>';
+  try {
+    const res = await fetch('/api/admin/statistics', { cache: 'no-store' });
+    if (!res.ok) throw new Error('Unable to load statistics');
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    const t = data.today || {};
+    document.getElementById('todayMetrics').innerHTML =
+      metric('Total Orders', t.orders, 'orders') +
+      metric('Cash Recv', money(t.cash_received), 'cash') +
+      metric('Online Recv', money(t.online_received), 'online') +
+      metric('Tax Coll', money(t.tax_collected), 'tax');
+
+    document.getElementById('todayOrderRows').innerHTML = todayOrdersHTML(data.today_orders || []);
+    document.getElementById('dailyRows').innerHTML = rowsHTML(data.daily || []);
+    document.getElementById('monthlyRows').innerHTML = rowsHTML(data.monthly || [], true);
+  } catch (e) {
+    document.getElementById('todayMetrics').innerHTML = `<div class="status" style="grid-column: 1 / -1;">${e.message || 'Could not load statistics.'}</div>`;
+  }
+}
+
+document.querySelectorAll('.quick-nav .jump').forEach(link => {
+  link.addEventListener('click', () => {
+    document.querySelectorAll('.quick-nav .jump').forEach(item => item.classList.remove('active'));
+    link.classList.add('active');
+  });
+});
+
 loadStatistics();
 </script>
 </body>

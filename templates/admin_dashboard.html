@@ -182,7 +182,6 @@
             border-color: #927326;
         }
 
-        /* Responsive Sub-Order Navigation */
         .sub-orders-controls {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -211,11 +210,6 @@
             transition: 0.15s;
             white-space: normal;
             word-break: break-word;
-        }
-
-        .sub-order-btn span:first-child {
-            line-height: 1.1;
-            text-align: center;
         }
 
         .sub-order-btn.active-new {
@@ -436,6 +430,44 @@
             word-break: break-word;
         }
 
+        /* Menu Item Catalog Table & Grid Styles */
+        .desktop-menu-table-wrap {
+            background: #fffdf7;
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            overflow: hidden;
+            overflow-x: auto;
+            width: 100%;
+        }
+        .desktop-menu-table { width: 100%; border-collapse: collapse; min-width: 580px; }
+        .desktop-menu-table th { padding: 0.65rem 0.85rem; text-align: left; background: #f7f2e7; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; }
+        .desktop-menu-table td { padding: 0.65rem 0.85rem; border-bottom: 1px solid var(--card-border); vertical-align: middle; font-size: 0.88rem; }
+
+        .mobile-menu-grid { display: none; }
+        @media (max-width: 768px) {
+            .desktop-menu-table-wrap { display: none !important; }
+            .mobile-menu-grid { display: grid !important; grid-template-columns: 1fr; gap: 0.65rem; width: 100%; }
+            .mobile-menu-card {
+                background: #fffdf7;
+                border: 1px solid var(--card-border);
+                border-radius: 14px;
+                padding: 0.75rem;
+                display: flex;
+                gap: 0.65rem;
+                align-items: center;
+                box-shadow: 0 3px 10px rgba(70, 55, 25, 0.05);
+                width: 100%;
+            }
+            .mobile-dish-thumb { width: 64px; height: 64px; border-radius: 10px; object-fit: cover; border: 1px solid #ded3b8; flex-shrink: 0; background: #eee8d8; }
+            .mobile-dish-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+            .mobile-dish-title { font-size: 0.92rem; font-weight: 700; color: #302a20; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .mobile-dish-meta { display: flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; color: var(--text-muted); }
+            .mobile-dish-price { font-size: 0.95rem; font-weight: 800; color: var(--primary-dark); }
+            .mobile-dish-actions { display: flex; flex-direction: column; gap: 0.3rem; flex-shrink: 0; }
+            .btn-mobile-edit { padding: 0.35rem 0.65rem; border-radius: 999px; background: #fffdf7; border: 1px solid #d7cbb0; color: #554830; font-weight: 700; font-size: 0.75rem; cursor: pointer; }
+            .btn-mobile-del { padding: 0.35rem 0.65rem; border-radius: 999px; background: #fff1ef; border: 1px solid #e3aaa4; color: #c53d3d; font-weight: 700; font-size: 0.75rem; cursor: pointer; }
+        }
+
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -468,6 +500,11 @@
         }
         .modal-header-row h3 { font-size: 1.05rem; font-weight: 800; color: #302a20; }
         .modal-close-icon { background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; }
+
+        .form-field { margin-bottom: 0.75rem; }
+        .form-field label { display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.25rem; }
+        .form-input { width: 100%; padding: 0.65rem; background: #fffaf0; border: 1px solid #ded3b8; border-radius: 10px; font-size: 0.88rem; color: #302a20; outline: none; box-sizing: border-box; }
+        .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(184, 149, 63, 0.15); }
 
         .modal-buttons {
             display: flex;
@@ -592,13 +629,30 @@
             </div>
         </section>
 
-        <!-- TAB 2: MENU CATALOGUE -->
+        <!-- TAB 2: RESTORED MENU CATALOG -->
         <section id="menuTab" style="display:none;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; gap:0.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; gap:0.5rem; flex-wrap:wrap;">
                 <h3 style="font-size:1.05rem; font-weight:800; color:#302a20;">Restaurant Menu</h3>
                 <button class="btn-primary" onclick="openItemModal()" style="padding:0.45rem 0.85rem; font-size:0.8rem;">+ Add Food</button>
             </div>
-            <div id="mobileMenuGrid" style="display:grid; grid-template-columns:1fr; gap:0.65rem;"></div>
+
+            <div class="desktop-menu-table-wrap">
+                <table class="desktop-menu-table">
+                    <thead>
+                        <tr>
+                            <th>Photo</th>
+                            <th>Dish Name</th>
+                            <th>Category</th>
+                            <th>Price (₹)</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="menuTableBody"></tbody>
+                </table>
+            </div>
+
+            <div class="mobile-menu-grid" id="mobileMenuGrid"></div>
         </section>
     </div>
 
@@ -613,6 +667,130 @@
             <div id="modalItemsGridAdmin" class="items-2col-grid"></div>
             <div class="modal-buttons">
                 <button type="button" class="btn-secondary" onclick="closeOrderItemsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD/EDIT MENU ITEM MODAL -->
+    <div class="modal-overlay" id="itemModal">
+        <div class="modal-box">
+            <div class="modal-header-row">
+                <h3 id="itemModalTitle">Menu Dish</h3>
+                <button class="modal-close-icon" onclick="closeItemModal()">&times;</button>
+            </div>
+
+            <form id="menuItemForm" onsubmit="handleSaveMenuItem(event)" enctype="multipart/form-data">
+                <input type="hidden" id="editItemId" name="id" />
+                
+                <div class="form-field">
+                    <label>Dish Name</label>
+                    <input type="text" id="dishNameInput" name="item_name" class="form-input" required placeholder="e.g. Masala Dosa" />
+                </div>
+                
+                <div class="form-field">
+                    <label>Category</label>
+                    <select id="dishCategorySelect" name="category" class="form-input" style="text-transform:capitalize;"></select>
+                </div>
+                
+                <div class="form-field">
+                    <label>Price (₹)</label>
+                    <input type="number" step="0.01" id="dishPriceInput" name="price" class="form-input" required placeholder="0.00" />
+                </div>
+                
+                <div class="form-field">
+                    <label>Photo File Upload</label>
+                    <input type="file" id="dishFileInput" name="image_file" accept="image/*" class="form-input" style="background:#fff;" />
+                </div>
+                
+                <div class="form-field">
+                    <label>Or Web Photo URL</label>
+                    <input type="text" id="dishUrlInput" name="image_url" class="form-input" placeholder="https://..." />
+                </div>
+                
+                <div class="form-field">
+                    <label>Availability Status</label>
+                    <select id="dishActiveSelect" name="is_active" class="form-input">
+                        <option value="true">🟢 Active (Available for orders)</option>
+                        <option value="false">🔴 Inactive (Marked unavailable)</option>
+                    </select>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="button" class="btn-secondary" onclick="closeItemModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Dish</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- DIGITAL SERVICE TAX MODAL -->
+    <div class="modal-overlay" id="taxModal">
+        <div class="modal-box" style="max-width: 400px;">
+            <div class="modal-header-row">
+                <h3>Digital Service Tax</h3>
+                <button class="modal-close-icon" onclick="closeTaxModal()">&times;</button>
+            </div>
+            <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.75rem;">
+                Percentage added to PhonePe / Online Gateway orders only. Counter cash orders are exempt.
+            </p>
+            <form onsubmit="handleSaveTax(event)">
+                <div class="form-field">
+                    <label>Online Gateway Tax Rate (%)</label>
+                    <input type="number" step="0.1" min="0" max="50" id="taxRateInput" class="form-input" required placeholder="5.0" />
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-secondary" onclick="closeTaxModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Rate</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- CATEGORIES MODAL -->
+    <div class="modal-overlay" id="categoriesModal">
+        <div class="modal-box">
+            <div class="modal-header-row">
+                <h3>Manage Category List</h3>
+                <button class="modal-close-icon" onclick="closeCategoriesModal()">&times;</button>
+            </div>
+            <form onsubmit="handleAddCategory(event)" style="display:flex; gap:0.4rem; margin-bottom:0.75rem;">
+                <input type="text" id="newCategoryInput" class="form-input" style="flex:1;" placeholder="New category (e.g. Snacks)" required />
+                <button type="submit" class="btn-primary" style="padding:0.55rem 0.85rem; white-space:nowrap;">+ Add</button>
+            </form>
+            <label style="display:block; font-size:0.78rem; font-weight:700; color:var(--text-muted); margin-bottom:0.35rem;">Existing Categories</label>
+            <div id="categoriesListContainer" style="max-height: 220px; overflow-y: auto;"></div>
+            <div class="modal-buttons" style="margin-top:0.75rem;">
+                <button class="btn-secondary" onclick="closeCategoriesModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PHOTOS MODAL -->
+    <div class="modal-overlay" id="photosModal">
+        <div class="modal-box">
+            <div class="modal-header-row">
+                <h3>Uploaded Photos</h3>
+                <button class="modal-close-icon" onclick="closePhotosModal()">&times;</button>
+            </div>
+            <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.75rem;">Stored asset files in /static/uploads/</p>
+            <div id="photosContainer" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(75px, 1fr)); gap:0.45rem;"></div>
+            <div class="modal-buttons">
+                <button class="btn-secondary" onclick="closePhotosModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PASSWORD MODAL -->
+    <div class="modal-overlay" id="passwordModal">
+        <div class="modal-box" style="max-width:340px;">
+            <div class="modal-header-row">
+                <h3>Admin Password</h3>
+                <button class="modal-close-icon" onclick="closePasswordModal()">&times;</button>
+            </div>
+            <input type="password" id="newAdminPasswordInput" class="form-input" placeholder="Min 6 characters" />
+            <div class="modal-buttons">
+                <button class="btn-secondary" onclick="closePasswordModal()">Cancel</button>
+                <button class="btn-primary" onclick="saveAdminPassword()">Save</button>
             </div>
         </div>
     </div>
@@ -648,6 +826,7 @@
 
     <script>
         let adminCategories = [];
+        let currentMenuItems = [];
         let soundEnabled = true;
         let audioCtx = null;
         let lastNewCount = null;
@@ -698,6 +877,7 @@
             document.getElementById("menuMainTabBtn").classList.toggle("active", tabId === 'menuTab');
             document.getElementById("profileDropdown").classList.remove("show");
             if (tabId === 'ordersTab') loadAdminOrders();
+            if (tabId === 'menuTab') loadAdminMenu();
         }
 
         function switchOrdersSubSection(sub) {
@@ -964,11 +1144,302 @@
             loadAdminOrders();
         }
 
+        // ==========================================
+        // MENU CATALOGUE METHODS
+        // ==========================================
+        async function loadAdminMenu() {
+            const tbody = document.getElementById("menuTableBody");
+            const mobileGrid = document.getElementById("mobileMenuGrid");
+
+            await loadAdminCategories();
+
+            const res = await fetch("/api/admin/menu/items");
+            const data = await res.json();
+            currentMenuItems = data.items || [];
+
+            tbody.innerHTML = "";
+            mobileGrid.innerHTML = "";
+
+            currentMenuItems.forEach(item => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td><img src="${item.photo_url || 'https://via.placeholder.com/50'}" style="width:48px; height:48px; border-radius:8px; object-fit:cover;" onerror="this.src='https://via.placeholder.com/50'"/></td>
+                    <td><strong>${item.item_name}</strong></td>
+                    <td style="text-transform:capitalize;">${item.category}</td>
+                    <td>₹${Number(item.price).toFixed(2)}</td>
+                    <td>${item.is_active ? '🟢 Active' : '🔴 Inactive'}</td>
+                    <td>
+                        <button class="btn-secondary" onclick="editMenuItem(${item.id})" style="padding:0.35rem 0.65rem; font-size:0.75rem;">Edit</button>
+                        <button class="btn-secondary" style="background:#fff1ef; color:#c53d3d; padding:0.35rem 0.65rem; font-size:0.75rem; margin-left:0.2rem;" onclick="deleteMenuItem(${item.id})">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+
+                const card = document.createElement("div");
+                card.className = "mobile-menu-card";
+                card.innerHTML = `
+                    <img src="${item.photo_url || 'https://via.placeholder.com/76'}" class="mobile-dish-thumb" onerror="this.src='https://via.placeholder.com/76'" />
+                    <div class="mobile-dish-info">
+                        <div class="mobile-dish-title">${item.item_name}</div>
+                        <div class="mobile-dish-meta">
+                            <span style="text-transform:capitalize;">${item.category}</span>
+                            <span>•</span>
+                            <span>${item.is_active ? '🟢 Live' : '🔴 Hidden'}</span>
+                        </div>
+                        <div class="mobile-dish-price">₹${Number(item.price).toFixed(2)}</div>
+                    </div>
+                    <div class="mobile-dish-actions">
+                        <button class="btn-mobile-edit" onclick="editMenuItem(${item.id})">Edit</button>
+                        <button class="btn-mobile-del" onclick="deleteMenuItem(${item.id})">Del</button>
+                    </div>
+                `;
+                mobileGrid.appendChild(card);
+            });
+        }
+
+        function openItemModal() {
+            document.getElementById("itemModalTitle").textContent = "Add Menu Dish";
+            document.getElementById("editItemId").value = "";
+            document.getElementById("dishNameInput").value = "";
+            document.getElementById("dishPriceInput").value = "";
+            document.getElementById("dishUrlInput").value = "";
+            document.getElementById("dishFileInput").value = "";
+            document.getElementById("dishActiveSelect").value = "true";
+            populateDishCategorySelect();
+            document.getElementById("itemModal").classList.add("open");
+        }
+
+        function editMenuItem(id) {
+            const item = currentMenuItems.find(i => i.id === id);
+            if (!item) return;
+            document.getElementById("itemModalTitle").textContent = "Edit Menu Dish";
+            document.getElementById("editItemId").value = item.id;
+            document.getElementById("dishNameInput").value = item.item_name;
+            populateDishCategorySelect(item.category);
+            document.getElementById("dishPriceInput").value = item.price;
+            document.getElementById("dishUrlInput").value = item.photo_url || "";
+            document.getElementById("dishFileInput").value = "";
+            document.getElementById("dishActiveSelect").value = item.is_active ? "true" : "false";
+            document.getElementById("itemModal").classList.add("open");
+        }
+
+        function closeItemModal() {
+            document.getElementById("itemModal").classList.remove("open");
+        }
+
+        async function handleSaveMenuItem(e) {
+            e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Saving...";
+
+            try {
+                const res = await fetch("/api/admin/menu/save", {
+                    method: "POST",
+                    body: new FormData(document.getElementById("menuItemForm"))
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeItemModal();
+                    loadAdminMenu();
+                }
+            } catch (err) {
+                alert("Network error saving dish");
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Save Dish";
+            }
+        }
+
+        async function deleteMenuItem(id) {
+            const confirmed = await showAdminConfirm("Delete Dish", "Delete this food item permanently?");
+            if (!confirmed) return;
+            await fetch("/api/admin/menu/delete", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id })
+            });
+            loadAdminMenu();
+        }
+
+        async function loadAdminCategories() {
+            try {
+                const res = await fetch("/api/categories");
+                const data = await res.json();
+                adminCategories = data.categories || [];
+                renderCategoriesModalList();
+                populateDishCategorySelect();
+            } catch (err) {}
+        }
+
+        function populateDishCategorySelect(selectedCategory = "") {
+            const selectEl = document.getElementById("dishCategorySelect");
+            selectEl.innerHTML = "";
+            adminCategories.forEach(cat => {
+                const opt = document.createElement("option");
+                opt.value = cat.name.toLowerCase();
+                opt.textContent = cat.name.charAt(0).toUpperCase() + cat.name.slice(1);
+                if (selectedCategory && selectedCategory.toLowerCase() === cat.name.toLowerCase()) {
+                    opt.selected = true;
+                }
+                selectEl.appendChild(opt);
+            });
+        }
+
+        function renderCategoriesModalList() {
+            const box = document.getElementById("categoriesListContainer");
+            box.innerHTML = "";
+            if (adminCategories.length === 0) {
+                box.innerHTML = `<div style="color:var(--text-muted); font-size:0.8rem; padding:0.4rem 0;">No categories found.</div>`;
+                return;
+            }
+            adminCategories.forEach(cat => {
+                const row = document.createElement("div");
+                row.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:0.4rem 0.6rem; background:#fffaf0; border:1px solid #ded3b8; border-radius:8px; margin-bottom:0.35rem;";
+                row.innerHTML = `
+                    <span style="font-weight:700; text-transform:capitalize; font-size:0.85rem;">${cat.name}</span>
+                    <button style="background:#fff1ef; color:#c53d3d; border:1px solid #e3aaa4; padding:0.2rem 0.5rem; border-radius:6px; font-size:0.75rem; cursor:pointer;" onclick="deleteCategory(${cat.id}, '${cat.name}')">Delete</button>
+                `;
+                box.appendChild(row);
+            });
+        }
+
+        function openCategoriesModal() {
+            document.getElementById("profileDropdown").classList.remove("show");
+            document.getElementById("categoriesModal").classList.add("open");
+            loadAdminCategories();
+        }
+
+        function closeCategoriesModal() {
+            document.getElementById("categoriesModal").classList.remove("open");
+        }
+
+        async function handleAddCategory(e) {
+            e.preventDefault();
+            const input = document.getElementById("newCategoryInput");
+            const name = input.value.trim();
+            if (!name) return;
+
+            const res = await fetch("/api/admin/categories/add", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name })
+            });
+            const data = await res.json();
+            if (data.success) {
+                input.value = "";
+                await loadAdminCategories();
+            }
+        }
+
+        async function deleteCategory(id, name) {
+            const confirmed = await showAdminConfirm("Delete Category", `Delete '${name}'?`);
+            if (!confirmed) return;
+            const res = await fetch("/api/admin/categories/delete", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id, name })
+            });
+            const data = await res.json();
+            if (data.success) await loadAdminCategories();
+        }
+
+        async function openTaxModal() {
+            document.getElementById("profileDropdown").classList.remove("show");
+            try {
+                const res = await fetch("/api/admin/settings/service-tax");
+                const data = await res.json();
+                document.getElementById("taxRateInput").value = data.service_tax_percent !== undefined ? data.service_tax_percent : 5.0;
+            } catch (e) {}
+            document.getElementById("taxModal").classList.add("open");
+        }
+
+        function closeTaxModal() {
+            document.getElementById("taxModal").classList.remove("open");
+        }
+
+        async function handleSaveTax(e) {
+            e.preventDefault();
+            const val = parseFloat(document.getElementById("taxRateInput").value);
+            if (isNaN(val) || val < 0) return alert("Please enter valid rate");
+            const res = await fetch("/api/admin/settings/service-tax", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ service_tax_percent: val })
+            });
+            const data = await res.json();
+            if (data.success) closeTaxModal();
+        }
+
+        function openPhotosModal() {
+            document.getElementById("profileDropdown").classList.remove("show");
+            loadStaticPhotos();
+            document.getElementById("photosModal").classList.add("open");
+        }
+
+        function closePhotosModal() {
+            document.getElementById("photosModal").classList.remove("open");
+        }
+
+        async function loadStaticPhotos() {
+            const box = document.getElementById("photosContainer");
+            box.innerHTML = '<div style="color:var(--text-muted); padding:0.4rem;">Loading...</div>';
+            const res = await fetch("/api/admin/photos");
+            const data = await res.json();
+
+            if (!data.photos || data.photos.length === 0) {
+                box.innerHTML = '<div style="color:var(--text-muted); grid-column:1/-1;">No photos in static/uploads/</div>';
+                return;
+            }
+
+            box.innerHTML = "";
+            data.photos.forEach(p => {
+                const card = document.createElement("div");
+                card.style.cssText = "position:relative; border:1px solid #ded3b8; border-radius:8px; overflow:hidden;";
+                card.innerHTML = `
+                    <img src="${p.url}" style="width:100%; height:68px; object-fit:cover; display:block;" />
+                    <button type="button" style="position:absolute; top:3px; right:3px; background:#c53d3d; color:#fff; border:none; border-radius:50%; width:20px; height:20px; font-weight:800; cursor:pointer; line-height:20px; font-size:12px;" onclick="deleteStaticPhoto('${p.filename}')">×</button>
+                `;
+                box.appendChild(card);
+            });
+        }
+
+        async function deleteStaticPhoto(fname) {
+            const confirmed = await showAdminConfirm("Delete Photo", `Delete ${fname}?`);
+            if (!confirmed) return;
+            const res = await fetch("/api/admin/photos/delete", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ filename: fname })
+            });
+            const data = await res.json();
+            if (data.success) loadStaticPhotos();
+        }
+
+        function openPasswordModal() {
+            document.getElementById("profileDropdown").classList.remove("show");
+            document.getElementById("passwordModal").classList.add("open");
+        }
+        function closePasswordModal() { document.getElementById("passwordModal").classList.remove("open"); }
+
+        async function saveAdminPassword() {
+            const newPassword = document.getElementById("newAdminPasswordInput").value.trim();
+            if (newPassword.length < 6) return alert("Min 6 characters required");
+            const res = await fetch("/api/admin/change-password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ new_password: newPassword })
+            });
+            const data = await res.json();
+            if (data.success) closePasswordModal();
+        }
+
         async function logoutAdmin() {
             await fetch("/api/admin/logout", { method: "POST" });
             window.location.reload();
         }
 
+        loadAdminCategories();
         loadAdminOrders();
         setInterval(loadAdminOrders, 4000);
     </script>
