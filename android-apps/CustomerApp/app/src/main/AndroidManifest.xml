@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
+        android:icon="@drawable/food_bites_logo"
         android:allowBackup="false"
         android:label="@string/app_name"
         android:theme="@style/AppTheme"
