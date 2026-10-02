@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Manage Menu Catalog</title>
+    <style>
+        :root {
+            --bg: #f8f5ec;
+            --card: #fffdf7;
+            --border: #ded3b8;
+            --ink: #302a20;
+            --muted: #766d5d;
+            --gold: #b8953f;
+            --green: #16865f;
+            --red: #d94b4b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(180deg, #fffdf8, #f4efe2);
+            color: var(--ink);
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 14px;
+            background: #fffdf7;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        h1 { font-size: 1.05rem; }
+        .btn-link, .btn-action-top {
+            color: #49391a;
+            font-weight: 700;
+            text-decoration: none;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 12px;
+            background: #fffaf0;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 14px auto;
+            padding: 0 10px;
+        }
+
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .btn-add-food {
+            background: linear-gradient(135deg, #d8bd70, #b8953f);
+            color: #fffdf7;
+            border: 1px solid #927326;
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-weight: 800;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+        }
+
+        .dish-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            box-shadow: 0 4px 14px rgba(70, 55, 25, 0.05);
+        }
+
+        .dish-thumb {
+            width: 72px;
+            height: 72px;
+            border-radius: 10px;
+            object-fit: cover;
+            border: 1px solid var(--border);
+            background: #eee8d8;
+            flex-shrink: 0;
+        }
+
+        .dish-info {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .dish-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--ink);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .dish-meta {
+            font-size: 0.78rem;
+            color: var(--muted);
+            text-transform: capitalize;
+        }
+
+        .dish-price {
+            font-size: 0.98rem;
+            font-weight: 800;
+            color: #927326;
+        }
+
+        .dish-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+
+        .btn-edit {
+            padding: 5px 12px;
+            border-radius: 999px;
+            background: #fffdf7;
+            border: 1px solid #d7cbb0;
+            color: #554830;
+            font-weight: 700;
+            font-size: 0.76rem;
+            cursor: pointer;
+        }
+
+        .btn-del {
+            padding: 5px 12px;
+            border-radius: 999px;
+            background: #fff1ef;
+            border: 1px solid #e3aaa4;
+            color: #c53d3d;
+            font-weight: 700;
+            font-size: 0.76rem;
+            cursor: pointer;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(55, 43, 20, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            padding: 12px;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: #fffdf7;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 440px;
+            padding: 16px;
+            max-height: 88vh;
+            overflow-y: auto;
+        }
+
+        .form-field { margin-bottom: 10px; }
+        .form-field label { display: block; font-size: 0.78rem; font-weight: 700; color: var(--muted); margin-bottom: 3px; }
+        .form-input { width: 100%; padding: 8px 10px; background: #fffaf0; border: 1px solid var(--border); border-radius: 8px; font-size: 0.88rem; outline: none; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>📋 Menu Management</h1>
+        <div style="display:flex; gap:6px;">
+            <a href="/admin" class="btn-link">← Dashboard</a>
+        </div>
+    </header>
+
+    <main>
+        <div class="action-bar">
+            <h2>Current Dishes</h2>
+            <button class="btn-add-food" onclick="openItemModal()">+ Add New Dish</button>
+        </div>
+
+        <div class="items-grid" id="dishesContainer">
+            <div style="color:var(--muted); padding:1rem;">Loading dishes...</div>
+        </div>
+    </main>
+
+    <!-- ADD/EDIT DISH MODAL -->
+    <div class="modal-overlay" id="itemModal">
+        <div class="modal-box">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <h3 id="modalTitle">Dish Details</h3>
+                <button style="background:none; border:none; font-size:1.4rem; cursor:pointer;" onclick="closeItemModal()">&times;</button>
+            </div>
+
+            <form id="menuItemForm" onsubmit="handleSaveMenuItem(event)" enctype="multipart/form-data">
+                <input type="hidden" id="editItemId" name="id" />
+
+                <div class="form-field">
+                    <label>Dish Name</label>
+                    <input type="text" id="dishNameInput" name="item_name" class="form-input" required />
+                </div>
+
+                <div class="form-field">
+                    <label>Category</label>
+                    <select id="dishCategorySelect" name="category" class="form-input" style="text-transform:capitalize;"></select>
+                </div>
+
+                <div class="form-field">
+                    <label>Price (₹)</label>
+                    <input type="number" step="0.01" id="dishPriceInput" name="price" class="form-input" required />
+                </div>
+
+                <div class="form-field">
+                    <label>Upload Photo</label>
+                    <input type="file" id="dishFileInput" name="image_file" accept="image/*" class="form-input" style="background:#fff;" />
+                </div>
+
+                <div class="form-field">
+                    <label>Or Web Image URL</label>
+                    <input type="text" id="dishUrlInput" name="image_url" class="form-input" placeholder="https://..." />
+                </div>
+
+                <div class="form-field">
+                    <label>Initial Status</label>
+                    <select id="dishActiveSelect" name="is_active" class="form-input">
+                        <option value="true">🟢 Active (Available)</option>
+                        <option value="false">🔴 Inactive (Unavailable)</option>
+                    </select>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+                    <button type="button" class="btn-action-top" onclick="closeItemModal()">Cancel</button>
+                    <button type="submit" class="btn-add-food">Save Dish</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let menuItems = [];
+        let categories = [];
+
+        async function loadCategories() {
+            try {
+                const res = await fetch("/api/categories");
+                const data = await res.json();
+                categories = data.categories || [];
+                const sel = document.getElementById("dishCategorySelect");
+                sel.innerHTML = categories.map(c => `<option value="${c.name.toLowerCase()}">${c.name.charAt(0).toUpperCase() + c.name.slice(1)}</option>`).join('');
+            } catch (e) {}
+        }
+
+        async function loadDishes() {
+            const container = document.getElementById("dishesContainer");
+            try {
+                const res = await fetch("/api/admin/menu/items");
+                const data = await res.json();
+                menuItems = data.items || [];
+
+                if (!menuItems.length) {
+                    container.innerHTML = '<div style="color:var(--muted); padding:1rem;">No items found. Click "+ Add New Dish" above.</div>';
+                    return;
+                }
+
+                container.innerHTML = menuItems.map(item => `
+                    <div class="dish-card">
+                        <img src="${item.photo_url || 'https://via.placeholder.com/72'}" class="dish-thumb" alt="${item.item_name}" onerror="this.src='https://via.placeholder.com/72'"/>
+                        <div class="dish-info">
+                            <div class="dish-title">${item.item_name}</div>
+                            <div class="dish-meta">${item.category} · ${item.is_active ? '🟢 Live' : '🔴 Hidden'}</div>
+                            <div class="dish-price">₹${Number(item.price).toFixed(2)}</div>
+                        </div>
+                        <div class="dish-actions">
+                            <button class="btn-edit" onclick="editItem(${item.id})">Edit</button>
+                            <button class="btn-del" onclick="deleteItem(${item.id}, '${item.item_name.replace(/'/g, "\\'")}')">Del</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                container.innerHTML = '<div style="color:var(--red); padding:1rem;">Error loading dishes.</div>';
+            }
+        }
+
+        function openItemModal() {
+            document.getElementById("modalTitle").textContent = "Add Food Item";
+            document.getElementById("editItemId").value = "";
+            document.getElementById("dishNameInput").value = "";
+            document.getElementById("dishPriceInput").value = "";
+            document.getElementById("dishUrlInput").value = "";
+            document.getElementById("dishFileInput").value = "";
+            document.getElementById("dishActiveSelect").value = "true";
+            document.getElementById("itemModal").classList.add("open");
+        }
+
+        function editItem(id) {
+            const item = menuItems.find(i => i.id === id);
+            if (!item) return;
+            document.getElementById("modalTitle").textContent = "Edit Dish";
+            document.getElementById("editItemId").value = item.id;
+            document.getElementById("dishNameInput").value = item.item_name;
+            document.getElementById("dishCategorySelect").value = item.category.toLowerCase();
+            document.getElementById("dishPriceInput").value = item.price;
+            document.getElementById("dishUrlInput").value = item.photo_url || "";
+            document.getElementById("dishFileInput").value = "";
+            document.getElementById("dishActiveSelect").value = item.is_active ? "true" : "false";
+            document.getElementById("itemModal").classList.add("open");
+        }
+
+        function closeItemModal() {
+            document.getElementById("itemModal").classList.remove("open");
+        }
+
+        async function handleSaveMenuItem(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.textContent = "Saving...";
+
+            try {
+                const res = await fetch("/api/admin/menu/save", {
+                    method: "POST",
+                    body: new FormData(document.getElementById("menuItemForm"))
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeItemModal();
+                    loadDishes();
+                } else {
+                    alert(data.error || "Failed to save dish.");
+                }
+            } catch (err) {
+                alert("Network error.");
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Save Dish";
+            }
+        }
+
+        async function deleteItem(id, name) {
+            if (!confirm(`Delete "${name}" permanently?`)) return;
+            try {
+                const res = await fetch("/api/admin/menu/delete", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id })
+                });
+                const data = await res.json();
+                if (data.success) loadDishes();
+            } catch (e) {}
+        }
+
+        loadCategories();
+        loadDishes();
+    </script>
+</body>
+</html>

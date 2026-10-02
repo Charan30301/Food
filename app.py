@@ -344,6 +344,46 @@ def register():
     session["username"] = user["username"]
     return jsonify({"success": True, "redirect_url": "/menu"})
 
+# Add this route to render the dedicated full menu edit page
+@app.route("/admin/menu")
+def admin_menu_management_page():
+    if not session.get("is_admin"):
+        return redirect(url_for("admin_page"))
+    return render_template("admin_menu_edit.html")
+
+# Fast 1-click active/inactive toggle endpoint with automatic menu version bump
+@app.route("/api/admin/menu/toggle-active", methods=["POST"])
+def admin_toggle_item_active():
+    if not session.get("is_admin"):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json() or {}
+    item_id = data.get("id")
+    if not item_id:
+        return jsonify({"error": "Item ID required"}), 400
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE menu_items
+                SET is_active = NOT is_active
+                WHERE id = %s
+                RETURNING id, item_name, is_active;
+            """, (int(item_id),))
+            updated = cur.fetchone()
+            conn.commit()
+
+    if not updated:
+        return jsonify({"error": "Item not found"}), 404
+
+    bump_menu_version()
+    return jsonify({
+        "success": True,
+        "id": updated["id"],
+        "item_name": updated["item_name"],
+        "is_active": updated["is_active"]
+    })
+
 # ==========================================
 # Menu & Cart CRUD Endpoints
 # ==========================================
