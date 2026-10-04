@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <link id="appManifest" rel="manifest" href="/manifest/{{ "chef" if pwa_role == "chef" else "reception" }}.webmanifest">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>{{ "Waiting Queue" if is_waiting else "Cooking Orders" }}</title>
     <style>
         :root {
@@ -34,43 +34,72 @@
             padding-bottom: 30px;
         }
 
+        /* Responsive 2-Row Header Container */
         header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-            padding: 12px 14px;
             background: #fffdf7;
             border-bottom: 1px solid var(--border);
             position: sticky;
             top: 0;
             z-index: 10;
+            padding: 8px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
         }
 
-        h1 { font-size: 1.02rem; margin: 0; }
-        .header-actions { display: flex; align-items: center; gap: 6px; }
+        .header-top-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
 
-        .btn-link, .btn-action-top {
+        .header-top-row h1 {
+            font-size: 1.08rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 800;
+        }
+
+        .header-controls-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            width: 100%;
+        }
+
+        /* Combined 1-row layout on wider screens */
+        @media (min-width: 600px) {
+            header {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                padding: 12px 16px;
+            }
+            .header-top-row { width: auto; }
+            .header-controls-row { width: auto; }
+        }
+
+        .btn-link, .sound-badge {
             color: #49391a;
             font-weight: 700;
             text-decoration: none;
             border: 1px solid var(--border);
             border-radius: 8px;
-            padding: 6px 10px;
+            padding: 7px 12px;
             background: #fffaf0;
             cursor: pointer;
-            font-size: 0.8rem;
+            font-size: 0.82rem;
             white-space: nowrap;
-        }
-
-        .sound-badge {
-            font-size: 0.72rem;
-            font-weight: 800;
-            padding: 5px 8px;
-            border-radius: 999px;
-            cursor: pointer;
-            border: 1px solid var(--border);
-            background: #fffaf0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 38px;
+            touch-action: manipulation;
         }
 
         .btn-switch-queue {
@@ -78,6 +107,15 @@
             color: #b45309 !important;
             border-color: #fde68a !important;
             font-weight: 800;
+        }
+
+        .badge {
+            font-size: 0.74rem;
+            font-weight: 800;
+            border-radius: 999px;
+            padding: 3px 8px;
+            background: #f0e7d1;
+            color: var(--ink);
         }
 
         main {
@@ -98,6 +136,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
         }
 
         .orders-grid {
@@ -194,14 +234,6 @@
             cursor: pointer;
             text-align: center;
             white-space: nowrap;
-        }
-
-        .badge {
-            font-size: 0.7rem;
-            font-weight: 800;
-            border-radius: 999px;
-            padding: 3px 7px;
-            background: #f0e7d1;
         }
 
         .status {
@@ -315,28 +347,31 @@
         .toast.show { opacity: 1; transform: translate(-50%, 0); }
         .toast.error { background: #b42318; }
     </style>
-<script>window.PWA_ROLE="{{ pwa_role|default('chef') }}";</script>
-<script src="/static/js/pwa.js" defer></script>
+    <script>window.PWA_ROLE="{{ pwa_role|default('chef') }}";</script>
+    <script src="/static/js/pwa.js" defer></script>
 </head>
 <body>
     <header>
-        <h1>
-            {{ "⏳ Waiting Orders" if is_waiting else "🍳 Active Kitchen (Max 5)" }}
-            <span id="count" class="badge">0</span>
-        </h1>
-        <div class="header-actions">
+        <!-- Row 1: Page Title and Count Badge -->
+        <div class="header-top-row">
+            <h1>
+                <span>{{ "⏳ Waiting Orders" if is_waiting else "🍳 Active Kitchen (Max 5)" }}</span>
+                <span id="count" class="badge">0</span>
+            </h1>
+        </div>
+
+        <!-- Row 2: Navigation & Sound Toggle -->
+        <div class="header-controls-row">
             {% if is_waiting %}
                 <a href="{{ '/chef' if pwa_role == 'chef' else '/admin/cooking' }}" class="btn-link">← Active Cooking (Max 5)</a>
             {% else %}
                 <a href="{{ '/chef/waiting' if pwa_role == 'chef' else '/admin/cooking-waiting' }}" class="btn-link btn-switch-queue" id="waitingQueueNavBtn">
-                    ⏳ Waiting Queue (<span id="waitingBadgeHeader">0</span>)
+                    ⏳ Waiting (<span id="waitingBadgeHeader">0</span>)
                 </a>
             {% endif %}
 
-            <button class="sound-badge" id="cookingNotificationButton" type="button">🔔 Alert</button>
             <button class="sound-badge" id="soundBtn" onclick="toggleSound()">🔔 ON</button>
-            <a href="/admin" class="btn-link">&larr; Admin</a>
-            <button class="btn-action-top" onclick="loadOrders()">&#8635; Refresh</button>
+            <a href="/admin" class="btn-link">Admin</a>
         </div>
     </header>
 
@@ -347,7 +382,7 @@
             </div>
         {% else %}
             <div class="queue-notice-banner" style="background:#ecfdf5; border-color:#a7f3d0; color:#065f46;">
-                <span>🔥 Maximum 5 active cooking orders displayed. Clicking 'Prepared' brings the next waitlisted order.</span>
+                <span>🔥 Max 5 active orders. Marking 'Prepared' immediately brings next waitlisted order.</span>
                 <span id="waitingCountBanner">Waitlist: 0</span>
             </div>
         {% endif %}
@@ -477,6 +512,7 @@
             document.getElementById('confirmTitle').textContent = title;
             document.getElementById('confirmMsg').textContent = message;
             document.getElementById('confirmModal').classList.add('show');
+            if (window.appPopupNotification) window.appPopupNotification(title, message, "/chef");
             return new Promise(resolve => { confirmResolve = resolve; });
         }
 
@@ -542,20 +578,17 @@
                 const activeKitchen = data.orders || [];
                 const waitingList = data.waiting_orders || [];
 
-                // Header Badges Update
                 const waitBadgeHeader = document.getElementById('waitingBadgeHeader');
                 if (waitBadgeHeader) waitBadgeHeader.textContent = waitingList.length;
 
                 const waitCountBanner = document.getElementById('waitingCountBanner');
                 if (waitCountBanner) waitCountBanner.textContent = `Waitlist: ${waitingList.length}`;
 
-                // Automatic redirect back from waiting page if active kitchen has fewer than 5 orders
                 if (IS_WAITING_PAGE && activeKitchen.length < 5) {
                     window.location.replace(MAIN_COOKING_URL);
                     return;
                 }
 
-                // Choose list to display
                 cachedOrders = IS_WAITING_PAGE ? waitingList : activeKitchen;
                 const currentCount = cachedOrders.length;
                 document.getElementById('count').textContent = currentCount;
@@ -622,11 +655,6 @@
 
         loadOrders();
         setInterval(loadOrders, 4000);
-        document.addEventListener('DOMContentLoaded', () => {
-            if (window.bindAppNotificationButton) {
-                window.bindAppNotificationButton(document.getElementById('cookingNotificationButton'));
-            }
-        });
     </script>
 </body>
 </html>
