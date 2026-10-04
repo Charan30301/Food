@@ -485,6 +485,12 @@
             padding: 10px;
         }
         .modal-overlay.open { display: flex; }
+        
+        /* Give confirmation modals a higher z-index so they always overlay category list */
+        #adminConfirmModal {
+            z-index: 3000 !important;
+        }
+
         .modal-box {
             background: #fffdf7;
             border: 1px solid #ded3b8;
@@ -532,7 +538,6 @@
             font-size: 0.82rem;
         }
 
-        /* Photos Gallery Grid */
         .photos-gallery-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
@@ -569,6 +574,47 @@
             cursor: pointer;
             width: 100%;
         }
+
+        /* Large password input styling with toggle eye */
+        .password-field-container {
+            position: relative;
+            width: 100%;
+            margin-top: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        .large-password-input {
+            width: 100%;
+            background: #fffaf0;
+            border: 1.5px solid #ded3b8;
+            border-radius: 12px;
+            padding: 0.85rem 2.8rem 0.85rem 1rem;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-main);
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .large-password-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(184, 149, 63, 0.15);
+        }
+        .password-eye-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
     </style>
 <script src="/static/js/pwa.js" defer></script>
 </head>
@@ -584,7 +630,7 @@
             <button class="kitchen-toggle-btn kitchen-open" id="kitchenToggleBtn" onclick="toggleKitchenStatus()">Kitchen: OPEN</button>
 
             <button class="admin-profile-btn" onclick="toggleDropdown()" title="Options">
-                <span>⚙️</span>
+                <span>⚙️️</span>
                 <span class="admin-btn-text">Options</span>
                 <span class="admin-btn-caret">▼</span>
             </button>
@@ -596,10 +642,6 @@
                 <button class="dropdown-item" onclick="openPhotosModal()"><span>🖼️ Uploaded Photos</span></button>
                 <button class="dropdown-item" onclick="openCategoriesModal()"><span>🏷️ Category List</span></button>
                 <button class="dropdown-item" onclick="openTaxModal()"><span>💰 Digital Service Tax</span></button>
-                <button class="dropdown-item" id="adminNotificationButton" type="button">
-                    <span>🔔 Notifications</span>
-                    <strong data-notification-status style="color:var(--success);">Enable</strong>
-                </button>
                 <button class="dropdown-item" onclick="toggleSoundSetting()">
                     <span>🔔 Alert Chime</span>
                     <strong id="soundStatusBadge" style="color:var(--success);">ON</strong>
@@ -756,7 +798,7 @@
                 <button class="modal-close-icon" onclick="closeCategoriesModal()">&times;</button>
             </div>
             <form onsubmit="handleAddCategory(event)" style="display:flex; gap:0.4rem; margin-bottom:0.75rem;">
-                <input type="text" id="newCategoryInput" class="form-input" style="flex:1;" placeholder="New category (e.g. Snacks)" required />
+                <input type="text" id="newCategoryInput" class="form-input" style="flex:1; padding:8px 10px; background:#fffaf0; border:1px solid #ded3b8; border-radius:8px; font-size:0.9rem;" placeholder="New category (e.g. Snacks)" required />
                 <button type="submit" class="btn-primary" style="padding:0.55rem 0.85rem; white-space:nowrap;">+ Add</button>
             </form>
             <label style="display:block; font-size:0.78rem; font-weight:700; color:var(--text-muted); margin-bottom:0.35rem;">Existing Categories</label>
@@ -778,9 +820,9 @@
                 Percentage added to PhonePe / Online Gateway orders only. Counter cash orders are exempt.
             </p>
             <form onsubmit="handleSaveTax(event)">
-                <div class="form-field">
-                    <label>Online Gateway Tax Rate (%)</label>
-                    <input type="number" step="0.1" min="0" max="50" id="taxRateInput" class="form-input" required placeholder="5.0" />
+                <div style="margin-bottom:10px;">
+                    <label style="display:block; font-size:0.78rem; font-weight:700; color:var(--text-muted); margin-bottom:3px;">Online Gateway Tax Rate (%)</label>
+                    <input type="number" step="0.1" min="0" max="50" id="taxRateInput" style="width:100%; padding:8px 10px; background:#fffaf0; border:1px solid var(--card-border); border-radius:8px; font-size:0.9rem; outline:none;" required placeholder="5.0" />
                 </div>
                 <div class="modal-buttons">
                     <button type="button" class="btn-secondary" onclick="closeTaxModal()">Cancel</button>
@@ -790,17 +832,23 @@
         </div>
     </div>
 
-    <!-- PASSWORD MODAL -->
+    <!-- PASSWORD MODAL (Enhanced with Large Input & Eye Toggle) -->
     <div class="modal-overlay" id="passwordModal">
-        <div class="modal-box" style="max-width:340px;">
+        <div class="modal-box" style="max-width:390px;">
             <div class="modal-header-row">
                 <h3>Admin Password</h3>
                 <button class="modal-close-icon" onclick="closePasswordModal()">&times;</button>
             </div>
-            <input type="password" id="newAdminPasswordInput" class="form-input" placeholder="Min 6 characters" />
+            <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.25rem;">Enter a strong new password for the admin account:</p>
+            <div class="password-field-container">
+                <input type="password" id="newAdminPasswordInput" class="large-password-input" placeholder="Min 6 characters" />
+                <button type="button" class="password-eye-toggle" onclick="togglePasswordVisibility('newAdminPasswordInput', this)" title="Show/Hide Password" tabindex="-1">
+                    👁️
+                </button>
+            </div>
             <div class="modal-buttons">
                 <button class="btn-secondary" onclick="closePasswordModal()">Cancel</button>
-                <button class="btn-primary" onclick="saveAdminPassword()">Save</button>
+                <button class="btn-primary" onclick="saveAdminPassword()">Save Password</button>
             </div>
         </div>
     </div>
@@ -812,6 +860,18 @@
         let lastNewCount = null;
         let currentSubSection = 'new';
         let allCachedAdminOrders = [];
+
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            if (input.type === "password") {
+                input.type = "text";
+                btn.textContent = "🙈";
+            } else {
+                input.type = "password";
+                btn.textContent = "👁️";
+            }
+        }
 
         const catalogSyncChannel = window.BroadcastChannel ? new BroadcastChannel('food_catalog_sync_channel') : null;
         if (catalogSyncChannel) {
@@ -866,12 +926,6 @@
                 osc2.stop(now + 0.7);
             } catch (e) {}
         }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            if (window.bindAppNotificationButton) {
-                window.bindAppNotificationButton(document.getElementById('adminNotificationButton'));
-            }
-        });
 
         function toggleSoundSetting() {
             soundEnabled = !soundEnabled;
@@ -972,7 +1026,6 @@
             }
         }
 
-        // Uploaded Photos Modal
         function openPhotosModal() {
             document.getElementById("profileDropdown").classList.remove("show");
             document.getElementById("photosModal").classList.add("open");
@@ -1119,7 +1172,6 @@
                 document.getElementById("counterBillsBadge").textContent = currentCounter;
                 document.getElementById("totalQueueBadge").textContent = currentNew + (data.active_count || 0);
 
-                // Fetch waiting queue count to display in options menu
                 fetch("/api/admin/cooking-orders").then(r => r.json()).then(ck => {
                     const el = document.getElementById("dropdownWaitCount");
                     if (el) el.textContent = ck.waiting_count || 0;
@@ -1129,7 +1181,6 @@
                 const deliveryGrid = document.getElementById("deliveryOrdersGrid");
                 const counterGrid = document.getElementById("counterOrdersGrid");
 
-                // 1. Requests
                 if (!data.new_orders || data.new_orders.length === 0) {
                     newGrid.innerHTML = '<div style="color:var(--text-muted); padding:0.65rem;">No new incoming orders.</div>';
                 } else {
@@ -1170,7 +1221,6 @@
                     });
                 }
 
-                // 2. Ready for Delivery
                 if (!preparedOrders || preparedOrders.length === 0) {
                     deliveryGrid.innerHTML = '<div style="color:var(--text-muted); padding:0.65rem;">No orders ready for delivery.</div>';
                 } else {
@@ -1183,7 +1233,7 @@
                         const itemsHtml = order.items.map(i => `<div class="order-item-line"><span>${i.name} × ${i.quantity}</span><span>₹${i.subtotal.toFixed(2)}</span></div>`).join('');
                         const typeBadge = order.order_type === 'parcel' 
                             ? `<span class="order-type-badge parcel">📦 Parcel</span>`
-                            : `<span class="order-type-badge dine_in">🍽️ Dine In</span>`;
+                            : `<span class="order-type-badge dine_in">🍽 Dine In</span>`;
 
                         card.innerHTML = `
                             <div class="order-head">
@@ -1204,7 +1254,6 @@
                     });
                 }
 
-                // 3. Counter Bills
                 if (!data.counter_bills || data.counter_bills.length === 0) {
                     counterGrid.innerHTML = '<div style="color:var(--text-muted); padding:0.65rem;">No counter cash bills waiting for payment.</div>';
                 } else {
@@ -1217,7 +1266,7 @@
                         const itemsHtml = order.items.map(i => `<div class="order-item-line"><span>${i.name} × ${i.quantity}</span><span>₹${i.subtotal.toFixed(2)}</span></div>`).join('');
                         const typeBadge = order.order_type === 'parcel' 
                             ? `<span class="order-type-badge parcel">📦 Parcel</span>`
-                            : `<span class="order-type-badge dine_in">🍽️ Dine In</span>`;
+                            : `<span class="order-type-badge dine_in">🍽 Dine In</span>`;
 
                         card.innerHTML = `
                             <div class="order-head">
@@ -1356,13 +1405,15 @@
         async function deleteCategory(id, name) {
             const confirmed = await showAdminConfirm("Delete Category", `Delete '${name}'?`);
             if (!confirmed) return;
-            const res = await fetch("/api/admin/categories/delete", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id, name })
-            });
-            const data = await res.json();
-            if (data.success) await loadAdminCategories();
+            try {
+                const res = await fetch("/api/admin/categories/delete", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id, name })
+                });
+                const data = await res.json();
+                if (data.success) await loadAdminCategories();
+            } catch (e) {}
         }
 
         function openPasswordModal() {

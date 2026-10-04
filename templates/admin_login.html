@@ -76,22 +76,44 @@
             margin-bottom: 1.35rem;
         }
 
-        input[type="password"] {
+        .password-input-wrapper {
+            position: relative;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        .password-input-wrapper input {
             width: 100%;
             background: #fffaf0 !important;
             color: var(--text) !important;
             border: 1px solid #d9ccb0 !important;
             border-radius: 12px !important;
-            padding: 0.85rem !important;
+            padding: 0.85rem 2.8rem 0.85rem 0.85rem !important;
             font-size: 0.95rem;
-            margin-bottom: 1rem;
             outline: none;
             box-sizing: border-box;
         }
 
-        input[type="password"]:focus {
+        .password-input-wrapper input:focus {
             border-color: var(--gold) !important;
             box-shadow: 0 0 0 3px rgba(184,149,63,0.14) !important;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.15rem;
+            color: var(--muted);
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
         }
 
         .btn-login {
@@ -125,13 +147,30 @@
         <h2>Admin Authentication</h2>
         <p>Enter the security key to access the operations panel</p>
         <form id="adminLoginForm" onsubmit="handleLogin(event)">
-            <input type="password" id="adminPassword" placeholder="Admin Password" required autofocus autocomplete="current-password" />
+            <div class="password-input-wrapper">
+                <input type="password" id="adminPassword" placeholder="Admin Password" required autofocus autocomplete="current-password" />
+                <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('adminPassword', this)" title="Show/Hide Password" tabindex="-1">
+                    👁️
+                </button>
+            </div>
             <button type="submit" class="btn-login">Unlock Admin Panel</button>
         </form>
         <div id="errMsg" class="error-msg"></div>
     </div>
 
     <script>
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            if (input.type === "password") {
+                input.type = "text";
+                btn.textContent = "🙈";
+            } else {
+                input.type = "password";
+                btn.textContent = "👁️";
+            }
+        }
+
         async function handleLogin(e) {
             e.preventDefault();
             const password = document.getElementById("adminPassword").value.trim();
