@@ -13,10 +13,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
 try:
-    firebase_admin = importlib.import_module("firebase_admin")
-    credentials = importlib.import_module("firebase_admin.credentials")
-    messaging = importlib.import_module("firebase_admin.messaging")
-except (ModuleNotFoundError, ImportError):
+    import firebase_admin  # type: ignore[import-not-found]
+    from firebase_admin import credentials, messaging  # type: ignore[import-not-found]
+except ModuleNotFoundError:
     firebase_admin = None
     credentials = None
     messaging = None
@@ -1143,7 +1142,7 @@ def timeout_cancel_order():
                 cancel_reason = "The kitchen is not accepting orders, please try again in a few minutes."
 
             cur.execute("""
-                UPDATE orders
+                UPDATE orders 
                 SET order_status = 'cancelled',
                     cancellation_reason = %s,
                     customer_alert = TRUE,
@@ -1437,7 +1436,7 @@ def admin_cooking_page():
 def admin_cooking_waiting_page():
     if not session.get("is_admin"):
         return redirect(url_for("admin_page"))
-    return render_template("cooking_orders.html", pwa_role="reception", is_waiting=True)
+    return render_template("cooking_waiting.html", pwa_role="reception", is_waiting=True)
 
 @app.route("/chef")
 def chef_page():
@@ -1449,7 +1448,7 @@ def chef_page():
 def chef_waiting_page():
     if not session.get("is_admin"):
         return render_template("chef_login.html")
-    return render_template("cooking_orders.html", pwa_role="chef", is_waiting=True)
+    return render_template("cooking_waiting.html", pwa_role="chef", is_waiting=True)
 
 @app.route("/api/admin/login", methods=["POST"])
 def admin_login():
@@ -1689,7 +1688,7 @@ def admin_statistics():
                            COALESCE(SUM(o.total_amount) FILTER (
                                WHERE o.payment_status = 'paid' AND o.payment_method = 'online'
                            ), 0)::float AS online_received,
-                           COALESCE(SUM(o.tax_amount) FILTER (WHERE payment_status = 'paid'), 0)::float AS tax_collected
+                           COALESCE(SUM(o.tax_amount) FILTER (WHERE o.payment_status = 'paid'), 0)::float AS tax_collected
                     FROM generate_series((NOW() AT TIME ZONE 'Asia/Kolkata')::date - INTERVAL '29 days',
                                          (NOW() AT TIME ZONE 'Asia/Kolkata')::date, INTERVAL '1 day') AS d(day)
                     LEFT JOIN orders o ON (o.created_at AT TIME ZONE 'Asia/Kolkata')::date = d.day::date
@@ -1707,7 +1706,7 @@ def admin_statistics():
                            COALESCE(SUM(o.total_amount) FILTER (
                                WHERE o.payment_status = 'paid' AND o.payment_method = 'online'
                            ), 0)::float AS online_received,
-                           COALESCE(SUM(o.tax_amount) FILTER (WHERE payment_status = 'paid'), 0)::float AS tax_collected
+                           COALESCE(SUM(o.tax_amount) FILTER (WHERE o.payment_status = 'paid'), 0)::float AS tax_collected
                     FROM generate_series(
                         date_trunc('month', (NOW() AT TIME ZONE 'Asia/Kolkata')::date) - INTERVAL '5 months',
                         date_trunc('month', (NOW() AT TIME ZONE 'Asia/Kolkata')::date),

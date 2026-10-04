@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <link rel="manifest" href="/manifest/customer.webmanifest">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Grand Palace Hotel - Menu</title>
     <style>
         :root {
@@ -24,9 +24,27 @@
             --red: #ef4444;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif; -webkit-tap-highlight-color: transparent; }
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+        }
 
-        .page-loading-overlay { position: fixed; inset: 0; z-index: 5000; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; background: rgba(251,249,242,.88); backdrop-filter: blur(3px); color: var(--brown); }
+        .page-loading-overlay { 
+            position: fixed; 
+            inset: 0; 
+            z-index: 5000; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            flex-direction: column; 
+            gap: 12px; 
+            background: rgba(251,249,242,.88); 
+            backdrop-filter: blur(3px); 
+            color: var(--brown); 
+        }
         .page-loading-overlay.hidden { display: none; }
         .loading-spinner { width: 46px; height: 46px; border: 4px solid #e8dec4; border-top-color: var(--gold-dark); border-radius: 50%; animation: spin .75s linear infinite; }
         .loading-caption { font-weight: 700; font-size: .92rem; }
@@ -42,9 +60,18 @@
         body {
             min-height: 100vh;
             margin: 0;
-            padding-bottom: 120px;
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 120px);
+            padding-left: env(safe-area-inset-left, 0px);
+            padding-right: env(safe-area-inset-right, 0px);
             background: linear-gradient(135deg, #fbf9f2 0%, #f7f3e8 45%, #eee8d8 100%) !important;
             color: var(--espresso) !important;
+            -webkit-text-size-adjust: 100%;
+            overscroll-behavior-y: contain;
+        }
+
+        input, select, textarea {
+            font-size: 16px !important;
         }
 
         header {
@@ -77,7 +104,6 @@
             min-height: 44px !important;
             box-sizing: border-box !important;
             padding: 0 16px 0 42px !important;
-            font-size: 15px !important;
             background: rgba(255, 255, 255, 0.90) !important;
             color: var(--espresso) !important;
             border: 1px solid var(--gold-border) !important;
@@ -116,6 +142,7 @@
             font-size: 0 !important;
             box-shadow: 0 3px 10px rgba(80, 60, 25, 0.18) !important;
             overflow: hidden !important;
+            touch-action: manipulation;
         }
         .profile-btn::before {
             content: attr(data-initial) !important;
@@ -151,6 +178,8 @@
             gap: 0.65rem;
             overflow-x: auto;
             scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
         }
         .categories-container::-webkit-scrollbar { display: none; }
         .cat-btn {
@@ -159,12 +188,14 @@
             border: 1px solid var(--gold-border) !important;
             border-radius: 999px !important;
             padding: 0.55rem 1.15rem;
+            min-height: 44px;
             font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
             white-space: nowrap;
             transition: all 0.25s ease;
             text-transform: capitalize;
+            touch-action: manipulation;
         }
         .cat-btn:hover { background: var(--cream) !important; color: var(--gold-dark) !important; }
         .cat-btn.active {
@@ -246,12 +277,14 @@
         .action-btn {
             background: none;
             border: none;
+            min-height: 44px;
             padding: 0.4rem 0.65rem;
-            font-size: 0.95rem;
+            font-size: 1.1rem;
             cursor: pointer;
             color: var(--gold-dark);
             font-weight: 700;
             outline: none;
+            touch-action: manipulation;
         }
         .qty-label {
             font-size: 0.85rem;
@@ -442,6 +475,7 @@
         }
         .btn-themed-ack {
             width: 100%;
+            min-height: 44px;
             padding: 0.75rem;
             background: linear-gradient(135deg, #d8bd70, #b8953f);
             color: #fffdf7;
@@ -450,6 +484,7 @@
             font-weight: 800;
             cursor: pointer;
             font-size: 0.92rem;
+            touch-action: manipulation;
         }
 
         .sidebar-overlay {
@@ -466,7 +501,6 @@
         }
         .sidebar-overlay.active { opacity: 1; pointer-events: auto; }
         
-        /* Mobile-Optimized Profile Sidebar */
         .profile-sidebar {
             position: fixed;
             top: 0;
@@ -493,7 +527,7 @@
             flex-shrink: 0;
             background: #fbf9f2;
         }
-        .sidebar-close-btn { background: none; border: none; font-size: 1.5rem; color: var(--gold-dark); cursor: pointer; }
+        .sidebar-close-btn { background: none; border: none; font-size: 1.5rem; color: var(--gold-dark); cursor: pointer; min-height: 44px; min-width: 44px; }
         
         .sidebar-body {
             flex: 1 1 auto;
@@ -503,8 +537,10 @@
             flex-direction: column;
             gap: 0.85rem;
             -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
         }
 
+        /* Fixed permanently-docked footer button */
         .sidebar-footer {
             flex-shrink: 0;
             padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
@@ -512,8 +548,11 @@
             border-top: 1px solid var(--gold-border);
         }
         .sidebar-logout-btn {
-            display: block;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             width: 100%;
+            min-height: 44px;
             padding: 0.7rem;
             background: rgba(239, 68, 68, 0.12);
             color: #c94b45;
@@ -524,6 +563,7 @@
             font-weight: 800;
             font-size: 0.88rem;
             cursor: pointer;
+            touch-action: manipulation;
         }
 
         .profile-card, .order-card {
@@ -535,7 +575,6 @@
             width: 100%;
         }
 
-        /* Mobile Screen Fitting for Username & Save Button */
         .profile-input-row {
             display: flex;
             align-items: center;
@@ -552,11 +591,11 @@
             border-radius: 8px;
             color: var(--espresso);
             outline: none;
-            font-size: 0.88rem;
             box-sizing: border-box;
         }
         .save-username-btn {
             flex-shrink: 0;
+            min-height: 44px;
             background: linear-gradient(135deg, #c2a45e, #9e7d3e);
             color: #fff;
             border: none;
@@ -566,6 +605,7 @@
             cursor: pointer;
             font-size: 0.82rem;
             white-space: nowrap;
+            touch-action: manipulation;
         }
 
         .mobile-item-details { display: none; }
@@ -598,14 +638,14 @@
                 top: 12px;
                 right: 12px;
                 z-index: 2;
-                width: 34px;
-                height: 34px;
+                width: 36px;
+                height: 36px;
                 border: none;
                 border-radius: 50%;
                 background: rgba(255,253,247,0.95);
                 color: #927326;
                 font-size: 24px;
-                line-height: 34px;
+                line-height: 36px;
                 font-weight: 700;
                 cursor: pointer;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.2);
@@ -624,7 +664,7 @@
         <div class="loading-spinner"></div><div class="loading-caption">Loading menu…</div>
     </div>
 
-    <div class="kitchen-banner" id="kitchenClosedBanner">⚠️ The Kitchen is currently CLOSED. Preorders are temporarily paused.</div>
+    <div class="kitchen-banner" id="kitchenClosedBanner">⚠️️ The Kitchen is currently CLOSED. Preorders are temporarily paused.</div>
 
     <header>
         <div class="top-bar">
@@ -728,11 +768,6 @@
                 </div>
             </div>
 
-            <div class="profile-card" style="margin-top:0.75rem;">
-                <button id="menuNotificationButton" type="button" style="width:100%; border:1px solid var(--gold-border); border-radius:10px; padding:10px 12px; background:#302a20; color:#fff; font-weight:800; cursor:pointer;">🔔 Enable notifications</button>
-                <div style="margin-top:6px; font-size:0.72rem; color:var(--brown-light);">Receive order updates even when the app is closed.</div>
-            </div>
-
             <div>
                 <h4 style="margin-bottom:0.55rem; color:var(--espresso); font-size:0.92rem;">Past Orders</h4>
                 <div id="ordersHistoryList" style="display:flex; flex-direction:column; gap:0.65rem;"></div>
@@ -770,7 +805,6 @@
             window.addEventListener(ev, () => { initCustomerAudio(); }, { once: true });
         });
 
-        // Musical Tri-tone chime (G5 -> C6 -> E6) when food is prepared & ready for delivery
         function playReadyChime() {
             initCustomerAudio();
             if (!customerAudioCtx) return;
@@ -829,7 +863,6 @@
                 if (!data.kitchen_open) closedBanner.classList.add('show');
                 else closedBanner.classList.remove('show');
 
-                // Instant auto-sync if items are enabled/disabled on admin panel
                 if (localMenuVersion !== null && data.menu_version && data.menu_version !== localMenuVersion) {
                     localMenuVersion = data.menu_version;
                     loadMenuAndCart();
@@ -907,7 +940,7 @@
                                 btnText: "Got it"
                             });
                         } else if (data.status === 'prepared') {
-                            playReadyChime(); // Play clear chime when food is ready
+                            playReadyChime();
                             showThemedPopup({
                                 title: "Food Ready!",
                                 message: `Token #${data.daily_order_number} is prepared and ready for delivery/pickup!`,
@@ -1235,9 +1268,6 @@
             await loadMenuAndCart();
             await checkOrderStatus();
             setInterval(checkOrderStatus, 2000);
-            if (window.bindAppNotificationButton) {
-                window.bindAppNotificationButton(document.getElementById('menuNotificationButton'));
-            }
         }
         init();
     </script>
