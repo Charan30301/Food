@@ -13,9 +13,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
 try:
-    import firebase_admin  # type: ignore[import-not-found]
-    from firebase_admin import credentials, messaging  # type: ignore[import-not-found]
-except ModuleNotFoundError:
+    firebase_admin = importlib.import_module("firebase_admin")
+    credentials = importlib.import_module("firebase_admin.credentials")
+    messaging = importlib.import_module("firebase_admin.messaging")
+except (ModuleNotFoundError, ImportError):
     firebase_admin = None
     credentials = None
     messaging = None
@@ -235,6 +236,39 @@ def notify(role, title, body, url="/", user_email=None, tag=None):
         send_push(role, title, body, url, user_email, tag)
     except Exception:
         app.logger.exception("Web Push notification failed")
+
+def notify_waitlisted_users_if_free():
+    """Alerts customers who were turned away because the kitchen queue was full."""
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS queue_waitlist_alerts (
+                        id SERIAL PRIMARY KEY,
+                        user_email VARCHAR(255) NOT NULL,
+                        notified BOOLEAN DEFAULT FALSE,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                """)
+                cur.execute("""
+                    SELECT COUNT(*)::int AS count 
+                    FROM orders 
+                    WHERE order_status IN ('accepted', 'preparing') AND payment_status = 'paid';
+                """)
+                active_count = cur.fetchone()["count"]
+                if active_count < 5:
+                    cur.execute("""
+                        SELECT id, user_email FROM queue_waitlist_alerts
+                        WHERE notified = FALSE AND created_at >= NOW() - INTERVAL '30 minutes';
+                    """)
+                    pending = cur.fetchall()
+                    if pending:
+                        for row in pending:
+                            notify("customer", "Kitchen is Free!", "The kitchen now has space! You can place your food order now.", "/menu", row["user_email"], tag="kitchen-now-free")
+                        cur.execute("UPDATE queue_waitlist_alerts SET notified = TRUE WHERE id = ANY(%s::int[]);", ([r["id"] for r in pending],))
+                        conn.commit()
+    except Exception as e:
+        app.logger.exception("Error alerting waitlisted users: %s", e)
 
 def clean_old_orders():
     try:
@@ -1085,17 +1119,41 @@ def timeout_cancel_order():
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("""
+                SELECT COUNT(*)::int AS count 
+                FROM orders 
+                WHERE order_status IN ('accepted', 'preparing') AND payment_status = 'paid';
+            """)
+            queue_count = cur.fetchone()["count"]
+
+            if queue_count > 0:
+                cancel_reason = f"There are already {queue_count} people waiting for their orders before you, that's why your order was not accepted. Please try again after 5 minutes."
+                cur.execute("SELECT user_email FROM orders WHERE id = %s;", (order_id,))
+                orow = cur.fetchone()
+                if orow and orow["user_email"]:
+                    cur.execute("""
+                        CREATE TABLE IF NOT EXISTS queue_waitlist_alerts (
+                            id SERIAL PRIMARY KEY,
+                            user_email VARCHAR(255) NOT NULL,
+                            notified BOOLEAN DEFAULT FALSE,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        );
+                    """)
+                    cur.execute("INSERT INTO queue_waitlist_alerts (user_email) VALUES (%s);", (orow["user_email"],))
+            else:
+                cancel_reason = "The kitchen is not accepting orders, please try again in a few minutes."
+
+            cur.execute("""
                 UPDATE orders
                 SET order_status = 'cancelled',
-                    cancellation_reason = 'The kitchen is not accepting orders, please try again in a few minutes.',
+                    cancellation_reason = %s,
                     customer_alert = TRUE,
                     updated_at = NOW()
                 WHERE id = %s AND order_status = 'placed';
-            """, (order_id,))
+            """, (cancel_reason, order_id))
             conn.commit()
 
-    set_order_update(order_id, "cancelled", "Order Cancelled", "The kitchen is not accepting orders at this time.")
-    return jsonify({"success": True})
+    set_order_update(order_id, "cancelled", "Order Cancelled", cancel_reason)
+    return jsonify({"success": True, "reason": cancel_reason})
 
 @app.route("/api/payment/confirm-test", methods=["POST"])
 def confirm_test_payment():
@@ -1258,6 +1316,7 @@ def check_active_order():
             order = cur.fetchone()
 
             if order:
+                # Automatic cancellation after 30 minutes of payment timeout
                 if order["order_status"] in ['accepted', 'preparing'] and order["payment_status"] != 'paid' and order["seconds_since_update"] >= 1800:
                     cur.execute("""
                         UPDATE orders
@@ -1294,20 +1353,41 @@ def check_active_order():
                 elapsed = order["seconds_elapsed"]
                 if order["order_status"] == 'placed' and elapsed >= 60:
                     cur.execute("""
+                        SELECT COUNT(*)::int AS count 
+                        FROM orders 
+                        WHERE order_status IN ('accepted', 'preparing') AND payment_status = 'paid';
+                    """)
+                    queue_count = cur.fetchone()["count"]
+
+                    if queue_count > 0:
+                        timeout_reason = f"There are already {queue_count} people waiting for their orders before you, that's why your order was not accepted. Please try again after 5 minutes."
+                        cur.execute("""
+                            CREATE TABLE IF NOT EXISTS queue_waitlist_alerts (
+                                id SERIAL PRIMARY KEY,
+                                user_email VARCHAR(255) NOT NULL,
+                                notified BOOLEAN DEFAULT FALSE,
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                            );
+                        """)
+                        cur.execute("INSERT INTO queue_waitlist_alerts (user_email) VALUES (%s);", (user_email,))
+                    else:
+                        timeout_reason = "The kitchen is not accepting orders, please try again in a few minutes."
+
+                    cur.execute("""
                         UPDATE orders 
                         SET order_status = 'cancelled',
-                            cancellation_reason = 'The kitchen is not accepting orders, please try again in a few minutes.',
+                            cancellation_reason = %s,
                             customer_alert = TRUE,
                             updated_at = NOW()
                         WHERE id = %s;
-                    """, (order["id"],))
+                    """, (timeout_reason, order["id"]))
                     conn.commit()
                     return jsonify({
                         "has_active_order": False,
                         "alert": True,
                         "order_id": order["id"],
                         "status": "cancelled",
-                        "reason": "The kitchen is not accepting orders, please try again in a few minutes.",
+                        "reason": timeout_reason,
                         "kitchen_open": kitchen_open,
                         "menu_version": menu_version
                     })
@@ -1351,13 +1431,25 @@ def admin_statistics_page():
 def admin_cooking_page():
     if not session.get("is_admin"):
         return redirect(url_for("admin_page"))
-    return render_template("cooking_orders.html", pwa_role="reception")
+    return render_template("cooking_orders.html", pwa_role="reception", is_waiting=False)
+
+@app.route("/admin/cooking-waiting")
+def admin_cooking_waiting_page():
+    if not session.get("is_admin"):
+        return redirect(url_for("admin_page"))
+    return render_template("cooking_orders.html", pwa_role="reception", is_waiting=True)
 
 @app.route("/chef")
 def chef_page():
     if not session.get("is_admin"):
         return render_template("chef_login.html")
-    return render_template("cooking_orders.html", pwa_role="chef")
+    return render_template("cooking_orders.html", pwa_role="chef", is_waiting=False)
+
+@app.route("/chef/waiting")
+def chef_waiting_page():
+    if not session.get("is_admin"):
+        return render_template("chef_login.html")
+    return render_template("cooking_orders.html", pwa_role="chef", is_waiting=True)
 
 @app.route("/api/admin/login", methods=["POST"])
 def admin_login():
@@ -1482,6 +1574,9 @@ def admin_get_orders():
         "kitchen_open": kitchen_open
     })
 
+# ==========================================
+# Kitchen 5-Order Cap & Waiting Queue APIs
+# ==========================================
 @app.route("/api/admin/cooking-orders", methods=["GET"])
 def admin_cooking_orders():
     if not session.get("is_admin"):
@@ -1510,10 +1605,10 @@ def admin_cooking_orders():
             """)
             rows = cur.fetchall()
 
-    orders = []
+    all_orders = []
     for order in rows:
         parsed = parse_cart_code(order["items_code"])
-        orders.append({
+        all_orders.append({
             "id": order["id"],
             "daily_order_number": order["daily_order_number"],
             "username": order["username"],
@@ -1532,7 +1627,18 @@ def admin_cooking_orders():
                 "subtotal": round(menu_map.get(item_id, {"price": 0.0})["price"] * qty, 2)
             } for item_id, qty in parsed.items()]
         })
-    return jsonify({"orders": orders})
+
+    # Kitchen limits strictly to first 5; rest go to waiting queue
+    active_kitchen_orders = all_orders[:5]
+    waiting_orders = all_orders[5:]
+
+    return jsonify({
+        "orders": active_kitchen_orders,
+        "waiting_orders": waiting_orders,
+        "active_count": len(active_kitchen_orders),
+        "waiting_count": len(waiting_orders),
+        "total_cooking_count": len(all_orders)
+    })
 
 @app.route("/api/admin/statistics", methods=["GET"])
 def admin_statistics():
@@ -1704,6 +1810,10 @@ def admin_update_order_status():
         set_order_update(order_id, new_status, title, body)
         notify("customer", title, body, "/cart", order_row["user_email"], tag=f"customer-status-{order_id}-{new_status}")
 
+    # If kitchen order prepared or delivered, check if space freed for waitlisted users
+    if new_status in ['prepared', 'delivered']:
+        notify_waitlisted_users_if_free()
+
     return jsonify({"success": True})
 
 @app.route("/api/admin/menu/items", methods=["GET"])
@@ -1798,8 +1908,11 @@ def admin_delete_photo():
     target = os.path.join(UPLOAD_FOLDER, fname)
 
     if os.path.exists(target):
-        os.remove(target)
-        return jsonify({"success": True})
+        try:
+            os.remove(target)
+            return jsonify({"success": True})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
     return jsonify({"error": "File not found"}), 404
 
 @app.route("/api/profile/orders", methods=["GET"])

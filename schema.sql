@@ -162,3 +162,10 @@ CREATE TABLE IF NOT EXISTS fcm_devices (
 );
 CREATE INDEX IF NOT EXISTS idx_fcm_devices_role ON fcm_devices(app_role);
 CREATE INDEX IF NOT EXISTS idx_fcm_devices_customer ON fcm_devices(app_role, user_email);
+
+CREATE TABLE IF NOT EXISTS queue_waitlist_alerts (
+    id SERIAL PRIMARY KEY,
+    user_email VARCHAR(255) NOT NULL,
+    notified BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

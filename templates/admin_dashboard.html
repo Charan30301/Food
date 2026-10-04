@@ -371,7 +371,6 @@
             text-transform: uppercase;
         }
 
-        /* 2-Columns Item Grid with Photos for Modals */
         .items-2col-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -414,7 +413,6 @@
             word-break: break-word;
         }
 
-        /* ITEM STATUS TOGGLE ROW LIST */
         .status-items-list {
             display: flex;
             flex-direction: column;
@@ -471,16 +469,8 @@
             white-space: nowrap;
             transition: 0.15s;
         }
-        .btn-status-active {
-            background: #e8f7ef;
-            color: #13845e;
-            border-color: #22c55e;
-        }
-        .btn-status-inactive {
-            background: #fff0ee;
-            color: #c53d3d;
-            border-color: #ef4444;
-        }
+        .btn-status-active { background: #e8f7ef; color: #13845e; border-color: #22c55e; }
+        .btn-status-inactive { background: #fff0ee; color: #c53d3d; border-color: #ef4444; }
 
         .modal-overlay {
             position: fixed;
@@ -541,6 +531,44 @@
             font-weight: 800;
             font-size: 0.82rem;
         }
+
+        /* Photos Gallery Grid */
+        .photos-gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+            max-height: 55vh;
+            overflow-y: auto;
+        }
+        .photo-card-box {
+            background: #fffaf0;
+            border: 1px solid #ded3b8;
+            border-radius: 10px;
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .photo-card-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 6px;
+            object-fit: cover;
+            border: 1px solid #ded3b8;
+        }
+        .btn-del-photo {
+            background: #fff1ef;
+            color: #c53d3d;
+            border: 1px solid #e3aaa4;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+        }
     </style>
 <script src="/static/js/pwa.js" defer></script>
 </head>
@@ -548,7 +576,7 @@
 
     <header>
         <div class="header-title">
-            <span>🛡</span>
+            <span>🛡️</span>
             <span>Kitchen Portal</span>
         </div>
 
@@ -556,15 +584,17 @@
             <button class="kitchen-toggle-btn kitchen-open" id="kitchenToggleBtn" onclick="toggleKitchenStatus()">Kitchen: OPEN</button>
 
             <button class="admin-profile-btn" onclick="toggleDropdown()" title="Options">
-                <span>⚙</span>
+                <span>⚙️</span>
                 <span class="admin-btn-text">Options</span>
                 <span class="admin-btn-caret">▼</span>
             </button>
             <div class="profile-dropdown-menu" id="profileDropdown">
                 <button class="dropdown-item" onclick="window.location.href='/admin/statistics'"><span>📊 Statistics</span></button>
-                <button class="dropdown-item" onclick="window.location.href='/admin/cooking'"><span>🍳 Cooking Orders</span></button>
+                <button class="dropdown-item" onclick="window.location.href='/admin/cooking'"><span>🍳 Cooking Orders (Max 5)</span></button>
+                <button class="dropdown-item" onclick="window.location.href='/admin/cooking-waiting'"><span>⏳ Waiting Queue (<strong id="dropdownWaitCount">0</strong>)</span></button>
                 <button class="dropdown-item" onclick="window.location.href='/admin/menu'"><span>📋 Edit Menu & Add Food</span></button>
-                <button class="dropdown-item" onclick="openCategoriesModal()"><span>🏷 Category List</span></button>
+                <button class="dropdown-item" onclick="openPhotosModal()"><span>🖼️ Uploaded Photos</span></button>
+                <button class="dropdown-item" onclick="openCategoriesModal()"><span>🏷️ Category List</span></button>
                 <button class="dropdown-item" onclick="openTaxModal()"><span>💰 Digital Service Tax</span></button>
                 <button class="dropdown-item" id="adminNotificationButton" type="button">
                     <span>🔔 Notifications</span>
@@ -657,7 +687,24 @@
         </section>
     </div>
 
-    <!-- FOOD ITEMS MODAL (2 ITEMS PER ROW, QTY ON TOP & PHOTO) -->
+    <!-- UPLOADED PHOTOS GALLERY MODAL -->
+    <div class="modal-overlay" id="photosModal">
+        <div class="modal-box" style="max-width:480px;">
+            <div class="modal-header-row">
+                <h3>🖼️ Uploaded Photos</h3>
+                <button class="modal-close-icon" onclick="closePhotosModal()">&times;</button>
+            </div>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.5rem;">Uploaded photos in <code>/static/uploads/</code>:</p>
+            <div class="photos-gallery-grid" id="photosGrid">
+                <div style="color:var(--text-muted); padding:0.5rem;">Loading photos...</div>
+            </div>
+            <div class="modal-buttons">
+                <button type="button" class="btn-secondary" onclick="closePhotosModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOD ITEMS MODAL -->
     <div class="modal-overlay" id="orderItemsModal" onclick="closeOrderItemsModal(event)">
         <div class="modal-box" onclick="event.stopPropagation();">
             <div class="modal-header-row">
@@ -763,11 +810,9 @@
         let soundEnabled = true;
         let audioCtx = null;
         let lastNewCount = null;
-        let lastCounterCount = null;
         let currentSubSection = 'new';
         let allCachedAdminOrders = [];
 
-        // Real-time synchronization bus between Dashboard & Menu Edit Page
         const catalogSyncChannel = window.BroadcastChannel ? new BroadcastChannel('food_catalog_sync_channel') : null;
         if (catalogSyncChannel) {
             catalogSyncChannel.onmessage = (e) => {
@@ -873,7 +918,6 @@
             document.getElementById("btnSubCounter").className = "sub-order-btn" + (sub === 'counter' ? " active-counter" : "");
         }
 
-        // Load & dynamically display all food items with immediate availability toggle
         async function loadItemStatusList() {
             const container = document.getElementById("statusItemsContainer");
             try {
@@ -925,6 +969,57 @@
                 }
             } catch (e) {
                 alert("Network error updating status.");
+            }
+        }
+
+        // Uploaded Photos Modal
+        function openPhotosModal() {
+            document.getElementById("profileDropdown").classList.remove("show");
+            document.getElementById("photosModal").classList.add("open");
+            loadUploadedPhotos();
+        }
+        function closePhotosModal() {
+            document.getElementById("photosModal").classList.remove("open");
+        }
+
+        async function loadUploadedPhotos() {
+            const grid = document.getElementById("photosGrid");
+            try {
+                const res = await fetch("/api/admin/photos");
+                const data = await res.json();
+                const photos = data.photos || [];
+                if (!photos.length) {
+                    grid.innerHTML = '<div style="color:var(--text-muted); font-size:0.85rem; padding:0.5rem;">No uploaded images in uploads folder.</div>';
+                    return;
+                }
+                grid.innerHTML = photos.map(p => `
+                    <div class="photo-card-box">
+                        <img src="${p.url}" class="photo-card-img" alt="${p.filename}">
+                        <button class="btn-del-photo" onclick="deleteUploadedPhoto('${p.filename}')">Delete</button>
+                    </div>
+                `).join('');
+            } catch (e) {
+                grid.innerHTML = '<div style="color:var(--danger); padding:0.5rem;">Failed loading photos.</div>';
+            }
+        }
+
+        async function deleteUploadedPhoto(filename) {
+            const confirmed = await showAdminConfirm("Delete Photo", `Permanently delete photo '${filename}' from server?`);
+            if (!confirmed) return;
+            try {
+                const res = await fetch("/api/admin/photos/delete", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ filename })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    loadUploadedPhotos();
+                } else {
+                    alert(data.error || "Could not delete photo.");
+                }
+            } catch (e) {
+                alert("Network error.");
             }
         }
 
@@ -1016,7 +1111,6 @@
                     playKitchenChime();
                 }
                 lastNewCount = currentNew;
-                lastCounterCount = currentCounter;
 
                 const preparedOrders = (data.active_orders || []).filter(o => o.order_status === 'prepared');
 
@@ -1024,6 +1118,12 @@
                 document.getElementById("deliveryOrdersBadge").textContent = preparedOrders.length;
                 document.getElementById("counterBillsBadge").textContent = currentCounter;
                 document.getElementById("totalQueueBadge").textContent = currentNew + (data.active_count || 0);
+
+                // Fetch waiting queue count to display in options menu
+                fetch("/api/admin/cooking-orders").then(r => r.json()).then(ck => {
+                    const el = document.getElementById("dropdownWaitCount");
+                    if (el) el.textContent = ck.waiting_count || 0;
+                }).catch(()=>{});
 
                 const newGrid = document.getElementById("newOrdersGrid");
                 const deliveryGrid = document.getElementById("deliveryOrdersGrid");
@@ -1083,7 +1183,7 @@
                         const itemsHtml = order.items.map(i => `<div class="order-item-line"><span>${i.name} × ${i.quantity}</span><span>₹${i.subtotal.toFixed(2)}</span></div>`).join('');
                         const typeBadge = order.order_type === 'parcel' 
                             ? `<span class="order-type-badge parcel">📦 Parcel</span>`
-                            : `<span class="order-type-badge dine_in">🍽 Dine In</span>`;
+                            : `<span class="order-type-badge dine_in">🍽️ Dine In</span>`;
 
                         card.innerHTML = `
                             <div class="order-head">
@@ -1117,7 +1217,7 @@
                         const itemsHtml = order.items.map(i => `<div class="order-item-line"><span>${i.name} × ${i.quantity}</span><span>₹${i.subtotal.toFixed(2)}</span></div>`).join('');
                         const typeBadge = order.order_type === 'parcel' 
                             ? `<span class="order-type-badge parcel">📦 Parcel</span>`
-                            : `<span class="order-type-badge dine_in">🍽 Dine In</span>`;
+                            : `<span class="order-type-badge dine_in">🍽️ Dine In</span>`;
 
                         card.innerHTML = `
                             <div class="order-head">

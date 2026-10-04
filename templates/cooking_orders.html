@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <link id="appManifest" rel="manifest" href="/manifest/{{ "chef" if pwa_role == "chef" else "reception" }}.webmanifest">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Cooking Orders</title>
+    <title>{{ "Waiting Queue" if is_waiting else "Cooking Orders" }}</title>
     <style>
         :root {
             --bg: #f8f5ec;
@@ -15,6 +15,7 @@
             --gold: #b8953f;
             --green: #16865f;
             --red: #d94b4b;
+            --amber: #c49a3a;
         }
 
         * {
@@ -46,7 +47,7 @@
             z-index: 10;
         }
 
-        h1 { font-size: 1.05rem; margin: 0; }
+        h1 { font-size: 1.02rem; margin: 0; }
         .header-actions { display: flex; align-items: center; gap: 6px; }
 
         .btn-link, .btn-action-top {
@@ -72,10 +73,31 @@
             background: #fffaf0;
         }
 
+        .btn-switch-queue {
+            background: #fffbeb !important;
+            color: #b45309 !important;
+            border-color: #fde68a !important;
+            font-weight: 800;
+        }
+
         main {
             max-width: 1400px;
             margin: 14px auto;
             padding: 0 10px;
+        }
+
+        .queue-notice-banner {
+            background: #eef2ff;
+            border: 1px solid #c7d2fe;
+            color: #3730a3;
+            border-radius: 10px;
+            padding: 8px 12px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .orders-grid {
@@ -115,6 +137,8 @@
             font-size: 0.74rem;
             font-weight: 800;
         }
+
+        .token.wait { background: #8b5cf6 !important; }
 
         .muted { color: var(--muted); font-size: 0.78rem; }
 
@@ -296,16 +320,38 @@
 </head>
 <body>
     <header>
-        <h1>🍳 Cooking Orders <span id="count" class="badge">0</span></h1>
+        <h1>
+            {{ "⏳ Waiting Orders" if is_waiting else "🍳 Active Kitchen (Max 5)" }}
+            <span id="count" class="badge">0</span>
+        </h1>
         <div class="header-actions">
-            <button class="sound-badge" id="cookingNotificationButton" type="button">🔔 Enable notifications</button>
-            <button class="sound-badge" id="soundBtn" onclick="toggleSound()">🔔 Sound: ON</button>
+            {% if is_waiting %}
+                <a href="{{ '/chef' if pwa_role == 'chef' else '/admin/cooking' }}" class="btn-link">← Active Cooking (Max 5)</a>
+            {% else %}
+                <a href="{{ '/chef/waiting' if pwa_role == 'chef' else '/admin/cooking-waiting' }}" class="btn-link btn-switch-queue" id="waitingQueueNavBtn">
+                    ⏳ Waiting Queue (<span id="waitingBadgeHeader">0</span>)
+                </a>
+            {% endif %}
+
+            <button class="sound-badge" id="cookingNotificationButton" type="button">🔔 Alert</button>
+            <button class="sound-badge" id="soundBtn" onclick="toggleSound()">🔔 ON</button>
             <a href="/admin" class="btn-link">&larr; Admin</a>
             <button class="btn-action-top" onclick="loadOrders()">&#8635; Refresh</button>
         </div>
     </header>
 
     <main>
+        {% if is_waiting %}
+            <div class="queue-notice-banner">
+                <span>⏳ Orders waiting because kitchen limit is 5. Auto-promotes as soon as dishes are prepared!</span>
+            </div>
+        {% else %}
+            <div class="queue-notice-banner" style="background:#ecfdf5; border-color:#a7f3d0; color:#065f46;">
+                <span>🔥 Maximum 5 active cooking orders displayed. Clicking 'Prepared' brings the next waitlisted order.</span>
+                <span id="waitingCountBanner">Waitlist: 0</span>
+            </div>
+        {% endif %}
+
         <div id="orders" class="orders-grid">
             <div class="status" style="grid-column: 1 / -1;">Loading orders&hellip;</div>
         </div>
@@ -314,7 +360,7 @@
     <!-- Confirmation Modal -->
     <div id="confirmModal" class="modal-backdrop">
         <div class="modal" onclick="event.stopPropagation()">
-            <div style="font-size:1.8rem; margin-bottom:4px;">⚠️️</div>
+            <div style="font-size:1.8rem; margin-bottom:4px;">⚠</div>
             <h3 id="confirmTitle" style="font-size:1.1rem; margin-bottom:4px;">Confirm Action</h3>
             <p id="confirmMsg" style="color:var(--muted); font-size:0.85rem; margin-bottom:12px;"></p>
             <div class="modal-actions" style="justify-content:center;">
@@ -324,7 +370,7 @@
         </div>
     </div>
 
-    <!-- Order Items Modal (2 Items per row, Qty on top, Photo) -->
+    <!-- Order Items Modal -->
     <div id="itemDetailModal" class="modal-backdrop" onclick="closeItemModal(event)">
         <div class="modal" onclick="event.stopPropagation()" style="text-align:left;">
             <h2 id="modalOrderTitle" style="margin: 0 0 4px; font-size: 1.05rem;"></h2>
@@ -337,8 +383,17 @@
     </div>
 
     <div id="toast" class="toast"></div>
+    <div id="cookingOrdersConfig"
+         data-is-waiting="{{ 'true' if is_waiting else 'false' }}"
+         data-pwa-role="{{ pwa_role|default('chef') }}"
+         style="display:none;"></div>
 
     <script>
+        const pageConfigEl = document.getElementById('cookingOrdersConfig');
+        const IS_WAITING_PAGE = pageConfigEl.dataset.isWaiting === 'true';
+        const PWA_ROLE = pageConfigEl.dataset.pwaRole || 'chef';
+        const MAIN_COOKING_URL = PWA_ROLE === 'chef' ? '/chef' : '/admin/cooking';
+
         let cachedOrders = [];
         let toastTimeout = null;
         let confirmResolve = null;
@@ -365,7 +420,6 @@
             }
         }
 
-        // Unlock audio context on initial page touch or click
         ['click', 'touchstart', 'keydown'].forEach(ev => {
             window.addEventListener(ev, () => { initAudio(); }, { once: true });
         });
@@ -374,7 +428,7 @@
             soundEnabled = !soundEnabled;
             initAudio();
             const btn = document.getElementById('soundBtn');
-            btn.textContent = soundEnabled ? '🔔 Sound: ON' : '🔕 Sound: OFF';
+            btn.textContent = soundEnabled ? '🔔 ON' : '🔕 OFF';
             btn.style.color = soundEnabled ? 'var(--green)' : 'var(--red)';
             if (soundEnabled) playKitchenChime();
         }
@@ -386,7 +440,6 @@
 
             try {
                 const now = audioCtx.currentTime;
-                // High-visibility kitchen chime: 587.33Hz (D5) -> 880Hz (A5)
                 const osc1 = audioCtx.createOscillator();
                 const gain1 = audioCtx.createGain();
                 osc1.type = 'triangle';
@@ -408,9 +461,7 @@
                 gain2.connect(audioCtx.destination);
                 osc2.start(now + 0.18);
                 osc2.stop(now + 0.8);
-            } catch (e) {
-                console.error("Audio playback error:", e);
-            }
+            } catch (e) {}
         }
 
         function showToast(message, isError = false) {
@@ -426,7 +477,6 @@
             document.getElementById('confirmTitle').textContent = title;
             document.getElementById('confirmMsg').textContent = message;
             document.getElementById('confirmModal').classList.add('show');
-            if (window.appPopupNotification) window.appPopupNotification(title, message, "/chef");
             return new Promise(resolve => { confirmResolve = resolve; });
         }
 
@@ -463,7 +513,7 @@
         async function updateStatus(e, id, status) {
             e.stopPropagation();
 
-            const actionLabel = status === 'prepared' ? 'PREPARED (will clear from cooking queue)' : status.toUpperCase();
+            const actionLabel = status === 'prepared' ? 'PREPARED (will clear and promote next in queue)' : status.toUpperCase();
             const confirmed = await showConfirmPopup('Update Status', `Mark Token #${id} as ${actionLabel}?`);
             if (!confirmed) return;
 
@@ -489,18 +539,37 @@
                 if (!res.ok) throw new Error('Failed to load orders');
 
                 const data = await res.json();
-                cachedOrders = data.orders || [];
+                const activeKitchen = data.orders || [];
+                const waitingList = data.waiting_orders || [];
+
+                // Header Badges Update
+                const waitBadgeHeader = document.getElementById('waitingBadgeHeader');
+                if (waitBadgeHeader) waitBadgeHeader.textContent = waitingList.length;
+
+                const waitCountBanner = document.getElementById('waitingCountBanner');
+                if (waitCountBanner) waitCountBanner.textContent = `Waitlist: ${waitingList.length}`;
+
+                // Automatic redirect back from waiting page if active kitchen has fewer than 5 orders
+                if (IS_WAITING_PAGE && activeKitchen.length < 5) {
+                    window.location.replace(MAIN_COOKING_URL);
+                    return;
+                }
+
+                // Choose list to display
+                cachedOrders = IS_WAITING_PAGE ? waitingList : activeKitchen;
                 const currentCount = cachedOrders.length;
                 document.getElementById('count').textContent = currentCount;
 
-                // Sound triggers whenever new paid cooking orders arrive
                 if (lastCookingCount !== null && currentCount > lastCookingCount) {
                     playKitchenChime();
                 }
                 lastCookingCount = currentCount;
 
                 if (!cachedOrders.length) {
-                    box.innerHTML = '<div class="status" style="grid-column: 1 / -1;">No active cooking orders right now.</div>';
+                    const emptyMsg = IS_WAITING_PAGE 
+                        ? 'No waiting orders. Kitchen capacity is currently under 5.' 
+                        : 'No active cooking orders right now.';
+                    box.innerHTML = `<div class="status" style="grid-column: 1 / -1;">${emptyMsg}</div>`;
                     return;
                 }
 
@@ -512,7 +581,7 @@
                         <article class="order-card" onclick="openItemModal(${o.id})">
                             <div class="order-head">
                                 <div>
-                                    <span class="token">Token #${escapeHtml(o.daily_order_number)}</span>
+                                    <span class="token ${IS_WAITING_PAGE ? 'wait' : ''}">Token #${escapeHtml(o.daily_order_number)}</span>
                                     <div style="font-weight: 800; margin-top: 4px; font-size:0.92rem;">${escapeHtml(o.username)}</div>
                                     <div class="muted">🕒 ${escapeHtml(o.time)} · ${escapeHtml(type)}</div>
                                 </div>
@@ -529,14 +598,20 @@
                                 <span>₹${Number(o.total_amount).toFixed(2)}</span>
                             </div>
 
-                            <div class="actions">
-                                <button type="button" class="btn-preparing ${isPrep ? 'active' : ''}" onclick="updateStatus(event, ${o.id}, 'preparing')">
-                                    🍳 Preparing
-                                </button>
-                                <button type="button" class="btn-prepared" onclick="updateStatus(event, ${o.id}, 'prepared')">
-                                    ✅ Prepared
-                                </button>
-                            </div>
+                            ${IS_WAITING_PAGE ? `
+                                <div style="background:#f5f3ff; color:#6d28d9; padding:8px; border-radius:8px; text-align:center; font-weight:700; font-size:0.78rem;">
+                                    ⏳ In Waiting Queue (Will promote when kitchen finishes an order)
+                                </div>
+                            ` : `
+                                <div class="actions">
+                                    <button type="button" class="btn-preparing ${isPrep ? 'active' : ''}" onclick="updateStatus(event, ${o.id}, 'preparing')">
+                                        🍳 Preparing
+                                    </button>
+                                    <button type="button" class="btn-prepared" onclick="updateStatus(event, ${o.id}, 'prepared')">
+                                        ✅ Prepared
+                                    </button>
+                                </div>
+                            `}
                         </article>
                     `;
                 }).join('');

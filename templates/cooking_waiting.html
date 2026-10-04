@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link id="appManifest" rel="manifest" href="/manifest/{{ 'chef' if pwa_role == 'chef' else 'reception' }}.webmanifest">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Waiting Queue - Orders Beyond Capacity</title>
+    <style>
+        :root {
+            --bg: #f8f5ec;
+            --card: #fffdf7;
+            --border: #ded3b8;
+            --ink: #302a20;
+            --muted: #766d5d;
+            --gold: #b8953f;
+            --purple: #8b5cf6;
+            --purple-dark: #6d28d9;
+            --purple-light: #f5f3ff;
+            --green: #16865f;
+            --red: #d94b4b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            background: linear-gradient(180deg, #fffdf8 0%, #f4efe2 100%);
+            color: var(--ink);
+            min-height: 100vh;
+            padding-bottom: 30px;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 12px 14px;
+            background: #fffdf7;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        h1 { font-size: 1.05rem; margin: 0; display: flex; align-items: center; gap: 6px; }
+
+        .badge-wait {
+            background: var(--purple);
+            color: #ffffff;
+            font-size: 0.72rem;
+            font-weight: 800;
+            border-radius: 999px;
+            padding: 3px 8px;
+        }
+
+        .header-actions { display: flex; align-items: center; gap: 6px; }
+
+        .btn-link, .btn-action-top {
+            color: #49391a;
+            font-weight: 700;
+            text-decoration: none;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 10px;
+            background: #fffaf0;
+            cursor: pointer;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        .btn-return-active {
+            background: linear-gradient(135deg, #10b981, #059669) !important;
+            color: #ffffff !important;
+            border: 1px solid #047857 !important;
+            font-weight: 800;
+        }
+
+        main {
+            max-width: 1400px;
+            margin: 14px auto;
+            padding: 0 10px;
+        }
+
+        .queue-notice-banner {
+            background: var(--purple-light);
+            border: 1px solid #ddd6fe;
+            color: var(--purple-dark);
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.08);
+        }
+
+        .auto-redirect-pill {
+            background: #ffffff;
+            border: 1px solid #c4b5fd;
+            border-radius: 999px;
+            padding: 3px 8px;
+            font-size: 0.72rem;
+            color: var(--purple-dark);
+            white-space: nowrap;
+        }
+
+        .orders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+        }
+
+        @media (max-width: 500px) {
+            .orders-grid { grid-template-columns: 1fr; }
+        }
+
+        .order-card {
+            background: var(--card);
+            border: 1px solid #ddd6fe;
+            border-left: 4px solid var(--purple);
+            border-radius: 14px;
+            padding: 12px;
+            box-shadow: 0 4px 14px rgba(90, 70, 18, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        .order-card:hover { transform: translateY(-2px); }
+
+        .order-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 6px;
+        }
+
+        .token-wait {
+            background: var(--purple);
+            color: #ffffff;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 800;
+        }
+
+        .queue-pos-tag {
+            background: #ede9fe;
+            color: var(--purple-dark);
+            font-weight: 800;
+            font-size: 0.72rem;
+            padding: 2px 7px;
+            border-radius: 6px;
+            border: 1px solid #ddd6fe;
+        }
+
+        .muted { color: var(--muted); font-size: 0.78rem; }
+
+        .items-box {
+            background: #fdfbf5;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 0.82rem;
+        }
+        .item-line { display: flex; justify-content: space-between; }
+
+        .total {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 800;
+            border-top: 1px solid #e8dec4;
+            padding-top: 8px;
+            font-size: 0.92rem;
+            color: var(--gold-dark);
+        }
+
+        .status {
+            padding: 30px;
+            text-align: center;
+            color: var(--muted);
+            background: #fffdf7;
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+        }
+
+        /* Order Items Modal */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(23, 19, 13, 0.65);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            z-index: 50;
+        }
+        .modal-backdrop.show { display: flex; }
+        .modal {
+            width: min(420px, 100%);
+            background: #fffdf7;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+            text-align: left;
+        }
+        .items-2col-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 8px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        .item-box {
+            background: #fdfbf5;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 8px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .item-qty-top {
+            background: var(--purple);
+            color: #ffffff;
+            font-size: 0.76rem;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 999px;
+        }
+        .item-img {
+            width: 54px;
+            height: 54px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 1px solid var(--border);
+            background: #f0eadb;
+        }
+        .item-name-bottom {
+            font-weight: 700;
+            font-size: 0.82rem;
+            color: var(--ink);
+            word-break: break-word;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 14px;
+        }
+        .modal-actions button {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-weight: 800;
+            cursor: pointer;
+            background: #fffaf0;
+            font-size: 0.82rem;
+        }
+    </style>
+    <script>window.PWA_ROLE = "{{ pwa_role|default('chef') }}";</script>
+    <script src="/static/js/pwa.js" defer></script>
+</head>
+<body>
+    <header>
+        <h1>
+            <span>⏳ Waiting Queue</span>
+            <span id="waitingCountBadge" class="badge-wait">0</span>
+        </h1>
+        <div class="header-actions">
+            <a href="{{ '/chef' if pwa_role == 'chef' else '/admin/cooking' }}" class="btn-link btn-return-active">
+                ← Active Cooking (Max 5)
+            </a>
+            <button class="btn-action-top" onclick="loadWaitingOrders()">↻ Refresh</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="queue-notice-banner">
+            <div>
+                <span>Orders waiting because the kitchen has reached the 5-order limit.</span>
+                <div style="font-size:0.75rem; color:var(--muted); margin-top:2px;">
+                    When any active order is marked <strong>"Prepared"</strong>, the first order below immediately enters the kitchen!
+                </div>
+            </div>
+            <div class="auto-redirect-pill">Auto-returns when free</div>
+        </div>
+
+        <div id="waitingOrdersGrid" class="orders-grid">
+            <div class="status" style="grid-column: 1 / -1;">Loading waiting orders&hellip;</div>
+        </div>
+    </main>
+
+    <!-- Order Items Modal -->
+    <div id="itemDetailModal" class="modal-backdrop" onclick="closeItemModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <h2 id="modalOrderTitle" style="margin: 0 0 4px; font-size: 1.05rem;"></h2>
+            <div id="modalCustomerText" class="muted" style="margin-bottom: 8px;"></div>
+            <div id="modalItemsGrid" class="items-2col-grid"></div>
+            <div class="modal-actions">
+                <button type="button" onclick="closeItemModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const PWA_ROLE = "{{ pwa_role|default('chef') }}";
+        const MAIN_COOKING_URL = PWA_ROLE === 'chef' ? '/chef' : '/admin/cooking';
+
+        let cachedWaitingOrders = [];
+
+        function escapeHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function openItemModal(orderId) {
+            const o = cachedWaitingOrders.find(item => item.id === orderId);
+            if (!o) return;
+
+            document.getElementById('modalOrderTitle').textContent = `Token #${o.daily_order_number} Items`;
+            document.getElementById('modalCustomerText').textContent = `Customer: ${o.username} · Placed: ${o.date} ${o.time} · Total: ₹${Number(o.total_amount).toFixed(2)}`;
+
+            const grid = document.getElementById('modalItemsGrid');
+            grid.innerHTML = (o.items || []).map(item => `
+                <div class="item-box">
+                    <div class="item-qty-top">Qty: ${escapeHtml(item.quantity)}</div>
+                    <img src="${item.photo_url || 'https://via.placeholder.com/54'}" class="item-img" alt="${escapeHtml(item.name)}" onerror="this.src='https://via.placeholder.com/54'"/>
+                    <div class="item-name-bottom">${escapeHtml(item.name)}</div>
+                </div>
+            `).join('');
+
+            document.getElementById('itemDetailModal').classList.add('show');
+        }
+
+        function closeItemModal(e) {
+            if (!e || e.target.id === 'itemDetailModal' || e.target.tagName === 'BUTTON') {
+                document.getElementById('itemDetailModal').classList.remove('show');
+            }
+        }
+
+        async function loadWaitingOrders() {
+            const grid = document.getElementById('waitingOrdersGrid');
+            try {
+                const res = await fetch('/api/admin/cooking-orders', { cache: 'no-store' });
+                if (!res.ok) throw new Error('Failed to load queue data');
+
+                const data = await res.json();
+                const activeCount = data.active_count || 0;
+                const waitingList = data.waiting_orders || [];
+
+                document.getElementById('waitingCountBadge').textContent = waitingList.length;
+                cachedWaitingOrders = waitingList;
+
+                // AUTOMATIC REDIRECT: If active cooking orders drop below 5, return to cooking page!
+                if (activeCount < 5) {
+                    window.location.replace(MAIN_COOKING_URL);
+                    return;
+                }
+
+                if (!waitingList.length) {
+                    grid.innerHTML = `
+                        <div class="status" style="grid-column: 1 / -1;">
+                            <div style="font-size:1.5rem; margin-bottom:6px;">✨</div>
+                            <strong>No orders in the waiting queue!</strong>
+                            <div style="font-size:0.8rem; margin-top:4px;">All paid orders are currently being prepared on the main cooking board.</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                grid.innerHTML = waitingList.map((o, idx) => {
+                    const type = o.order_type === 'parcel' ? '📦 Parcel' : '🍽 Dine in';
+                    const itemsSummary = (o.items || []).map(i => `
+                        <div class="item-line">
+                            <span>${escapeHtml(i.name)} × ${escapeHtml(i.quantity)}</span>
+                            <span>₹${Number(i.subtotal).toFixed(2)}</span>
+                        </div>
+                    `).join('');
+
+                    return `
+                        <article class="order-card" onclick="openItemModal(${o.id})">
+                            <div class="order-head">
+                                <div>
+                                    <span class="token-wait">Token #${escapeHtml(o.daily_order_number)}</span>
+                                    <div style="font-weight: 800; margin-top: 4px; font-size:0.92rem;">${escapeHtml(o.username)}</div>
+                                    <div class="muted">🕒 ${escapeHtml(o.time)} · ${escapeHtml(type)}</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <span class="queue-pos-tag">Queue Position #${idx + 1}</span>
+                                    <div class="muted" style="margin-top: 4px;">🟢 PAID</div>
+                                </div>
+                            </div>
+
+                            <div class="items-box">${itemsSummary}</div>
+
+                            <div class="total">
+                                <span>Total</span>
+                                <span>₹${Number(o.total_amount).toFixed(2)}</span>
+                            </div>
+                        </article>
+                    `;
+                }).join('');
+            } catch (err) {
+                grid.innerHTML = `<div class="status" style="grid-column: 1 / -1;">${escapeHtml(err.message || 'Error loading waiting queue.')}</div>`;
+            }
+        }
+
+        loadWaitingOrders();
+        // Periodically poll every 3 seconds to detect capacity openings
+        setInterval(loadWaitingOrders, 3000);
+    </script>
+</body>
+</html>

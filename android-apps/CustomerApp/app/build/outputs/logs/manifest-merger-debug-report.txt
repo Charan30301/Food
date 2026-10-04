@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:2:1-32:12
-INJECTED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:2:1-32:12
-INJECTED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:2:1-32:12
-INJECTED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:2:1-32:12
+ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:2:1-33:12
+INJECTED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:2:1-33:12
+INJECTED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:2:1-33:12
+INJECTED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:2:1-33:12
 MERGED from [androidx.appcompat:appcompat-resources:1.7.1] C:\Users\manoh\.gradle\caches\9.3.0\transforms\2ae7f9ca040635ed3b2c3f0bb79ea512\workspace\transformed\appcompat-resources-1.7.1\AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.appcompat:appcompat:1.7.1] C:\Users\manoh\.gradle\caches\9.3.0\transforms\53c10681d9ba9067be553de2c26db943\workspace\transformed\appcompat-1.7.1\AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.webkit:webkit:1.14.0] C:\Users\manoh\.gradle\caches\9.3.0\transforms\5fc018654a3ff1cf3eb27fce5fc22e16\workspace\transformed\webkit-1.14.0\AndroidManifest.xml:2:1-7:12
@@ -85,8 +85,8 @@ MERGED from [com.google.firebase:firebase-messaging:25.1.3] C:\Users\manoh\.grad
 	android:name
 		ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:5:22-74
 application
-ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:7:5-30:19
-INJECTED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:7:5-30:19
+ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:7:5-31:19
+INJECTED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:7:5-31:19
 MERGED from [com.google.firebase:firebase-messaging:25.1.3] C:\Users\manoh\.gradle\caches\9.3.0\transforms\76c5c09d378a2570b64494d1fd4736e0\workspace\transformed\firebase-messaging-25.1.3\AndroidManifest.xml:28:5-64:19
 MERGED from [com.google.firebase:firebase-messaging:25.1.3] C:\Users\manoh\.gradle\caches\9.3.0\transforms\76c5c09d378a2570b64494d1fd4736e0\workspace\transformed\firebase-messaging-25.1.3\AndroidManifest.xml:28:5-64:19
 MERGED from [com.google.android.gms:play-services-base:18.9.0] C:\Users\manoh\.gradle\caches\9.3.0\transforms\8661ffe769274425e6f2f3e26f861d90\workspace\transformed\play-services-base-18.9.0\AndroidManifest.xml:19:5-23:19
@@ -128,41 +128,43 @@ MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\ma
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.17.0] C:\Users\manoh\.gradle\caches\9.3.0\transforms\72af6d0d1cbab1b81dde1a7d9e71f966\workspace\transformed\core-1.17.0\AndroidManifest.xml:28:18-86
 	android:label
-		ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:9:9-41
+		ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:10:9-41
+	android:icon
+		ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:8:9-49
 	android:allowBackup
-		ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:8:9-36
+		ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:9:9-36
 	android:theme
-		ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:10:9-40
+		ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:11:9-40
 	android:usesCleartextTraffic
-		ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:11:9-44
+		ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:12:9-44
 activity#com.localfood.customer.MainActivity
-ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:13:9-20:20
+ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:14:9-21:20
 	android:exported
-		ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:15:13-36
+		ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:16:13-36
 	android:name
-		ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:14:13-41
+		ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:15:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:16:13-19:29
+ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:17:13-20:29
 action#android.intent.action.MAIN
-ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:17:17-69
+ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:18:17-69
 	android:name
-		ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:17:25-66
+		ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:18:25-66
 category#android.intent.category.LAUNCHER
-ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:18:17-77
+ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:19:17-77
 	android:name
-		ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:18:27-74
+		ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:19:27-74
 service#com.localfood.customer.AppFirebaseMessagingService
-ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:22:9-28:19
+ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:23:9-29:19
 	android:exported
-		ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:24:13-37
+		ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:25:13-37
 	android:name
-		ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:23:13-56
+		ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:24:13-56
 intent-filter#action:name:com.google.firebase.MESSAGING_EVENT
-ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:25:13-27:29
+ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:26:13-28:29
 action#com.google.firebase.MESSAGING_EVENT
-ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:26:17-78
+ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:27:17-78
 	android:name
-		ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:26:25-75
+		ADDED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml:27:25-75
 uses-sdk
 INJECTED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\Users\manoh\Downloads\Food\android-apps\CustomerApp\app\src\main\AndroidManifest.xml
