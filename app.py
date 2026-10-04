@@ -1430,25 +1430,25 @@ def admin_statistics_page():
 def admin_cooking_page():
     if not session.get("is_admin"):
         return redirect(url_for("admin_page"))
-    return render_template("cooking_orders.html", pwa_role="reception", is_waiting=False)
+    return render_template("cooking_orders.html", pwa_role="reception")
 
 @app.route("/admin/cooking-waiting")
 def admin_cooking_waiting_page():
     if not session.get("is_admin"):
         return redirect(url_for("admin_page"))
-    return render_template("cooking_orders.html", pwa_role="reception", is_waiting=True)
+    return render_template("cooking_waiting.html", pwa_role="reception")
 
 @app.route("/chef")
 def chef_page():
     if not session.get("is_admin"):
         return render_template("chef_login.html")
-    return render_template("cooking_orders.html", pwa_role="chef", is_waiting=False)
+    return render_template("cooking_orders.html", pwa_role="chef")
 
 @app.route("/chef/waiting")
 def chef_waiting_page():
     if not session.get("is_admin"):
         return render_template("chef_login.html")
-    return render_template("cooking_orders.html", pwa_role="chef", is_waiting=True)
+    return render_template("cooking_waiting.html", pwa_role="chef")
 
 @app.route("/api/admin/login", methods=["POST"])
 def admin_login():

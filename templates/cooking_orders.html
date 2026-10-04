@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <link id="appManifest" rel="manifest" href="/manifest/{{ "chef" if pwa_role == "chef" else "reception" }}.webmanifest">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>{{ "Waiting Queue" if is_waiting else "Cooking Orders" }}</title>
+    <title>Cooking Orders - Active Kitchen</title>
     <style>
         :root {
             --bg: #f8f5ec;
@@ -67,7 +67,7 @@
             font-weight: 800;
         }
 
-        /* Row 2: Sound on left, Waiting on right */
+        /* Row 2: Sound on left, Waiting queue on right */
         .header-controls-row {
             display: flex;
             align-items: center;
@@ -349,10 +349,10 @@
             </h1>
         </div>
 
-        <!-- Row 2: Sound on the left, Waiting queue on the right -->
+        <!-- Row 2: Sound on left, Direct link to Waiting queue on right -->
         <div class="header-controls-row">
             <button class="sound-badge" id="soundBtn" onclick="toggleSound()">🔔 ON</button>
-            <a href="javascript:void(0)" onclick="goToWaitingPage()" class="btn-link btn-switch-queue" id="waitingQueueNavBtn">
+            <a href="{{ '/chef/waiting' if pwa_role == 'chef' else '/admin/cooking-waiting' }}" class="btn-link btn-switch-queue" id="waitingQueueNavBtn">
                 ⏳ Waiting (<span id="waitingBadgeHeader">0</span>)
             </a>
         </div>
@@ -397,14 +397,6 @@
     <div id="toast" class="toast"></div>
 
     <script>
-        function goToWaitingPage() {
-            if (window.location.pathname.startsWith('/chef')) {
-                window.location.href = '/chef/waiting';
-            } else {
-                window.location.href = '/admin/cooking-waiting';
-            }
-        }
-
         let cachedOrders = [];
         let toastTimeout = null;
         let confirmResolve = null;
