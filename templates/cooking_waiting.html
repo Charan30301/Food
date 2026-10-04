@@ -36,25 +36,27 @@
             padding-bottom: 30px;
         }
 
-        /* Responsive 2-Row Header Container */
+        /* 2-Row Header Container */
         header {
             background: #fffdf7;
             border-bottom: 1px solid var(--border);
             position: sticky;
             top: 0;
             z-index: 10;
-            padding: 8px 12px;
+            padding: 10px 14px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
         }
 
+        /* Top row: Center-aligned title and count badge */
         .header-top-row {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
             width: 100%;
+            text-align: center;
         }
 
         .header-top-row h1 {
@@ -62,28 +64,17 @@
             margin: 0;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 6px;
             font-weight: 800;
         }
 
+        /* Controls row: Sound button on the left, Active Cooking return button on the right */
         .header-controls-row {
             display: flex;
             align-items: center;
-            justify-content: flex-end;
-            gap: 8px;
+            justify-content: space-between;
             width: 100%;
-        }
-
-        /* Combined 1-row layout on wider screens */
-        @media (min-width: 600px) {
-            header {
-                flex-direction: row;
-                align-items: center;
-                justify-content: space-between;
-                padding: 12px 16px;
-            }
-            .header-top-row { width: auto; }
-            .header-controls-row { width: auto; }
         }
 
         .badge-wait {
@@ -95,13 +86,13 @@
             padding: 3px 8px;
         }
 
-        .btn-link {
+        .btn-link, .sound-badge {
             color: #49391a;
             font-weight: 700;
             text-decoration: none;
             border: 1px solid var(--border);
             border-radius: 8px;
-            padding: 7px 12px;
+            padding: 7px 14px;
             background: #fffaf0;
             cursor: pointer;
             font-size: 0.82rem;
@@ -318,7 +309,7 @@
 </head>
 <body>
     <header>
-        <!-- Row 1: Page Title and Waiting Queue Count -->
+        <!-- Row 1: Page Title and Waiting Queue Count centered -->
         <div class="header-top-row">
             <h1>
                 <span>⏳ Waiting Queue</span>
@@ -326,12 +317,12 @@
             </h1>
         </div>
 
-        <!-- Row 2: Return Button & Admin Link -->
+        <!-- Row 2: Sound on the left, Active Cooking button on the right -->
         <div class="header-controls-row">
+            <button class="sound-badge" id="soundBtn" onclick="toggleSound()">🔔 ON</button>
             <a href="{{ '/chef' if pwa_role == 'chef' else '/admin/cooking' }}" class="btn-link btn-return-active">
                 ← Active Cooking (Max 5)
             </a>
-            <a href="/admin" class="btn-link">Admin</a>
         </div>
     </header>
 
@@ -368,6 +359,8 @@
         const MAIN_COOKING_URL = PWA_ROLE === 'chef' ? '/chef' : '/admin/cooking';
 
         let cachedWaitingOrders = [];
+        let audioCtx = null;
+        let soundEnabled = true;
 
         function escapeHtml(str) {
             return String(str ?? '')
@@ -376,6 +369,28 @@
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#39;');
+        }
+
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) audioCtx = new AudioContextClass();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        ['click', 'touchstart', 'keydown'].forEach(ev => {
+            window.addEventListener(ev, () => { initAudio(); }, { once: true });
+        });
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            initAudio();
+            const btn = document.getElementById('soundBtn');
+            btn.textContent = soundEnabled ? '🔔 ON' : '🔕 OFF';
+            btn.style.color = soundEnabled ? 'var(--green)' : 'var(--red)';
         }
 
         function openItemModal(orderId) {

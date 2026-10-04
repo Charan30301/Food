@@ -34,54 +34,45 @@
             padding-bottom: 30px;
         }
 
-        /* Responsive 2-Row Header Container */
+        /* 2-Row Header Container */
         header {
             background: #fffdf7;
             border-bottom: 1px solid var(--border);
             position: sticky;
             top: 0;
             z-index: 10;
-            padding: 8px 12px;
+            padding: 10px 14px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
         }
 
+        /* Top row: Center-aligned title and count badge */
         .header-top-row {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
             width: 100%;
+            text-align: center;
         }
 
         .header-top-row h1 {
-            font-size: 1.08rem;
+            font-size: 1.12rem;
             margin: 0;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
             font-weight: 800;
         }
 
+        /* Controls row: Sound button on the left, Waiting on the right */
         .header-controls-row {
             display: flex;
             align-items: center;
-            justify-content: flex-end;
-            gap: 8px;
+            justify-content: space-between;
             width: 100%;
-        }
-
-        /* Combined 1-row layout on wider screens */
-        @media (min-width: 600px) {
-            header {
-                flex-direction: row;
-                align-items: center;
-                justify-content: space-between;
-                padding: 12px 16px;
-            }
-            .header-top-row { width: auto; }
-            .header-controls-row { width: auto; }
         }
 
         .btn-link, .sound-badge {
@@ -90,7 +81,7 @@
             text-decoration: none;
             border: 1px solid var(--border);
             border-radius: 8px;
-            padding: 7px 12px;
+            padding: 7px 14px;
             background: #fffaf0;
             cursor: pointer;
             font-size: 0.82rem;
@@ -113,7 +104,7 @@
             font-size: 0.74rem;
             font-weight: 800;
             border-radius: 999px;
-            padding: 3px 8px;
+            padding: 3px 9px;
             background: #f0e7d1;
             color: var(--ink);
         }
@@ -125,9 +116,9 @@
         }
 
         .queue-notice-banner {
-            background: #eef2ff;
-            border: 1px solid #c7d2fe;
-            color: #3730a3;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
             border-radius: 10px;
             padding: 8px 12px;
             font-size: 0.82rem;
@@ -177,8 +168,6 @@
             font-size: 0.74rem;
             font-weight: 800;
         }
-
-        .token.wait { background: #8b5cf6 !important; }
 
         .muted { color: var(--muted); font-size: 0.78rem; }
 
@@ -352,40 +341,28 @@
 </head>
 <body>
     <header>
-        <!-- Row 1: Page Title and Count Badge -->
+        <!-- Row 1: Content page name & count badge centered -->
         <div class="header-top-row">
             <h1>
-                <span>{{ "⏳ Waiting Orders" if is_waiting else "🍳 Active Kitchen (Max 5)" }}</span>
+                <span>🍳 Active Kitchen (Max 5)</span>
                 <span id="count" class="badge">0</span>
             </h1>
         </div>
 
-        <!-- Row 2: Navigation & Sound Toggle -->
+        <!-- Row 2: Sound on the left, Waiting queue on the right -->
         <div class="header-controls-row">
-            {% if is_waiting %}
-                <a href="{{ '/chef' if pwa_role == 'chef' else '/admin/cooking' }}" class="btn-link">← Active Cooking (Max 5)</a>
-            {% else %}
-                <a href="{{ '/chef/waiting' if pwa_role == 'chef' else '/admin/cooking-waiting' }}" class="btn-link btn-switch-queue" id="waitingQueueNavBtn">
-                    ⏳ Waiting (<span id="waitingBadgeHeader">0</span>)
-                </a>
-            {% endif %}
-
             <button class="sound-badge" id="soundBtn" onclick="toggleSound()">🔔 ON</button>
-            <a href="/admin" class="btn-link">Admin</a>
+            <a href="{{ '/chef/waiting' if pwa_role == 'chef' else '/admin/cooking-waiting' }}" class="btn-link btn-switch-queue" id="waitingQueueNavBtn">
+                ⏳ Waiting (<span id="waitingBadgeHeader">0</span>)
+            </a>
         </div>
     </header>
 
     <main>
-        {% if is_waiting %}
-            <div class="queue-notice-banner">
-                <span>⏳ Orders waiting because kitchen limit is 5. Auto-promotes as soon as dishes are prepared!</span>
-            </div>
-        {% else %}
-            <div class="queue-notice-banner" style="background:#ecfdf5; border-color:#a7f3d0; color:#065f46;">
-                <span>🔥 Max 5 active orders. Marking 'Prepared' immediately brings next waitlisted order.</span>
-                <span id="waitingCountBanner">Waitlist: 0</span>
-            </div>
-        {% endif %}
+        <div class="queue-notice-banner">
+            <span>🔥 Max 5 active orders. Marking 'Prepared' brings the next waitlisted order.</span>
+            <span id="waitingCountBanner">Waitlist: 0</span>
+        </div>
 
         <div id="orders" class="orders-grid">
             <div class="status" style="grid-column: 1 / -1;">Loading orders&hellip;</div>
@@ -419,13 +396,12 @@
 
     <div id="toast" class="toast"></div>
     <div id="cookingOrdersConfig"
-         data-is-waiting="{{ 'true' if is_waiting else 'false' }}"
+         data-is-waiting="false"
          data-pwa-role="{{ pwa_role|default('chef') }}"
          style="display:none;"></div>
 
     <script>
         const pageConfigEl = document.getElementById('cookingOrdersConfig');
-        const IS_WAITING_PAGE = pageConfigEl.dataset.isWaiting === 'true';
         const PWA_ROLE = pageConfigEl.dataset.pwaRole || 'chef';
         const MAIN_COOKING_URL = PWA_ROLE === 'chef' ? '/chef' : '/admin/cooking';
 
@@ -512,7 +488,6 @@
             document.getElementById('confirmTitle').textContent = title;
             document.getElementById('confirmMsg').textContent = message;
             document.getElementById('confirmModal').classList.add('show');
-            if (window.appPopupNotification) window.appPopupNotification(title, message, "/chef");
             return new Promise(resolve => { confirmResolve = resolve; });
         }
 
@@ -584,12 +559,7 @@
                 const waitCountBanner = document.getElementById('waitingCountBanner');
                 if (waitCountBanner) waitCountBanner.textContent = `Waitlist: ${waitingList.length}`;
 
-                if (IS_WAITING_PAGE && activeKitchen.length < 5) {
-                    window.location.replace(MAIN_COOKING_URL);
-                    return;
-                }
-
-                cachedOrders = IS_WAITING_PAGE ? waitingList : activeKitchen;
+                cachedOrders = activeKitchen;
                 const currentCount = cachedOrders.length;
                 document.getElementById('count').textContent = currentCount;
 
@@ -599,10 +569,7 @@
                 lastCookingCount = currentCount;
 
                 if (!cachedOrders.length) {
-                    const emptyMsg = IS_WAITING_PAGE 
-                        ? 'No waiting orders. Kitchen capacity is currently under 5.' 
-                        : 'No active cooking orders right now.';
-                    box.innerHTML = `<div class="status" style="grid-column: 1 / -1;">${emptyMsg}</div>`;
+                    box.innerHTML = `<div class="status" style="grid-column: 1 / -1;">No active cooking orders right now.</div>`;
                     return;
                 }
 
@@ -614,7 +581,7 @@
                         <article class="order-card" onclick="openItemModal(${o.id})">
                             <div class="order-head">
                                 <div>
-                                    <span class="token ${IS_WAITING_PAGE ? 'wait' : ''}">Token #${escapeHtml(o.daily_order_number)}</span>
+                                    <span class="token">Token #${escapeHtml(o.daily_order_number)}</span>
                                     <div style="font-weight: 800; margin-top: 4px; font-size:0.92rem;">${escapeHtml(o.username)}</div>
                                     <div class="muted">🕒 ${escapeHtml(o.time)} · ${escapeHtml(type)}</div>
                                 </div>
@@ -631,20 +598,14 @@
                                 <span>₹${Number(o.total_amount).toFixed(2)}</span>
                             </div>
 
-                            ${IS_WAITING_PAGE ? `
-                                <div style="background:#f5f3ff; color:#6d28d9; padding:8px; border-radius:8px; text-align:center; font-weight:700; font-size:0.78rem;">
-                                    ⏳ In Waiting Queue (Will promote when kitchen finishes an order)
-                                </div>
-                            ` : `
-                                <div class="actions">
-                                    <button type="button" class="btn-preparing ${isPrep ? 'active' : ''}" onclick="updateStatus(event, ${o.id}, 'preparing')">
-                                        🍳 Preparing
-                                    </button>
-                                    <button type="button" class="btn-prepared" onclick="updateStatus(event, ${o.id}, 'prepared')">
-                                        ✅ Prepared
-                                    </button>
-                                </div>
-                            `}
+                            <div class="actions">
+                                <button type="button" class="btn-preparing ${isPrep ? 'active' : ''}" onclick="updateStatus(event, ${o.id}, 'preparing')">
+                                    🍳 Preparing
+                                </button>
+                                <button type="button" class="btn-prepared" onclick="updateStatus(event, ${o.id}, 'prepared')">
+                                    ✅ Prepared
+                                </button>
+                            </div>
                         </article>
                     `;
                 }).join('');
