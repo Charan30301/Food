@@ -69,7 +69,7 @@
             font-weight: 800;
         }
 
-        /* Controls row: Sound button on the left, Active Cooking button on the right */
+        /* Controls row: Sound on left, Return button on right */
         .header-controls-row {
             display: flex;
             align-items: center;
@@ -132,16 +132,6 @@
             gap: 8px;
             box-shadow: 0 2px 8px rgba(139, 92, 246, 0.08);
             flex-wrap: wrap;
-        }
-
-        .auto-redirect-pill {
-            background: #ffffff;
-            border: 1px solid #c4b5fd;
-            border-radius: 999px;
-            padding: 3px 8px;
-            font-size: 0.72rem;
-            color: var(--purple-dark);
-            white-space: nowrap;
         }
 
         .orders-grid {
@@ -230,7 +220,6 @@
             color: var(--gold-dark);
         }
 
-        /* Preparing and Prepared action buttons */
         .actions {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -263,14 +252,6 @@
             cursor: pointer;
             text-align: center;
             white-space: nowrap;
-        }
-
-        .badge {
-            font-size: 0.7rem;
-            font-weight: 800;
-            border-radius: 999px;
-            padding: 3px 7px;
-            background: #f0e7d1;
         }
 
         .status {
@@ -400,7 +381,7 @@
         <!-- Row 2: Sound on the left, Active Cooking button on the right -->
         <div class="header-controls-row">
             <button class="sound-badge" id="soundBtn" onclick="toggleSound()">🔔 ON</button>
-            <a href="{{ '/chef' if pwa_role == 'chef' else '/admin/cooking' }}" class="btn-link btn-return-active">
+            <a href="javascript:void(0)" onclick="goToActiveCookingPage()" class="btn-link btn-return-active">
                 ← Active Cooking (Max 5)
             </a>
         </div>
@@ -409,12 +390,11 @@
     <main>
         <div class="queue-notice-banner">
             <div>
-                <span>Orders waiting because the kitchen has reached the 5-order limit.</span>
+                <span>Orders waiting because kitchen limit is 5.</span>
                 <div style="font-size:0.75rem; color:var(--muted); margin-top:2px;">
                     You can start preparing or mark orders prepared directly from here!
                 </div>
             </div>
-            <div class="auto-redirect-pill">Auto-returns when free</div>
         </div>
 
         <div id="waitingOrdersGrid" class="orders-grid">
@@ -450,8 +430,13 @@
     <div id="toast" class="toast"></div>
 
     <script>
-        const PWA_ROLE = "{{ pwa_role|default('chef') }}";
-        const MAIN_COOKING_URL = PWA_ROLE === 'chef' ? '/chef' : '/admin/cooking';
+        function goToActiveCookingPage() {
+            if (window.location.pathname.startsWith('/chef')) {
+                window.location.href = '/chef';
+            } else {
+                window.location.href = '/admin/cooking';
+            }
+        }
 
         let cachedWaitingOrders = [];
         let toastTimeout = null;
@@ -565,18 +550,13 @@
                 if (!res.ok) throw new Error('Failed to load queue data');
 
                 const data = await res.json();
-                const activeCount = data.active_count || 0;
                 const waitingList = data.waiting_orders || [];
 
                 document.getElementById('waitingCountBadge').textContent = waitingList.length;
                 cachedWaitingOrders = waitingList;
 
-                if (activeCount < 5) {
-                    window.location.replace(MAIN_COOKING_URL);
-                    return;
-                }
-
-                if (!waitingList.length) {
+                // Only redirect if there are literally zero waiting orders left
+                if (waitingList.length === 0) {
                     grid.innerHTML = `
                         <div class="status" style="grid-column: 1 / -1;">
                             <div style="font-size:1.5rem; margin-bottom:6px;">✨</div>
@@ -584,6 +564,9 @@
                             <div style="font-size:0.8rem; margin-top:4px;">All paid orders are currently being prepared on the main cooking board.</div>
                         </div>
                     `;
+                    setTimeout(() => {
+                        goToActiveCookingPage();
+                    }, 1500);
                     return;
                 }
 

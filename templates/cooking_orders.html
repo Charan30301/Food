@@ -48,7 +48,7 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
         }
 
-        /* Top row: Center-aligned title and count badge */
+        /* Row 1: Content page name & count badge centered */
         .header-top-row {
             display: flex;
             align-items: center;
@@ -67,7 +67,7 @@
             font-weight: 800;
         }
 
-        /* Controls row: Sound button on the left, Waiting on the right */
+        /* Row 2: Sound on left, Waiting on right */
         .header-controls-row {
             display: flex;
             align-items: center;
@@ -352,7 +352,7 @@
         <!-- Row 2: Sound on the left, Waiting queue on the right -->
         <div class="header-controls-row">
             <button class="sound-badge" id="soundBtn" onclick="toggleSound()">🔔 ON</button>
-            <a href="{{ '/chef/waiting' if pwa_role == 'chef' else '/admin/cooking-waiting' }}" class="btn-link btn-switch-queue" id="waitingQueueNavBtn">
+            <a href="javascript:void(0)" onclick="goToWaitingPage()" class="btn-link btn-switch-queue" id="waitingQueueNavBtn">
                 ⏳ Waiting (<span id="waitingBadgeHeader">0</span>)
             </a>
         </div>
@@ -395,15 +395,15 @@
     </div>
 
     <div id="toast" class="toast"></div>
-    <div id="cookingOrdersConfig"
-         data-is-waiting="false"
-         data-pwa-role="{{ pwa_role|default('chef') }}"
-         style="display:none;"></div>
 
     <script>
-        const pageConfigEl = document.getElementById('cookingOrdersConfig');
-        const PWA_ROLE = pageConfigEl.dataset.pwaRole || 'chef';
-        const MAIN_COOKING_URL = PWA_ROLE === 'chef' ? '/chef' : '/admin/cooking';
+        function goToWaitingPage() {
+            if (window.location.pathname.startsWith('/chef')) {
+                window.location.href = '/chef/waiting';
+            } else {
+                window.location.href = '/admin/cooking-waiting';
+            }
+        }
 
         let cachedOrders = [];
         let toastTimeout = null;
