@@ -69,7 +69,7 @@
             font-weight: 800;
         }
 
-        /* Controls row: Sound button on the left, Active Cooking return button on the right */
+        /* Controls row: Sound button on the left, Active Cooking button on the right */
         .header-controls-row {
             display: flex;
             align-items: center;
@@ -197,6 +197,17 @@
 
         .muted { color: var(--muted); font-size: 0.78rem; }
 
+        .click-hint {
+            font-size: 0.72rem;
+            color: var(--gold);
+            text-align: center;
+            font-weight: 700;
+            background: #fff9eb;
+            padding: 4px;
+            border-radius: 6px;
+            border: 1px dashed #e8dec4;
+        }
+
         .items-box {
             background: #fdfbf5;
             border: 1px solid var(--border);
@@ -217,6 +228,49 @@
             padding-top: 8px;
             font-size: 0.92rem;
             color: var(--gold-dark);
+        }
+
+        /* Preparing and Prepared action buttons */
+        .actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .btn-preparing {
+            background: #fee2e2;
+            color: #b91c1c;
+            border: 1.5px solid #ef4444;
+            border-radius: 8px;
+            padding: 8px 4px;
+            font-weight: 800;
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .btn-preparing.active { background: #ef4444; color: #ffffff; }
+
+        .btn-prepared {
+            background: #dcfce7;
+            color: #15803d;
+            border: 1.5px solid #22c55e;
+            border-radius: 8px;
+            padding: 8px 4px;
+            font-weight: 800;
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .badge {
+            font-size: 0.7rem;
+            font-weight: 800;
+            border-radius: 999px;
+            padding: 3px 7px;
+            background: #f0e7d1;
         }
 
         .status {
@@ -246,8 +300,29 @@
             border-radius: 16px;
             padding: 16px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
-            text-align: left;
+            text-align: center;
         }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 14px;
+        }
+        .modal-actions button {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-weight: 800;
+            cursor: pointer;
+            background: #fffaf0;
+            font-size: 0.82rem;
+        }
+        .btn-confirm-yes {
+            background: linear-gradient(135deg, #d8bd70, #b8953f) !important;
+            color: #ffffff !important;
+            border-color: #927326 !important;
+        }
+
         .items-2col-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -289,20 +364,25 @@
             color: var(--ink);
             word-break: break-word;
         }
-        .modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 14px;
+
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: 20px;
+            transform: translate(-50%, 20px);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 60;
+            padding: 10px 16px;
+            border-radius: 10px;
+            background: #302a20;
+            color: #ffffff;
+            transition: 0.2s ease;
+            font-size: 0.85rem;
+            text-align: center;
         }
-        .modal-actions button {
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 8px 14px;
-            font-weight: 800;
-            cursor: pointer;
-            background: #fffaf0;
-            font-size: 0.82rem;
-        }
+        .toast.show { opacity: 1; transform: translate(-50%, 0); }
+        .toast.error { background: #b42318; }
     </style>
     <script>window.PWA_ROLE = "{{ pwa_role|default('chef') }}";</script>
     <script src="/static/js/pwa.js" defer></script>
@@ -331,7 +411,7 @@
             <div>
                 <span>Orders waiting because the kitchen has reached the 5-order limit.</span>
                 <div style="font-size:0.75rem; color:var(--muted); margin-top:2px;">
-                    When any active order is marked <strong>"Prepared"</strong>, the first order below immediately enters the kitchen!
+                    You can start preparing or mark orders prepared directly from here!
                 </div>
             </div>
             <div class="auto-redirect-pill">Auto-returns when free</div>
@@ -342,9 +422,22 @@
         </div>
     </main>
 
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal-backdrop">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div style="font-size:1.8rem; margin-bottom:4px;">⚠</div>
+            <h3 id="confirmTitle" style="font-size:1.1rem; margin-bottom:4px;">Confirm Action</h3>
+            <p id="confirmMsg" style="color:var(--muted); font-size:0.85rem; margin-bottom:12px;"></p>
+            <div class="modal-actions" style="justify-content:center;">
+                <button type="button" onclick="closeConfirm(false)">Cancel</button>
+                <button type="button" class="btn-confirm-yes" onclick="closeConfirm(true)">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Order Items Modal -->
     <div id="itemDetailModal" class="modal-backdrop" onclick="closeItemModal(event)">
-        <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal" onclick="event.stopPropagation()" style="text-align:left;">
             <h2 id="modalOrderTitle" style="margin: 0 0 4px; font-size: 1.05rem;"></h2>
             <div id="modalCustomerText" class="muted" style="margin-bottom: 8px;"></div>
             <div id="modalItemsGrid" class="items-2col-grid"></div>
@@ -354,11 +447,15 @@
         </div>
     </div>
 
+    <div id="toast" class="toast"></div>
+
     <script>
         const PWA_ROLE = "{{ pwa_role|default('chef') }}";
         const MAIN_COOKING_URL = PWA_ROLE === 'chef' ? '/chef' : '/admin/cooking';
 
         let cachedWaitingOrders = [];
+        let toastTimeout = null;
+        let confirmResolve = null;
         let audioCtx = null;
         let soundEnabled = true;
 
@@ -393,6 +490,27 @@
             btn.style.color = soundEnabled ? 'var(--green)' : 'var(--red)';
         }
 
+        function showToast(message, isError = false) {
+            const el = document.getElementById('toast');
+            el.textContent = message;
+            el.classList.toggle('error', isError);
+            el.classList.add('show');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => el.classList.remove('show'), 2400);
+        }
+
+        function showConfirmPopup(title, message) {
+            document.getElementById('confirmTitle').textContent = title;
+            document.getElementById('confirmMsg').textContent = message;
+            document.getElementById('confirmModal').classList.add('show');
+            return new Promise(resolve => { confirmResolve = resolve; });
+        }
+
+        function closeConfirm(val) {
+            document.getElementById('confirmModal').classList.remove('show');
+            if (confirmResolve) confirmResolve(val);
+        }
+
         function openItemModal(orderId) {
             const o = cachedWaitingOrders.find(item => item.id === orderId);
             if (!o) return;
@@ -415,6 +533,28 @@
         function closeItemModal(e) {
             if (!e || e.target.id === 'itemDetailModal' || e.target.tagName === 'BUTTON') {
                 document.getElementById('itemDetailModal').classList.remove('show');
+            }
+        }
+
+        async function updateStatus(e, id, status) {
+            e.stopPropagation();
+
+            const actionLabel = status === 'prepared' ? 'PREPARED (will clear from queue)' : status.toUpperCase();
+            const confirmed = await showConfirmPopup('Update Status', `Mark Token #${id} as ${actionLabel}?`);
+            if (!confirmed) return;
+
+            try {
+                const res = await fetch('/api/admin/order/update-status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ order_id: id, status: status })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.error || 'Update failed');
+                showToast(`Order updated to ${status.toUpperCase()}`);
+                await loadWaitingOrders();
+            } catch (err) {
+                showToast(err.message || 'Could not update status', true);
             }
         }
 
@@ -449,6 +589,7 @@
 
                 grid.innerHTML = waitingList.map((o, idx) => {
                     const type = o.order_type === 'parcel' ? '📦 Parcel' : '🍽 Dine in';
+                    const isPrep = o.order_status === 'preparing';
                     const itemsSummary = (o.items || []).map(i => `
                         <div class="item-line">
                             <span>${escapeHtml(i.name)} × ${escapeHtml(i.quantity)}</span>
@@ -470,11 +611,22 @@
                                 </div>
                             </div>
 
+                            <div class="click-hint">&#128070; Tap to view items (${o.items ? o.items.length : 0})</div>
+
                             <div class="items-box">${itemsSummary}</div>
 
                             <div class="total">
                                 <span>Total</span>
                                 <span>₹${Number(o.total_amount).toFixed(2)}</span>
+                            </div>
+
+                            <div class="actions">
+                                <button type="button" class="btn-preparing ${isPrep ? 'active' : ''}" onclick="updateStatus(event, ${o.id}, 'preparing')">
+                                    🍳 Preparing
+                                </button>
+                                <button type="button" class="btn-prepared" onclick="updateStatus(event, ${o.id}, 'prepared')">
+                                    ✅ Prepared
+                                </button>
                             </div>
                         </article>
                     `;
