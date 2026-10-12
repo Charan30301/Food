@@ -1144,64 +1144,62 @@ def submit_order_request():
 
     user_email = session.get("user_email")
     if not user_email:
-        return jsonify({"error": "Authentication required to place orders"}), 401
+        return jsonify({"error": "Please log in first to place your order."}), 401
 
     data = request.get_json() or {}
     order_type = str(data.get("order_type", "dine_in")).strip().lower()
     if order_type not in ["dine_in", "parcel"]:
         order_type = "dine_in"
 
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_type VARCHAR(20) DEFAULT 'dine_in';")
-            cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(30) DEFAULT 'unselected';")
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_type VARCHAR(20) DEFAULT 'dine_in';")
+                cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(30) DEFAULT 'unselected';")
 
-            cur.execute("SELECT cart_code, total_price::float FROM carts WHERE user_email = %s;", (user_email,))
-            cart = cur.fetchone()
+                cur.execute("SELECT cart_code, total_price::float FROM carts WHERE user_email = %s;", (user_email,))
+                cart = cur.fetchone()
 
-            if not cart or not cart["cart_code"] or cart["total_price"] <= 0:
-                return jsonify({"error": "Cart is empty"}), 400
+                if not cart or not cart["cart_code"] or cart["total_price"] <= 0:
+                    return jsonify({"error": "Your cart is empty."}), 400
 
-            cur.execute("""
-                UPDATE orders 
-                SET order_status = 'cancelled', cancellation_reason = 'Superseded by new request'
-                WHERE user_email = %s AND order_status = 'placed' AND payment_status != 'paid';
-            """, (user_email,))
+                cur.execute("""
+                    UPDATE orders 
+                    SET order_status = 'cancelled', cancellation_reason = 'Superseded by new request'
+                    WHERE user_email = %s AND order_status = 'placed' AND payment_status != 'paid';
+                """, (user_email,))
 
-            daily_num = get_next_daily_order_number(cur)
+                daily_num = get_next_daily_order_number(cur)
 
-            cur.execute("""
-                INSERT INTO orders (user_email, items_code, total_amount, gateway_order_id, payment_status, order_status, daily_order_number, order_type, payment_method, created_at, updated_at)
-                VALUES (%s, %s, %s, '', 'pending', 'placed', %s, %s, 'unselected', NOW(), NOW())
-                RETURNING id, daily_order_number;
-            """, (user_email, cart["cart_code"], cart["total_price"], daily_num, order_type))
-            new_order = cur.fetchone()
+                cur.execute("""
+                    INSERT INTO orders (user_email, items_code, total_amount, gateway_order_id, payment_status, order_status, daily_order_number, order_type, payment_method, created_at, updated_at)
+                    VALUES (%s, %s, %s, '', 'pending', 'placed', %s, %s, 'unselected', NOW(), NOW())
+                    RETURNING id, daily_order_number;
+                """, (user_email, cart["cart_code"], cart["total_price"], daily_num, order_type))
+                new_order = cur.fetchone()
 
-            real_order_id = create_razorpay_order(cart["total_price"], new_order["id"])
-            cur.execute("UPDATE orders SET gateway_order_id = %s WHERE id = %s;", (real_order_id, new_order["id"]))
-            conn.commit()
+                real_order_id = create_razorpay_order(cart["total_price"], new_order["id"])
+                cur.execute("UPDATE orders SET gateway_order_id = %s WHERE id = %s;", (real_order_id, new_order["id"]))
+                conn.commit()
 
-    set_order_update(
-        new_order["id"],
-        "placed",
-        "Order Placed!",
-        f"Your order (Token #{new_order['daily_order_number']}) is placed and awaiting reception."
-    )
+        set_order_update(
+            new_order["id"],
+            "placed",
+            "Order Placed!",
+            f"Your order (Token #{new_order['daily_order_number']}) is placed and awaiting reception."
+        )
 
-    notify(
-        "reception",
-        "New order received",
-        f"Token #{new_order['daily_order_number']} is waiting for reception.",
-        "/admin",
-        tag=f"reception-new-order-{new_order['id']}"
-    )
+        notify("reception", "New order received", f"Token #{new_order['daily_order_number']} is waiting for reception.", "/admin", tag=f"reception-new-order-{new_order['id']}")
 
-    return jsonify({
-        "success": True,
-        "order_id": new_order["id"],
-        "daily_order_number": new_order["daily_order_number"],
-        "order_type": order_type
-    })
+        return jsonify({
+            "success": True,
+            "order_id": new_order["id"],
+            "daily_order_number": new_order["daily_order_number"],
+            "order_type": order_type
+        })
+    except Exception as e:
+        app.logger.exception("Submit order error: %s", e)
+        return jsonify({"error": f"Order placement failed: {str(e)}"}), 500
 
 @app.route("/api/order/select-payment-method", methods=["POST"])
 def select_payment_method():
