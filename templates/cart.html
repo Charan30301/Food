@@ -89,7 +89,6 @@
             margin: 0 auto;
         }
 
-        /* Enhanced High-Visibility Header */
         .header {
             display: flex;
             align-items: center;
@@ -123,10 +122,6 @@
             transform: scale(0.96);
             background: #fdfaf3;
             border-color: var(--gold-dark);
-        }
-        .back-btn span {
-            font-size: 1.15rem;
-            line-height: 1;
         }
 
         .header-title-box {
@@ -334,7 +329,6 @@
             margin-top: 0.2rem;
         }
 
-        /* Responsive Modal Overlays */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -456,7 +450,6 @@
 </div>
 
 <div class="container">
-    <!-- Redesigned High-Contrast Navigation Header -->
     <div class="header">
         <a href="/menu" class="back-btn" aria-label="Go back to Menu">
             <span>←</span> Menu
@@ -542,10 +535,10 @@
 </div>
 
 <script>
-    const IS_TEST_MODE = "{{ 'true' if test_mode else 'false' }}" === "true";
-    const RZP_KEY_ID = "{{ rzp_key }}";
-    const USER_EMAIL = "{{ email }}";
-    const USER_NAME = "{{ username }}";
+    const IS_TEST_MODE = {{ 'true' if test_mode else 'false' }};
+    const RZP_KEY_ID = {{ rzp_key|tojson }};
+    const USER_EMAIL = {{ email|tojson }};
+    const USER_NAME = {{ username|tojson }};
 
     let cartTotal = 0;
     let submittedOrderId = null;
@@ -624,62 +617,53 @@
     async function loadCartData() {
         try {
             const statusRes = await fetch('/api/order/active', { cache: 'no-store' });
-            if (!statusRes.ok) throw new Error('Could not check active order');
-            const statusData = await statusRes.json();
-
-            if (statusData.service_tax_percent !== undefined) {
-                serviceTaxPercent = Number(statusData.service_tax_percent);
+            if (statusRes.ok) {
+                const statusData = await statusRes.json();
+                if (statusData.service_tax_percent !== undefined) {
+                    serviceTaxPercent = Number(statusData.service_tax_percent);
+                }
+                if (statusData.alert && statusData.status === 'cancelled') {
+                    const overlay = document.getElementById('cartLoadingOverlay');
+                    if (overlay) overlay.classList.add('hidden');
+                    await handleKitchenCancellation(statusData);
+                    return;
+                }
+                if (statusData.has_active_order && statusData.status === 'placed') {
+                    submittedOrderId = statusData.order_id;
+                    currentActiveOrder = statusData;
+                    secondsLeft = statusData.seconds_left !== undefined ? statusData.seconds_left : 60;
+                    orderState = "awaiting_acceptance";
+                    if (statusData.order_type) selectOrderType(statusData.order_type);
+                    await renderCartItems();
+                    setAwaitingAcceptanceUI();
+                    return;
+                }
+                if (statusData.has_active_order && statusData.status !== 'placed' && statusData.payment_status !== 'paid') {
+                    submittedOrderId = statusData.order_id;
+                    currentActiveOrder = statusData;
+                    orderState = "accepted_unpaid";
+                    if (statusData.order_type) selectOrderType(statusData.order_type);
+                    await renderCartItems();
+                    setPayNowUI();
+                    return;
+                }
             }
-
-            if (statusData.alert && statusData.status === 'cancelled') {
-                const overlay = document.getElementById('cartLoadingOverlay');
-                if (overlay) overlay.classList.add('hidden');
-                await handleKitchenCancellation(statusData);
-                return;
-            }
-
-            if (statusData.has_active_order && statusData.status === 'placed') {
-                submittedOrderId = statusData.order_id;
-                currentActiveOrder = statusData;
-                secondsLeft = statusData.seconds_left !== undefined ? statusData.seconds_left : 60;
-                orderState = "awaiting_acceptance";
-                if (statusData.order_type) selectOrderType(statusData.order_type);
-                await renderCartItems();
-                setAwaitingAcceptanceUI();
-                return;
-            }
-
-            if (statusData.has_active_order && statusData.status !== 'placed' && statusData.payment_status !== 'paid') {
-                submittedOrderId = statusData.order_id;
-                currentActiveOrder = statusData;
-                orderState = "accepted_unpaid";
-                if (statusData.order_type) selectOrderType(statusData.order_type);
-                await renderCartItems();
-                setPayNowUI();
-                return;
-            }
-
-            orderState = "cart";
-            await renderCartItems();
         } catch (err) {
-            console.error('Cart initialisation failed:', err);
-            const list = document.getElementById('cartItemsList');
-            if (list) list.innerHTML = '<p style="text-align:center;color:#9b2c2c;padding:1.5rem;">Could not connect to the server. Please refresh and try again.</p>';
-            const overlay = document.getElementById('cartLoadingOverlay');
-            if (overlay) overlay.classList.add('hidden');
+            console.warn('Active order check skipped:', err);
         }
+
+        orderState = "cart";
+        await renderCartItems();
     }
 
     async function renderCartItems() {
         const list = document.getElementById('cartItemsList');
         const billBox = document.getElementById('billBox');
         const overlay = document.getElementById('cartLoadingOverlay');
-        if (list && !list.dataset.loaded) {
-            list.innerHTML = '<div class="cart-skeleton"></div><div class="cart-skeleton"></div><div class="cart-skeleton"></div>';
-        }
+        
         try {
             const res = await fetch('/api/cart/items', { cache: 'no-store' });
-            if (!res.ok) throw new Error(`Cart request failed (${res.status})`);
+            if (!res.ok) throw new Error(`Cart response status: ${res.status}`);
             const data = await res.json();
 
             if (!data.items || data.items.length === 0) {
@@ -693,7 +677,7 @@
             data.items.forEach(item => {
                 list.innerHTML += `
                     <div class="cart-row">
-                        <img src="${item.photo_url}" class="item-thumb" alt="${item.item_name}" loading="lazy" decoding="async" onerror="this.src='https://via.placeholder.com/54'">
+                        <img src="${item.photo_url || 'https://via.placeholder.com/54'}" class="item-thumb" alt="${item.item_name}" loading="lazy" decoding="async" onerror="this.src='https://via.placeholder.com/54'">
                         <div class="item-details">
                             <h4>${item.item_name}</h4>
                             <span>${item.category}</span>
@@ -707,10 +691,10 @@
             document.getElementById('totalPayableLabel').textContent = `₹${cartTotal.toFixed(2)}`;
             billBox.style.display = 'block';
         } catch (err) {
-            console.error('Cart loading failed:', err);
-            list.innerHTML = '<p style="text-align:center;color:#9b2c2c;padding:1.5rem;">Could not load your cart. Please refresh and try again.</p>';
+            console.error('Failed to load cart items:', err);
+            list.innerHTML = '<p style="text-align:center; color:var(--brown-light); padding:2.5rem 1rem;">Your cart is empty.</p>';
+            billBox.style.display = 'none';
         } finally {
-            if (list) list.dataset.loaded = 'true';
             if (overlay) overlay.classList.add('hidden');
         }
     }
@@ -936,31 +920,6 @@
     }
 
     async function launchPaymentFlow(orderData) {
-        if (IS_TEST_MODE) {
-            const btn = document.getElementById('mainActionButton');
-            if (btn) { btn.disabled = true; btn.textContent = "Processing..."; }
-
-            try {
-                const payRes = await fetch('/api/payment/confirm-test', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ order_id: orderData.order_id })
-                });
-                const payData = await payRes.json();
-                
-                if (payData.success) {
-                    window.location.href = "/menu";
-                } else {
-                    showThemedPopup({ title: "Payment Error", message: "Failed recording payment.", icon: "❌" });
-                    setPayNowUI();
-                }
-            } catch (err) {
-                showThemedPopup({ title: "Network Error", message: "Could not communicate with server.", icon: "⚠️" });
-                setPayNowUI();
-            }
-            return;
-        }
-
         const options = {
             "key": RZP_KEY_ID,
             "amount": Math.round(orderData.total_amount * 100),
