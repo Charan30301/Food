@@ -441,7 +441,7 @@
             display: block;
         }
     </style>
-<script src="/static/js/pwa.js" defer></script>
+    <script src="/static/js/pwa.js" defer></script>
 </head>
 <body>
 <div class="page-loading-overlay" id="cartLoadingOverlay" role="status" aria-live="polite">
@@ -496,7 +496,7 @@
     <div class="themed-dialog">
         <div style="font-size: 2rem; margin-bottom: 0.25rem;">💳</div>
         <h3 class="themed-dialog-title">Choose Payment Method</h3>
-        <p class="themed-dialog-msg">Base Bill: <strong id="choiceModalAmountLabel" style="color:var(--gold-dark);">₹0.00</strong></p>
+        <p class="themed-dialog-msg">Base Food Bill: <strong id="choiceModalAmountLabel" style="color:var(--gold-dark);">₹0.00</strong></p>
 
         <div class="pay-choice-grid">
             <button type="button" class="pay-choice-btn" onclick="executePaymentChoice('counter')">
@@ -691,7 +691,7 @@
                 return;
             }
 
-            cartTotal = data.total_price;
+            cartTotal = Number(data.total_price);
             list.innerHTML = '';
             data.items.forEach(item => {
                 list.innerHTML += `
@@ -707,7 +707,12 @@
                 `;
             });
 
-            document.getElementById('totalPayableLabel').textContent = `₹${cartTotal.toFixed(2)}`;
+            // Display pure food total
+            const baseAmountToDisplay = (currentActiveOrder && currentActiveOrder.base_amount !== undefined && Number(currentActiveOrder.base_amount) > 0)
+                ? Number(currentActiveOrder.base_amount)
+                : cartTotal;
+
+            document.getElementById('totalPayableLabel').textContent = `₹${baseAmountToDisplay.toFixed(2)}`;
             billBox.style.display = 'block';
         } catch (err) {
             console.error('Failed to load cart items:', err);
@@ -727,13 +732,20 @@
     }
 
     function openPaymentMethodModal() {
-        const baseAmt = currentActiveOrder ? currentActiveOrder.total_amount : cartTotal;
+        // Pure un-taxed food amount
+        const baseAmt = (currentActiveOrder && currentActiveOrder.base_amount !== undefined && Number(currentActiveOrder.base_amount) > 0)
+            ? Number(currentActiveOrder.base_amount)
+            : (cartTotal > 0 ? cartTotal : (currentActiveOrder ? Number(currentActiveOrder.total_amount) : 0));
+
         const taxVal = Number((baseAmt * (serviceTaxPercent / 100.0)).toFixed(2));
         const onlineTotal = (baseAmt + taxVal).toFixed(2);
 
         document.getElementById("choiceModalAmountLabel").textContent = `₹${baseAmt.toFixed(2)}`;
         document.getElementById("serviceTaxPercentLabel").textContent = serviceTaxPercent;
+        
+        // Cash strictly shows baseAmt ($80)
         document.getElementById("counterPayLabel").textContent = `Total: ₹${baseAmt.toFixed(2)}`;
+        // Online strictly shows baseAmt + single tax ($80 + x)
         document.getElementById("onlinePayLabel").textContent = `Total: ₹${onlineTotal}`;
 
         document.getElementById("paymentMethodModal").classList.add("open");
@@ -758,14 +770,26 @@
             });
             const data = await res.json();
             if (data.final_total) {
-                currentActiveOrder.total_amount = data.final_total;
+                currentActiveOrder.total_amount = Number(data.final_total);
             }
-        } catch (e) {}
+            if (data.base_amount) {
+                currentActiveOrder.base_amount = Number(data.base_amount);
+            }
+            if (data.gateway_order_id) {
+                currentActiveOrder.gateway_order_id = data.gateway_order_id;
+            }
+        } catch (e) {
+            console.error("Payment method selection failed:", e);
+        }
 
         if (method === 'counter') {
+            const payableCash = (currentActiveOrder.base_amount !== undefined && Number(currentActiveOrder.base_amount) > 0)
+                ? Number(currentActiveOrder.base_amount).toFixed(2)
+                : Number(currentActiveOrder.total_amount).toFixed(2);
+
             showThemedPopup({
                 title: "Pay at Counter Chosen",
-                message: `Please pay ₹${currentActiveOrder.total_amount.toFixed(2)} cash at the hotel counter. Once paid, the cashier will verify your payment and start cooking!`,
+                message: `Please pay ₹${payableCash} cash at the hotel counter. Once paid, the cashier will verify your payment and start cooking!`,
                 icon: "💵",
                 confirmText: "Understood",
                 onResolve: () => {
@@ -860,7 +884,10 @@
         if (btn) {
             btn.disabled = false;
             btn.className = "action-btn btn-pay-green";
-            const amt = currentActiveOrder ? currentActiveOrder.total_amount.toFixed(2) : cartTotal.toFixed(2);
+            // Show pure food base amount on the main button
+            const amt = (currentActiveOrder && currentActiveOrder.base_amount !== undefined && Number(currentActiveOrder.base_amount) > 0)
+                ? Number(currentActiveOrder.base_amount).toFixed(2)
+                : (cartTotal > 0 ? cartTotal.toFixed(2) : (currentActiveOrder ? Number(currentActiveOrder.total_amount).toFixed(2) : "0.00"));
             btn.textContent = `Pay Now (Accepted) - ₹${amt}`;
         }
     }
@@ -939,9 +966,16 @@
     }
 
     async function launchPaymentFlow(orderData) {
+        // Calculate the exact single-tax online total to pass to Razorpay
+        const baseAmt = (orderData.base_amount !== undefined && Number(orderData.base_amount) > 0)
+            ? Number(orderData.base_amount)
+            : Number(orderData.total_amount);
+        const taxVal = Number((baseAmt * (serviceTaxPercent / 100.0)).toFixed(2));
+        const exactOnlineTotal = (baseAmt + taxVal);
+
         const options = {
             "key": RZP_KEY_ID,
-            "amount": Math.round(orderData.total_amount * 100),
+            "amount": Math.round(exactOnlineTotal * 100),
             "currency": "INR",
             "name": "Grand Palace Hotel",
             "description": `Token #${orderData.daily_order_number}`,
@@ -962,11 +996,17 @@
                 if (verifyData.success) {
                     window.location.href = "/menu";
                 } else {
-                    showThemedPopup({ title: "Verification Failed", message: "Gateway signature verification failed.", icon: "❌" });
+                    showThemedPopup({ 
+                        title: "Verification Failed", 
+                        message: "Gateway signature verification failed.", 
+                        icon: "❌",
+                        onResolve: () => { setPayNowUI(); }
+                    });
                 }
             },
             "modal": {
                 "ondismiss": function() {
+                    // Reset UI safely without compounding extra tax
                     setPayNowUI();
                 }
             }
