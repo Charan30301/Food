@@ -1171,16 +1171,20 @@ def submit_order_request():
 
                 daily_num = get_next_daily_order_number(cur)
 
+                # Generate a temporary unique ID so the UNIQUE constraint is never violated
+                temp_gw_id = f"init_{os.urandom(8).hex()}"
+
                 cur.execute("""
                     INSERT INTO orders (user_email, items_code, total_amount, gateway_order_id, payment_status, order_status, daily_order_number, order_type, payment_method, created_at, updated_at)
-                    VALUES (%s, %s, %s, '', 'pending', 'placed', %s, %s, 'unselected', NOW(), NOW())
+                    VALUES (%s, %s, %s, %s, 'pending', 'placed', %s, %s, 'unselected', NOW(), NOW())
                     RETURNING id, daily_order_number;
-                """, (user_email, cart["cart_code"], cart["total_price"], daily_num, order_type))
+                """, (user_email, cart["cart_code"], cart["total_price"], temp_gw_id, daily_num, order_type))
                 new_order = cur.fetchone()
 
                 real_order_id = create_razorpay_order(cart["total_price"], new_order["id"])
                 cur.execute("UPDATE orders SET gateway_order_id = %s WHERE id = %s;", (real_order_id, new_order["id"]))
                 conn.commit()
+
 
         set_order_update(
             new_order["id"],
@@ -1245,7 +1249,8 @@ def select_payment_method():
             else:
                 tax_amount = 0.0
                 final_total = round(base_amount, 2)
-                real_gw_id = ""
+                real_gw_id = f"counter_ref_{order_id}_{os.urandom(4).hex()}"
+
 
             cur.execute("""
                 UPDATE orders
