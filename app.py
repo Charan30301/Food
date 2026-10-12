@@ -1285,6 +1285,10 @@ def verify_razorpay_payment():
     if not (rzp_order_id and rzp_payment_id and rzp_signature):
         return jsonify({"success": False, "error": "Missing signature details"}), 400
 
+    if not RAZORPAY_KEY_SECRET:
+        app.logger.error("RAZORPAY_KEY_SECRET environment variable is missing on server!")
+        return jsonify({"success": False, "error": "Server configuration error: Key Secret missing"}), 500
+
     is_valid = False
     if client:
         try:
@@ -1294,18 +1298,22 @@ def verify_razorpay_payment():
                 'razorpay_signature': rzp_signature
             })
             is_valid = True
-        except Exception:
+        except Exception as e:
+            app.logger.warning("Razorpay utility signature mismatch: %s", e)
             is_valid = False
-    elif RAZORPAY_KEY_SECRET:
+
+    if not is_valid:
+        # Fallback raw calculation check
         msg = f"{rzp_order_id}|{rzp_payment_id}".encode('utf-8')
         generated = hmac.new(RAZORPAY_KEY_SECRET.encode('utf-8'), msg, hashlib.sha256).hexdigest()
         is_valid = hmac.compare_digest(generated, rzp_signature)
+        if not is_valid:
+            app.logger.error("Signature mismatch: received %s != generated %s", rzp_signature, generated)
 
     if not is_valid:
-        return jsonify({"success": False, "error": "Invalid signature. Payment could not be verified."}), 400
+        return jsonify({"success": False, "error": "Gateway signature verification failed."}), 400
 
     order_record = None
-
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("""
@@ -1324,28 +1332,15 @@ def verify_razorpay_payment():
             conn.commit()
 
     if not order_record:
+        app.logger.error("Payment valid but order with gateway_order_id=%s not found in DB", rzp_order_id)
         return jsonify({"success": False, "error": "Order not found"}), 404
 
     target_email = order_record["user_email"]
     order_id = order_record["id"]
 
     set_order_update(order_id, "paid", "Payment Verified!", f"Payment confirmed for Token #{order_record['daily_order_number']}.")
-
-    notify(
-        "customer",
-        "Payment confirmed",
-        f"Your order #{order_id} payment was confirmed.",
-        "/cart",
-        target_email,
-        tag=f"customer-payment-{order_id}"
-    )
-    notify(
-        "chef",
-        "New cooking order",
-        f"Order #{order_id} has been paid and is ready for the kitchen queue.",
-        "/chef",
-        tag=f"chef-order-{order_id}"
-    )
+    notify("customer", "Payment confirmed", f"Your order #{order_id} payment was confirmed.", "/cart", target_email, tag=f"customer-payment-{order_id}")
+    notify("chef", "New cooking order", f"Order #{order_id} has been paid and is ready for the kitchen queue.", "/chef", tag=f"chef-order-{order_id}")
 
     return jsonify({"success": True})
 
