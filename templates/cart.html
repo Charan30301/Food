@@ -534,11 +534,30 @@
     </div>
 </div>
 
+<div id="cartPageConfig"
+     data-test-mode="{{ 'true' if test_mode else 'false' }}"
+     data-rzp-key="{{ rzp_key|tojson }}"
+     data-user-email="{{ email|tojson }}"
+     data-user-name="{{ username|tojson }}"
+     style="display:none;"></div>
+
 <script>
-    const IS_TEST_MODE = {{ 'true' if test_mode else 'false' }};
-    const RZP_KEY_ID = {{ rzp_key|tojson }};
-    const USER_EMAIL = {{ email|tojson }};
-    const USER_NAME = {{ username|tojson }};
+    const cartPageConfig = document.getElementById("cartPageConfig");
+
+    const readConfigValue = (key, fallback = null) => {
+        const raw = cartPageConfig.dataset[key];
+        if (raw === undefined || raw === null || raw === "") return fallback;
+        try {
+            return JSON.parse(raw);
+        } catch (error) {
+            return raw;
+        }
+    };
+
+    const IS_TEST_MODE = readConfigValue("testMode", false);
+    const RZP_KEY_ID = readConfigValue("rzpKey", null);
+    const USER_EMAIL = readConfigValue("userEmail", null);
+    const USER_NAME = readConfigValue("userName", null);
 
     let cartTotal = 0;
     let submittedOrderId = null;

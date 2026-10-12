@@ -1016,6 +1016,8 @@ def check_active_order():
             cur.execute("""
                 SELECT id, order_status, payment_status, total_amount::float, daily_order_number, 
                        gateway_order_id, cancellation_reason, customer_alert,
+                       COALESCE(NULLIF(base_amount, 0), total_amount - COALESCE(tax_amount, 0), total_amount)::float AS base_amount,
+                       COALESCE(tax_amount, 0)::float AS tax_amount,
                        COALESCE(order_type, 'dine_in') AS order_type,
                        COALESCE(payment_method, 'unselected') AS payment_method,
                        EXTRACT(EPOCH FROM (NOW() - created_at))::int AS seconds_elapsed,
@@ -1116,7 +1118,9 @@ def check_active_order():
                     "order_type": order.get("order_type", "dine_in"),
                     "payment_method": order.get("payment_method", "unselected"),
                     "payment_status": order["payment_status"],
+                    "base_amount": order["base_amount"],
                     "total_amount": order["total_amount"],
+                    "tax_amount": order["tax_amount"],
                     "service_tax_percent": tax_rate,
                     "gateway_order_id": order["gateway_order_id"],
                     "seconds_left": seconds_remaining,
@@ -1154,6 +1158,9 @@ def submit_order_request():
             with conn.cursor() as cur:
                 cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_type VARCHAR(20) DEFAULT 'dine_in';")
                 cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(30) DEFAULT 'unselected';")
+                cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS base_amount NUMERIC(10,2) NOT NULL DEFAULT 0.00;")
+                cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS tax_amount NUMERIC(10,2) NOT NULL DEFAULT 0.00;")
+                cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS tax_rate NUMERIC(6,2) NOT NULL DEFAULT 0.00;")
 
                 cur.execute("SELECT cart_code, total_price::float FROM carts WHERE user_email = %s;", (user_email,))
                 cart = cur.fetchone()
@@ -1168,21 +1175,19 @@ def submit_order_request():
                 """, (user_email,))
 
                 daily_num = get_next_daily_order_number(cur)
-
-                # Generate a temporary unique ID so the UNIQUE constraint is never violated
                 temp_gw_id = f"init_{os.urandom(8).hex()}"
+                base_amt = float(cart["total_price"])
 
                 cur.execute("""
-                    INSERT INTO orders (user_email, items_code, total_amount, gateway_order_id, payment_status, order_status, daily_order_number, order_type, payment_method, created_at, updated_at)
-                    VALUES (%s, %s, %s, %s, 'pending', 'placed', %s, %s, 'unselected', NOW(), NOW())
+                    INSERT INTO orders (user_email, items_code, total_amount, base_amount, gateway_order_id, payment_status, order_status, daily_order_number, order_type, payment_method, created_at, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, 'pending', 'placed', %s, %s, 'unselected', NOW(), NOW())
                     RETURNING id, daily_order_number;
-                """, (user_email, cart["cart_code"], cart["total_price"], temp_gw_id, daily_num, order_type))
+                """, (user_email, cart["cart_code"], base_amt, base_amt, temp_gw_id, daily_num, order_type))
                 new_order = cur.fetchone()
 
-                real_order_id = create_razorpay_order(cart["total_price"], new_order["id"])
+                real_order_id = create_razorpay_order(base_amt, new_order["id"])
                 cur.execute("UPDATE orders SET gateway_order_id = %s WHERE id = %s;", (real_order_id, new_order["id"]))
                 conn.commit()
-
 
         set_order_update(
             new_order["id"],
@@ -1202,7 +1207,7 @@ def submit_order_request():
     except Exception as e:
         app.logger.exception("Submit order error: %s", e)
         return jsonify({"error": f"Order placement failed: {str(e)}"}), 500
-
+    
 @app.route("/api/order/select-payment-method", methods=["POST"])
 def select_payment_method():
     user_email = session.get("user_email")
@@ -1220,14 +1225,22 @@ def select_payment_method():
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(30) DEFAULT 'unselected';")
+            cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS base_amount NUMERIC(10,2) NOT NULL DEFAULT 0.00;")
             cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS tax_amount NUMERIC(10,2) NOT NULL DEFAULT 0.00;")
             cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS tax_rate NUMERIC(6,2) NOT NULL DEFAULT 0.00;")
-            cur.execute("SELECT id, items_code, total_amount::float FROM orders WHERE id = %s AND user_email = %s;", (order_id, user_email))
+            cur.execute("""
+                SELECT id, items_code, total_amount::float, 
+                       COALESCE(base_amount, 0)::float AS base_amount,
+                       COALESCE(tax_amount, 0)::float AS tax_amount
+                FROM orders 
+                WHERE id = %s AND user_email = %s;
+            """, (order_id, user_email))
             order = cur.fetchone()
 
             if not order:
                 return jsonify({"error": "Order not found"}), 404
 
+            # Derive the untouched base amount
             parsed = parse_cart_code(order["items_code"])
             item_ids = list(parsed.keys())
             base_amount = 0.0
@@ -1237,29 +1250,34 @@ def select_payment_method():
                 prices = {row["id"]: row["price"] for row in cur.fetchall()}
                 for i_id, qty in parsed.items():
                     base_amount += prices.get(i_id, 0.0) * qty
+            elif order["base_amount"] > 0:
+                base_amount = float(order["base_amount"])
             else:
-                base_amount = order["total_amount"]
+                base_amount = float(order["total_amount"]) - float(order["tax_amount"])
 
+            base_amount = round(base_amount, 2)
+
+            # Cash pays exact base amount; online adds tax
             if method == "online":
                 tax_amount = round(base_amount * (tax_rate / 100.0), 2)
                 final_total = round(base_amount + tax_amount, 2)
                 real_gw_id = create_razorpay_order(final_total, order_id)
             else:
                 tax_amount = 0.0
-                final_total = round(base_amount, 2)
+                final_total = base_amount
                 real_gw_id = f"counter_ref_{order_id}_{os.urandom(4).hex()}"
-
 
             cur.execute("""
                 UPDATE orders
                 SET payment_method = %s,
+                    base_amount = %s,
                     total_amount = %s,
                     tax_amount = %s,
                     tax_rate = %s,
                     gateway_order_id = %s,
                     updated_at = NOW()
                 WHERE id = %s;
-            """, (method, final_total, tax_amount, tax_rate if method == "online" else 0.0, real_gw_id, order_id))
+            """, (method, base_amount, final_total, tax_amount, tax_rate if method == "online" else 0.0, real_gw_id, order_id))
             conn.commit()
 
     return jsonify({
@@ -1271,6 +1289,7 @@ def select_payment_method():
         "final_total": final_total,
         "gateway_order_id": real_gw_id
     })
+
 
 # Real Razorpay Signature Verification Endpoint
 @app.route("/api/payment/verify", methods=["POST"])
