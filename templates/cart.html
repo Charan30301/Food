@@ -534,30 +534,11 @@
     </div>
 </div>
 
-<div id="cartPageConfig"
-     data-test-mode="{{ 'true' if test_mode else 'false' }}"
-     data-rzp-key="{{ rzp_key|tojson }}"
-     data-user-email="{{ email|tojson }}"
-     data-user-name="{{ username|tojson }}"
-     style="display:none;"></div>
-
 <script>
-    const cartPageConfig = document.getElementById("cartPageConfig");
-
-    const readConfigValue = (key, fallback = null) => {
-        const raw = cartPageConfig.dataset[key];
-        if (raw === undefined || raw === null || raw === "") return fallback;
-        try {
-            return JSON.parse(raw);
-        } catch (error) {
-            return raw;
-        }
-    };
-
-    const IS_TEST_MODE = readConfigValue("testMode", false);
-    const RZP_KEY_ID = readConfigValue("rzpKey", null);
-    const USER_EMAIL = readConfigValue("userEmail", null);
-    const USER_NAME = readConfigValue("userName", null);
+    const IS_TEST_MODE = JSON.parse('{{ test_mode|tojson|safe }}');
+    const RZP_KEY_ID = JSON.parse('{{ rzp_key|tojson|safe }}');
+    const USER_EMAIL = JSON.parse('{{ email|tojson|safe }}');
+    const USER_NAME = JSON.parse('{{ username|tojson|safe }}');
 
     let cartTotal = 0;
     let submittedOrderId = null;
@@ -707,7 +688,6 @@
                 `;
             });
 
-            // Display pure food total
             const baseAmountToDisplay = (currentActiveOrder && currentActiveOrder.base_amount !== undefined && Number(currentActiveOrder.base_amount) > 0)
                 ? Number(currentActiveOrder.base_amount)
                 : cartTotal;
@@ -732,7 +712,6 @@
     }
 
     function openPaymentMethodModal() {
-        // Pure un-taxed food amount
         const baseAmt = (currentActiveOrder && currentActiveOrder.base_amount !== undefined && Number(currentActiveOrder.base_amount) > 0)
             ? Number(currentActiveOrder.base_amount)
             : (cartTotal > 0 ? cartTotal : (currentActiveOrder ? Number(currentActiveOrder.total_amount) : 0));
@@ -743,9 +722,7 @@
         document.getElementById("choiceModalAmountLabel").textContent = `₹${baseAmt.toFixed(2)}`;
         document.getElementById("serviceTaxPercentLabel").textContent = serviceTaxPercent;
         
-        // Cash strictly shows baseAmt ($80)
         document.getElementById("counterPayLabel").textContent = `Total: ₹${baseAmt.toFixed(2)}`;
-        // Online strictly shows baseAmt + single tax ($80 + x)
         document.getElementById("onlinePayLabel").textContent = `Total: ₹${onlineTotal}`;
 
         document.getElementById("paymentMethodModal").classList.add("open");
@@ -884,7 +861,6 @@
         if (btn) {
             btn.disabled = false;
             btn.className = "action-btn btn-pay-green";
-            // Show pure food base amount on the main button
             const amt = (currentActiveOrder && currentActiveOrder.base_amount !== undefined && Number(currentActiveOrder.base_amount) > 0)
                 ? Number(currentActiveOrder.base_amount).toFixed(2)
                 : (cartTotal > 0 ? cartTotal.toFixed(2) : (currentActiveOrder ? Number(currentActiveOrder.total_amount).toFixed(2) : "0.00"));
@@ -966,7 +942,16 @@
     }
 
     async function launchPaymentFlow(orderData) {
-        // Calculate the exact single-tax online total to pass to Razorpay
+        if (!RZP_KEY_ID || RZP_KEY_ID === "" || RZP_KEY_ID === "null") {
+            showThemedPopup({
+                title: "Configuration Error",
+                message: "Razorpay Key ID is not configured on the server. Please add RAZORPAY_KEY_ID in server environment variables.",
+                icon: "⚙️"
+            });
+            setPayNowUI();
+            return;
+        }
+
         const baseAmt = (orderData.base_amount !== undefined && Number(orderData.base_amount) > 0)
             ? Number(orderData.base_amount)
             : Number(orderData.total_amount);
@@ -1006,7 +991,6 @@
             },
             "modal": {
                 "ondismiss": function() {
-                    // Reset UI safely without compounding extra tax
                     setPayNowUI();
                 }
             }

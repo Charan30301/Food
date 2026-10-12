@@ -46,14 +46,17 @@ TEST_MODE = False
 
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "").strip()
 
-# Production Razorpay Credentials
+# Production Razorpay Credentials (reads environment variables with trim)
 RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID", "").strip()
 RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET", "").strip()
 RAZORPAY_WEBHOOK_SECRET = os.environ.get("RAZORPAY_WEBHOOK_SECRET", "").strip()
 
 client = None
 if razorpay and RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET:
-    client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
+    try:
+        client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
+    except Exception as exc:
+        app.logger.warning("Could not initialize Razorpay Client: %s", exc)
 
 DB_CONFIG = {
     "dbname": os.environ.get("DB_NAME", "hotel_db_aza2"),
@@ -362,6 +365,7 @@ def create_razorpay_order(amount_rupees, receipt_id):
         except Exception as e:
             app.logger.warning("Razorpay order creation fallback: %s", e)
     return f"order_ref_{receipt_id}_{os.urandom(4).hex()}"
+
 # ==========================================
 # Real-Time Polling Endpoints
 # ==========================================
@@ -723,11 +727,14 @@ def menu_page():
 def cart_page():
     if "user_email" not in session:
         return redirect(url_for("index"))
+
+    active_key = RAZORPAY_KEY_ID or os.environ.get("RAZORPAY_KEY_ID", "").strip()
+
     return render_template(
         "cart.html",
         email=session["user_email"],
         username=session.get("username", "Guest"),
-        rzp_key=RAZORPAY_KEY_ID,
+        rzp_key=active_key,
         test_mode=TEST_MODE
     )
 
@@ -1240,7 +1247,6 @@ def select_payment_method():
             if not order:
                 return jsonify({"error": "Order not found"}), 404
 
-            # Derive the untouched base amount
             parsed = parse_cart_code(order["items_code"])
             item_ids = list(parsed.keys())
             base_amount = 0.0
@@ -1257,7 +1263,6 @@ def select_payment_method():
 
             base_amount = round(base_amount, 2)
 
-            # Cash pays exact base amount; online adds tax
             if method == "online":
                 tax_amount = round(base_amount * (tax_rate / 100.0), 2)
                 final_total = round(base_amount + tax_amount, 2)
@@ -1289,7 +1294,6 @@ def select_payment_method():
         "final_total": final_total,
         "gateway_order_id": real_gw_id
     })
-
 
 # Real Razorpay Signature Verification Endpoint
 @app.route("/api/payment/verify", methods=["POST"])
@@ -1381,7 +1385,6 @@ def verify_razorpay_payment():
     notify("chef", "New cooking order", f"Order #{order_id} has been paid and is ready for the kitchen queue.", "/chef", tag=f"chef-order-{order_id}")
 
     return jsonify({"success": True})
-
 
 # Optional Razorpay Webhook Endpoint
 @app.route("/api/payment/webhook", methods=["POST"])
