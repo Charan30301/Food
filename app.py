@@ -41,16 +41,21 @@ except ModuleNotFoundError:
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "hotel_secret_key_12345")
 
+# Production: Test mode disabled
 TEST_MODE = False
 TEST_USER_EMAIL = "test_customer@gmail.com"
 TEST_USERNAME = "Test Customer"
 
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com")
-RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID", "rzp_test_YourKeyIdHere")
-RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET", "YourKeySecretHere")
-RAZORPAY_WEBHOOK_SECRET = os.environ.get("RAZORPAY_WEBHOOK_SECRET", "YourWebhookSecretHere")
 
-client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET)) if razorpay else None
+# Production Razorpay Keys (Set these in your hosting environment variables)
+RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID", "").strip()
+RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET", "").strip()
+RAZORPAY_WEBHOOK_SECRET = os.environ.get("RAZORPAY_WEBHOOK_SECRET", "").strip()
+
+client = None
+if razorpay and RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET:
+    client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 
 DB_CONFIG = {
     "dbname": os.environ.get("DB_NAME", "hotel_db_aza2"),
@@ -237,7 +242,6 @@ def notify(role, title, body, url="/", user_email=None, tag=None):
         app.logger.exception("Web Push notification failed")
 
 def notify_waitlisted_users_if_free():
-    """Alerts customers who were turned away because the kitchen queue was full."""
     try:
         with get_db() as conn:
             with conn.cursor() as cur:
@@ -345,6 +349,23 @@ def verify_google_token(token):
         raise ValueError("Invalid Google token audience")
     return idinfo
 
+# Helper function to create official Razorpay Orders
+def create_razorpay_order(amount_rupees, receipt_id):
+    if client:
+        try:
+            amount_paise = int(round(float(amount_rupees) * 100))
+            order_payload = {
+                "amount": amount_paise,
+                "currency": "INR",
+                "receipt": f"rcpt_{receipt_id}",
+                "payment_capture": 1
+            }
+            rzp_order = client.order.create(data=order_payload)
+            return rzp_order.get("id")
+        except Exception as e:
+            app.logger.exception("Failed to create Razorpay Order: %s", e)
+    return f"order_{os.urandom(8).hex()}"
+
 # ==========================================
 # Real-Time Polling Endpoints (NO-FCM FALLBACK)
 # ==========================================
@@ -384,24 +405,6 @@ def get_latest_order_status():
         except Exception:
             pass
     return jsonify(latest_order_state)
-
-@app.route("/api/orders/test-alert", methods=["GET", "POST"])
-def test_order_alert():
-    status = request.args.get("status") or (request.get_json() or {}).get("status", "prepared")
-    titles = {
-        "placed": ("Order Placed!", "Test Order #1001 was placed."),
-        "accepted": ("Order Accepted!", "The kitchen has accepted test order #1001."),
-        "preparing": ("Food Cooking!", "Test Order #1001 is being prepared now."),
-        "prepared": ("Order Ready!", "Test Order #1001 is hot and ready for pickup!"),
-        "delivered": ("Order Delivered!", "Test Order #1001 has been delivered.")
-    }
-    t, m = titles.get(status, ("Order Update", f"Order status is now {status}"))
-    set_order_update("1001", status, t, m)
-    return jsonify({
-        "success": True,
-        "message": f"Broadcasted test notification '{status}'. Phone app will show notification within 5 seconds.",
-        "state": latest_order_state
-    })
 
 # ==========================================
 # PWA Routes
@@ -523,108 +526,6 @@ def fcm_register():
         app.logger.exception("Could not register FCM device")
         return jsonify({"error": "Could not register notification device"}), 500
 
-@app.route("/api/fcm/unregister", methods=["POST"])
-def fcm_unregister():
-    data = request.get_json() or {}
-    token = str(data.get("token", "")).strip()
-    if not token:
-        return jsonify({"success": True})
-    try:
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute("DELETE FROM fcm_devices WHERE token=%s", (token,))
-                conn.commit()
-        return jsonify({"success": True})
-    except Exception:
-        return jsonify({"success": False}), 500
-
-@app.route("/api/fcm/status")
-def fcm_status():
-    return jsonify({"enabled": fcm_enabled()})
-
-@app.route("/api/fcm/test", methods=["POST"])
-def fcm_test():
-    requested_role = str((request.get_json() or {}).get("role", "")).strip().lower()
-    if requested_role == "customer":
-        user_email = session.get("user_email") or TEST_USER_EMAIL
-        notify("customer", "Test notification", "Notification system is working on your Customer app.", "/menu", user_email, "test-notification")
-        set_order_update("999", "test", "Test Notification", "Notification system is working on Customer App.")
-        return jsonify({"success": True, "role": "customer"})
-    if requested_role in {"reception", "chef"}:
-        path = "/admin" if requested_role == "reception" else "/admin/cooking"
-        notify(requested_role, "Test notification", f"Notification system is working on your {requested_role.title()} app.", path, None, "test-notification")
-        return jsonify({"success": True, "role": requested_role})
-    return jsonify({"error": "role must be customer, reception or chef"}), 400
-
-@app.route("/api/push/config")
-def push_config():
-    return jsonify({
-        "enabled": bool(VAPID_PUBLIC_KEY),
-        "public_key": VAPID_PUBLIC_KEY
-    })
-
-@app.route("/api/push/subscribe", methods=["POST"])
-def push_subscribe():
-    data = request.get_json() or {}
-    subscription = data.get("subscription") or {}
-    endpoint = str(subscription.get("endpoint", "")).strip()
-    keys = subscription.get("keys") or {}
-    p256dh = str(keys.get("p256dh", "")).strip()
-    auth = str(keys.get("auth", "")).strip()
-    role = str(data.get("role", "")).strip().lower()
-
-    if not endpoint or not p256dh or not auth:
-        return jsonify({"error": "Invalid push subscription"}), 400
-
-    if role not in PWA_ROLES:
-        return jsonify({"error": "Invalid application role"}), 400
-
-    user_email = session.get("user_email") if role == "customer" else None
-
-    try:
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    CREATE TABLE IF NOT EXISTS push_subscriptions (
-                        id SERIAL PRIMARY KEY,
-                        app_role VARCHAR(20) NOT NULL,
-                        user_email VARCHAR(255) NULL,
-                        endpoint TEXT UNIQUE NOT NULL,
-                        p256dh TEXT NOT NULL,
-                        auth TEXT NOT NULL,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    );
-                """)
-                cur.execute("""
-                    INSERT INTO push_subscriptions
-                        (app_role, user_email, endpoint, p256dh, auth, updated_at)
-                    VALUES (%s, %s, %s, %s, %s, NOW())
-                    ON CONFLICT (endpoint)
-                    DO UPDATE SET app_role = EXCLUDED.app_role,
-                                  user_email = EXCLUDED.user_email,
-                                  p256dh = EXCLUDED.p256dh,
-                                  auth = EXCLUDED.auth,
-                                  updated_at = NOW();
-                """, (role, user_email, endpoint, p256dh, auth))
-                conn.commit()
-        return jsonify({"success": True})
-    except Exception as exc:
-        app.logger.exception("Could not save push subscription")
-        return jsonify({"error": "Could not save notification subscription"}), 500
-
-@app.route("/api/push/unsubscribe", methods=["POST"])
-def push_unsubscribe():
-    data = request.get_json() or {}
-    endpoint = str(data.get("endpoint", "")).strip()
-    if not endpoint:
-        return jsonify({"success": True})
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("DELETE FROM push_subscriptions WHERE endpoint = %s;", (endpoint,))
-            conn.commit()
-    return jsonify({"success": True})
-
 # ==========================================
 # Category & Settings Endpoints
 # ==========================================
@@ -726,31 +627,12 @@ def index():
     clean_old_orders()
     if "user_email" in session:
         return redirect(url_for("menu_page"))
-
-    if TEST_MODE:
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    INSERT INTO users (email, username)
-                    VALUES (%s, %s)
-                    ON CONFLICT (email) DO NOTHING;
-                """, (TEST_USER_EMAIL, TEST_USERNAME))
-                conn.commit()
-        session["user_email"] = TEST_USER_EMAIL
-        session["username"] = TEST_USERNAME
-        return redirect(url_for("menu_page"))
-
     return render_template("login.html", google_client_id=GOOGLE_CLIENT_ID)
 
 @app.route("/menu")
 def menu_page():
-    if TEST_MODE and "user_email" not in session:
-        session["user_email"] = TEST_USER_EMAIL
-        session["username"] = TEST_USERNAME
-
     if "user_email" not in session:
         return redirect(url_for("index"))
-
     return render_template("menu.html", email=session["user_email"], username=session.get("username", "Guest"))
 
 @app.route("/cart")
@@ -987,7 +869,7 @@ def get_cart_items():
     return jsonify({"items": detailed_items, "total_price": cart_row["total_price"], "cart_code": cart_row["cart_code"]})
 
 # ==========================================
-# Two-Stage Order Execution
+# Two-Stage Order Execution (Live Razorpay)
 # ==========================================
 @app.route("/api/order/submit-request", methods=["POST"])
 def submit_order_request():
@@ -1018,14 +900,17 @@ def submit_order_request():
             """, (user_email,))
 
             daily_num = get_next_daily_order_number(cur)
-            fake_gw_id = f"test_order_{os.urandom(4).hex()}"
 
             cur.execute("""
                 INSERT INTO orders (user_email, items_code, total_amount, gateway_order_id, payment_status, order_status, daily_order_number, order_type, payment_method, created_at, updated_at)
-                VALUES (%s, %s, %s, %s, 'pending', 'placed', %s, %s, 'unselected', NOW(), NOW())
+                VALUES (%s, %s, %s, '', 'pending', 'placed', %s, %s, 'unselected', NOW(), NOW())
                 RETURNING id, daily_order_number;
-            """, (user_email, cart["cart_code"], cart["total_price"], fake_gw_id, daily_num, order_type))
+            """, (user_email, cart["cart_code"], cart["total_price"], daily_num, order_type))
             new_order = cur.fetchone()
+
+            # Create real Razorpay order ID
+            real_order_id = create_razorpay_order(cart["total_price"], new_order["id"])
+            cur.execute("UPDATE orders SET gateway_order_id = %s WHERE id = %s;", (real_order_id, new_order["id"]))
             conn.commit()
 
     set_order_update(
@@ -1086,9 +971,12 @@ def select_payment_method():
             if method == "online":
                 tax_amount = round(base_amount * (tax_rate / 100.0), 2)
                 final_total = round(base_amount + tax_amount, 2)
+                # Recreate/Refresh Razorpay order with the final tax-inclusive amount
+                real_gw_id = create_razorpay_order(final_total, order_id)
             else:
                 tax_amount = 0.0
                 final_total = round(base_amount, 2)
+                real_gw_id = ""
 
             cur.execute("""
                 UPDATE orders
@@ -1096,9 +984,10 @@ def select_payment_method():
                     total_amount = %s,
                     tax_amount = %s,
                     tax_rate = %s,
+                    gateway_order_id = %s,
                     updated_at = NOW()
                 WHERE id = %s;
-            """, (method, final_total, tax_amount, tax_rate if method == "online" else 0.0, order_id))
+            """, (method, final_total, tax_amount, tax_rate if method == "online" else 0.0, real_gw_id, order_id))
             conn.commit()
 
     return jsonify({
@@ -1107,8 +996,130 @@ def select_payment_method():
         "base_amount": base_amount,
         "tax_rate": tax_rate if method == "online" else 0.0,
         "tax_amount": tax_amount,
-        "final_total": final_total
+        "final_total": final_total,
+        "gateway_order_id": real_gw_id
     })
+
+# Real Razorpay Signature Verification Endpoint
+@app.route("/api/payment/verify", methods=["POST"])
+def verify_razorpay_payment():
+    data = request.get_json() or {}
+    rzp_order_id = data.get("razorpay_order_id")
+    rzp_payment_id = data.get("razorpay_payment_id")
+    rzp_signature = data.get("razorpay_signature")
+
+    if not (rzp_order_id and rzp_payment_id and rzp_signature):
+        return jsonify({"success": False, "error": "Missing signature details"}), 400
+
+    # 1. Cryptographic HMAC verification
+    is_valid = False
+    if client:
+        try:
+            client.utility.verify_payment_signature({
+                'razorpay_order_id': rzp_order_id,
+                'razorpay_payment_id': rzp_payment_id,
+                'razorpay_signature': rzp_signature
+            })
+            is_valid = True
+        except Exception as e:
+            app.logger.warning("Razorpay utility signature mismatch: %s", e)
+            is_valid = False
+    else:
+        # Fallback raw HMAC-SHA256 check
+        msg = f"{rzp_order_id}|{rzp_payment_id}".encode('utf-8')
+        generated = hmac.new(RAZORPAY_KEY_SECRET.encode('utf-8'), msg, hashlib.sha256).hexdigest()
+        is_valid = hmac.compare_digest(generated, rzp_signature)
+
+    if not is_valid:
+        return jsonify({"success": False, "error": "Invalid signature. Payment could not be verified."}), 400
+
+    # 2. Update Database on Verified Payment
+    user_email = session.get("user_email")
+    order_record = None
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE orders
+                SET payment_status = 'paid',
+                    payment_id = %s,
+                    customer_alert = TRUE,
+                    updated_at = NOW()
+                WHERE gateway_order_id = %s
+                RETURNING id, daily_order_number, user_email;
+            """, (rzp_payment_id, rzp_order_id))
+            order_record = cur.fetchone()
+
+            if order_record and order_record["user_email"]:
+                cur.execute("UPDATE carts SET cart_code = '', total_price = 0 WHERE user_email = %s;", (order_record["user_email"],))
+            conn.commit()
+
+    if not order_record:
+        return jsonify({"success": False, "error": "Order not found"}), 404
+
+    target_email = order_record["user_email"]
+    order_id = order_record["id"]
+
+    set_order_update(order_id, "paid", "Payment Verified!", f"Payment confirmed for Token #{order_record['daily_order_number']}.")
+
+    notify(
+        "customer",
+        "Payment confirmed",
+        f"Your order #{order_id} payment was confirmed.",
+        "/cart",
+        target_email,
+        tag=f"customer-payment-{order_id}"
+    )
+    notify(
+        "chef",
+        "New cooking order",
+        f"Order #{order_id} has been paid and is ready for the kitchen queue.",
+        "/chef",
+        tag=f"chef-order-{order_id}"
+    )
+
+    return jsonify({"success": True})
+
+# Optional Razorpay Webhook Endpoint
+@app.route("/api/payment/webhook", methods=["POST"])
+def razorpay_webhook():
+    webhook_body = request.data.decode("utf-8")
+    webhook_signature = request.headers.get("X-Razorpay-Signature", "")
+
+    if not RAZORPAY_WEBHOOK_SECRET:
+        return jsonify({"status": "ignored"}), 200
+
+    try:
+        client.utility.verify_webhook_signature(webhook_body, webhook_signature, RAZORPAY_WEBHOOK_SECRET)
+    except Exception:
+        return jsonify({"error": "Invalid webhook signature"}), 400
+
+    event_payload = json.loads(webhook_body)
+    event_type = event_payload.get("event")
+
+    if event_type == "payment.captured":
+        payment_entity = event_payload.get("payload", {}).get("payment", {}).get("entity", {})
+        rzp_order_id = payment_entity.get("order_id")
+        rzp_payment_id = payment_entity.get("id")
+
+        if rzp_order_id and rzp_payment_id:
+            with get_db() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        UPDATE orders
+                        SET payment_status = 'paid',
+                            payment_id = %s,
+                            customer_alert = TRUE,
+                            updated_at = NOW()
+                        WHERE gateway_order_id = %s
+                        RETURNING id, user_email;
+                    """, (rzp_payment_id, rzp_order_id))
+                    row = cur.fetchone()
+                    if row and row["user_email"]:
+                        cur.execute("UPDATE carts SET cart_code = '', total_price = 0 WHERE user_email = %s;", (row["user_email"],))
+                    conn.commit()
+
+    return jsonify({"status": "ok"}), 200
 
 @app.route("/api/order/timeout-cancel", methods=["POST"])
 def timeout_cancel_order():
@@ -1142,7 +1153,7 @@ def timeout_cancel_order():
                 cancel_reason = "The kitchen is not accepting orders, please try again in a few minutes."
 
             cur.execute("""
-                UPDATE orders
+                UPDATE orders 
                 SET order_status = 'cancelled',
                     cancellation_reason = %s,
                     customer_alert = TRUE,
@@ -1153,42 +1164,6 @@ def timeout_cancel_order():
 
     set_order_update(order_id, "cancelled", "Order Cancelled", cancel_reason)
     return jsonify({"success": True, "reason": cancel_reason})
-
-@app.route("/api/payment/confirm-test", methods=["POST"])
-def confirm_test_payment():
-    data = request.get_json() or {}
-    order_id = data.get("order_id")
-    user_email = session.get("user_email", TEST_USER_EMAIL)
-
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("""
-                UPDATE orders
-                SET payment_status = 'paid', payment_id = %s, updated_at = NOW()
-                WHERE id = %s;
-            """, (f"pay_test_{os.urandom(4).hex()}", order_id))
-
-            cur.execute("UPDATE carts SET cart_code = '', total_price = 0 WHERE user_email = %s;", (user_email,))
-            conn.commit()
-
-    set_order_update(order_id, "paid", "Payment Successful!", f"Payment for Order #{order_id} was confirmed.")
-
-    notify(
-        "customer",
-        "Payment confirmed",
-        f"Your order #{order_id} payment was confirmed.",
-        "/cart",
-        user_email,
-        tag=f"customer-payment-{order_id}"
-    )
-    notify(
-        "chef",
-        "New cooking order",
-        f"Order #{order_id} has been paid and is ready for the kitchen queue.",
-        "/chef",
-        tag=f"chef-order-{order_id}"
-    )
-    return jsonify({"success": True})
 
 @app.route("/api/admin/order/complete-counter-payment", methods=["POST"])
 def complete_counter_payment():
@@ -1254,162 +1229,6 @@ def acknowledge_order_alert():
             conn.commit()
 
     return jsonify({"success": True})
-
-# ==========================================
-# Real-Time Customer Status Polling
-# ==========================================
-@app.route("/api/order/active", methods=["GET"])
-def check_active_order():
-    user_email = session.get("user_email", TEST_USER_EMAIL)
-
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT key, value FROM system_settings
-                WHERE key IN ('kitchen_open', 'menu_version', 'service_tax_percent');
-            """)
-            settings = {row["key"]: row["value"] for row in cur.fetchall()}
-            kitchen_open = settings.get("kitchen_open", "true") == "true"
-            try:
-                menu_version = int(settings.get("menu_version", "1"))
-            except (TypeError, ValueError):
-                menu_version = 1
-            try:
-                tax_rate = float(settings.get("service_tax_percent", "5.0"))
-            except (TypeError, ValueError):
-                tax_rate = 5.0
-
-            cur.execute("""
-                SELECT id, order_status, cancellation_reason
-                FROM orders 
-                WHERE user_email = %s 
-                  AND customer_alert = TRUE
-                  AND order_status = 'cancelled'
-                ORDER BY updated_at DESC LIMIT 1;
-            """, (user_email,))
-            cancelled_order = cur.fetchone()
-
-            if cancelled_order:
-                return jsonify({
-                    "has_active_order": False,
-                    "alert": True,
-                    "order_id": cancelled_order["id"],
-                    "status": "cancelled",
-                    "reason": cancelled_order["cancellation_reason"] or "Order cancelled by kitchen",
-                    "kitchen_open": kitchen_open,
-                    "menu_version": menu_version
-                })
-
-            cur.execute("""
-                SELECT id, order_status, payment_status, total_amount::float, daily_order_number, 
-                       gateway_order_id, cancellation_reason, customer_alert,
-                       COALESCE(order_type, 'dine_in') AS order_type,
-                       COALESCE(payment_method, 'unselected') AS payment_method,
-                       EXTRACT(EPOCH FROM (NOW() - created_at))::int AS seconds_elapsed,
-                       EXTRACT(EPOCH FROM (NOW() - updated_at))::int AS seconds_since_update
-                FROM orders 
-                WHERE user_email = %s 
-                  AND order_status IN ('placed', 'accepted', 'preparing', 'prepared', 'delivered')
-                ORDER BY created_at DESC LIMIT 1;
-            """, (user_email,))
-            order = cur.fetchone()
-
-            if order:
-                # Automatic cancellation after 30 minutes of payment timeout
-                if order["order_status"] in ['accepted', 'preparing'] and order["payment_status"] != 'paid' and order["seconds_since_update"] >= 1800:
-                    cur.execute("""
-                        UPDATE orders
-                        SET order_status = 'cancelled',
-                            cancellation_reason = 'Order automatically cancelled due to payment timeout (30 minutes).',
-                            customer_alert = TRUE,
-                            updated_at = NOW()
-                        WHERE id = %s;
-                    """, (order["id"],))
-                    conn.commit()
-                    return jsonify({
-                        "has_active_order": False,
-                        "alert": True,
-                        "order_id": order["id"],
-                        "status": "cancelled",
-                        "reason": "Order automatically cancelled due to payment timeout (30 minutes).",
-                        "kitchen_open": kitchen_open,
-                        "menu_version": menu_version
-                    })
-
-                if order["order_status"] == 'delivered' and order["customer_alert"]:
-                    return jsonify({
-                        "has_active_order": False,
-                        "alert": True,
-                        "order_id": order["id"],
-                        "daily_order_number": order["daily_order_number"],
-                        "status": "delivered",
-                        "order_type": order.get("order_type", "dine_in"),
-                        "payment_method": order.get("payment_method", "unselected"),
-                        "kitchen_open": kitchen_open,
-                        "menu_version": menu_version
-                    })
-
-                elapsed = order["seconds_elapsed"]
-                if order["order_status"] == 'placed' and elapsed >= 60:
-                    cur.execute("""
-                        SELECT COUNT(*)::int AS count 
-                        FROM orders 
-                        WHERE order_status IN ('accepted', 'preparing') AND payment_status = 'paid';
-                    """)
-                    queue_count = cur.fetchone()["count"]
-
-                    if queue_count > 0:
-                        timeout_reason = f"There are already {queue_count} people waiting for their orders before you, that's why your order was not accepted. Please try again after 5 minutes."
-                        cur.execute("""
-                            CREATE TABLE IF NOT EXISTS queue_waitlist_alerts (
-                                id SERIAL PRIMARY KEY,
-                                user_email VARCHAR(255) NOT NULL,
-                                notified BOOLEAN DEFAULT FALSE,
-                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                            );
-                        """)
-                        cur.execute("INSERT INTO queue_waitlist_alerts (user_email) VALUES (%s);", (user_email,))
-                    else:
-                        timeout_reason = "The kitchen is not accepting orders, please try again in a few minutes."
-
-                    cur.execute("""
-                        UPDATE orders 
-                        SET order_status = 'cancelled',
-                            cancellation_reason = %s,
-                            customer_alert = TRUE,
-                            updated_at = NOW()
-                        WHERE id = %s;
-                    """, (timeout_reason, order["id"]))
-                    conn.commit()
-                    return jsonify({
-                        "has_active_order": False,
-                        "alert": True,
-                        "order_id": order["id"],
-                        "status": "cancelled",
-                        "reason": timeout_reason,
-                        "kitchen_open": kitchen_open,
-                        "menu_version": menu_version
-                    })
-
-                seconds_remaining = max(0, 60 - elapsed) if order["order_status"] == 'placed' else 0
-
-                return jsonify({
-                    "has_active_order": order["order_status"] != 'delivered',
-                    "order_id": order["id"],
-                    "daily_order_number": order["daily_order_number"],
-                    "status": order["order_status"],
-                    "order_type": order.get("order_type", "dine_in"),
-                    "payment_method": order.get("payment_method", "unselected"),
-                    "payment_status": order["payment_status"],
-                    "total_amount": order["total_amount"],
-                    "service_tax_percent": tax_rate,
-                    "gateway_order_id": order["gateway_order_id"],
-                    "seconds_left": seconds_remaining,
-                    "kitchen_open": kitchen_open,
-                    "menu_version": menu_version
-                })
-
-    return jsonify({"has_active_order": False, "alert": False, "kitchen_open": kitchen_open, "menu_version": menu_version, "service_tax_percent": tax_rate})
 
 # ==========================================
 # Admin Operations & Dashboard APIs
@@ -1573,9 +1392,7 @@ def admin_get_orders():
         "kitchen_open": kitchen_open
     })
 
-# ==========================================
 # Kitchen 5-Order Cap & Waiting Queue APIs
-# ==========================================
 @app.route("/api/admin/cooking-orders", methods=["GET"])
 def admin_cooking_orders():
     if not session.get("is_admin"):
@@ -1627,7 +1444,6 @@ def admin_cooking_orders():
             } for item_id, qty in parsed.items()]
         })
 
-    # Kitchen limits strictly to first 5; rest go to waiting queue
     active_kitchen_orders = all_orders[:5]
     waiting_orders = all_orders[5:]
 
@@ -1809,7 +1625,6 @@ def admin_update_order_status():
         set_order_update(order_id, new_status, title, body)
         notify("customer", title, body, "/cart", order_row["user_email"], tag=f"customer-status-{order_id}-{new_status}")
 
-    # If kitchen order prepared or delivered, check if space freed for waitlisted users
     if new_status in ['prepared', 'delivered']:
         notify_waitlisted_users_if_free()
 
