@@ -8,7 +8,7 @@ from urllib.parse import urlencode
 from urllib.request import urlopen
 from datetime import timezone
 from zoneinfo import ZoneInfo
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, Response
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
@@ -19,12 +19,6 @@ except ModuleNotFoundError:
     firebase_admin = None
     credentials = None
     messaging = None
-
-try:
-    from pywebpush import webpush, WebPushException  # type: ignore
-except (ModuleNotFoundError, ImportError):
-    webpush = None
-    WebPushException = Exception
 
 try:
     psycopg = importlib.import_module("psycopg")
@@ -41,12 +35,10 @@ except ModuleNotFoundError:
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", os.urandom(32).hex())
 
-# Production Deployment Configuration
 TEST_MODE = False
 
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "").strip()
 
-# Production Razorpay Credentials (reads environment variables with trim)
 RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID", "").strip()
 RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET", "").strip()
 RAZORPAY_WEBHOOK_SECRET = os.environ.get("RAZORPAY_WEBHOOK_SECRET", "").strip()
@@ -91,9 +83,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp', 'gif'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# ==========================================
 # In-Memory Real-time State for Polling
-# ==========================================
 latest_order_state = {
     "hasUpdate": False,
     "order_id": "",
@@ -112,12 +102,6 @@ def set_order_update(order_id, status, title, message):
         "message": str(message)
     }
 
-# ==========================================
-# Native Android FCM + Optional Web Push
-# ==========================================
-VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "").strip()
-VAPID_PRIVATE_KEY_B64 = os.environ.get("VAPID_PRIVATE_KEY_B64", "").strip()
-VAPID_CLAIM_EMAIL = os.environ.get("VAPID_CLAIM_EMAIL", "mailto:admin@example.com").strip()
 FIREBASE_SERVICE_ACCOUNT_JSON = os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON", "").strip()
 FIREBASE_SERVICE_ACCOUNT_JSON_B64 = os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON_B64", "").strip()
 
@@ -145,15 +129,6 @@ def _init_firebase():
 
 def fcm_enabled():
     return bool(_init_firebase() and messaging)
-
-def _push_private_key():
-    if not VAPID_PRIVATE_KEY_B64:
-        return None
-    try:
-        import base64
-        return base64.b64decode(VAPID_PRIVATE_KEY_B64).decode("utf-8")
-    except Exception:
-        return None
 
 def send_fcm(role, title, body, url="/", user_email=None, tag=None):
     if not fcm_enabled():
@@ -191,7 +166,6 @@ def send_fcm(role, title, body, url="/", user_email=None, tag=None):
                 messaging.send(message)
             except Exception as exc:
                 text = str(exc)
-                app.logger.warning("FCM failed for device %s: %s", device["id"], text)
                 if "UNREGISTERED" in text.upper() or "NOT_FOUND" in text.upper():
                     stale_ids.append(device["id"])
         if stale_ids:
@@ -202,45 +176,8 @@ def send_fcm(role, title, body, url="/", user_email=None, tag=None):
     except Exception as exc:
         app.logger.exception("FCM notification skipped: %s", exc)
 
-def send_push(role, title, body, url="/", user_email=None, tag=None):
-    if not (webpush and VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY_B64):
-        return
-    try:
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                if role == "customer":
-                    cur.execute("SELECT id, endpoint, p256dh, auth FROM push_subscriptions WHERE app_role='customer' AND user_email=%s;", (user_email,))
-                else:
-                    cur.execute("SELECT id, endpoint, p256dh, auth FROM push_subscriptions WHERE app_role=%s;", (role,))
-                subscriptions = cur.fetchall()
-        private_key = _push_private_key()
-        if not private_key:
-            return
-        payload = json.dumps({"title": title, "body": body, "url": url, "tag": tag or f"{role}-notification"})
-        stale_ids = []
-        for sub in subscriptions:
-            try:
-                webpush(subscription_info={"endpoint": sub["endpoint"], "keys": {"p256dh": sub["p256dh"], "auth": sub["auth"]}}, data=payload, vapid_private_key=private_key, vapid_claims={"sub": VAPID_CLAIM_EMAIL})
-            except Exception as exc:
-                status = getattr(getattr(exc, "response", None), "status_code", None)
-                if status in (404, 410): stale_ids.append(sub["id"])
-        if stale_ids:
-            with get_db() as conn:
-                with conn.cursor() as cur:
-                    cur.execute("DELETE FROM push_subscriptions WHERE id = ANY(%s::int[]);", (stale_ids,))
-                    conn.commit()
-    except Exception as exc:
-        app.logger.warning("Web Push skipped: %s", exc)
-
 def notify(role, title, body, url="/", user_email=None, tag=None):
-    try:
-        send_fcm(role, title, body, url, user_email, tag)
-    except Exception:
-        app.logger.exception("Native FCM notification failed")
-    try:
-        send_push(role, title, body, url, user_email, tag)
-    except Exception:
-        app.logger.exception("Web Push notification failed")
+    send_fcm(role, title, body, url, user_email, tag)
 
 def notify_waitlisted_users_if_free():
     try:
@@ -366,9 +303,6 @@ def create_razorpay_order(amount_rupees, receipt_id):
             app.logger.warning("Razorpay order creation fallback: %s", e)
     return f"order_ref_{receipt_id}_{os.urandom(4).hex()}"
 
-# ==========================================
-# Real-Time Polling Endpoints
-# ==========================================
 @app.route("/api/orders/latest-status", methods=["GET"])
 def get_latest_order_status():
     user_email = session.get("user_email")
@@ -405,91 +339,6 @@ def get_latest_order_status():
         except Exception:
             pass
     return jsonify(latest_order_state)
-
-# ==========================================
-# PWA Routes
-# ==========================================
-PWA_ROLES = {
-    "customer": {
-        "name": "Food Centre Customer",
-        "short_name": "Customer",
-        "start_url": "/app/customer",
-        "id": "/pwa/customer",
-        "home_url": "/menu",
-        "description": "Browse the menu, manage your cart and place food orders.",
-        "theme": "#b8953f"
-    },
-    "reception": {
-        "name": "Food Centre Reception",
-        "short_name": "Reception",
-        "start_url": "/app/reception",
-        "id": "/pwa/reception",
-        "home_url": "/admin",
-        "description": "Reception order management, statistics and menu administration.",
-        "theme": "#6b4f1d"
-    },
-    "chef": {
-        "name": "Food Centre Chef",
-        "short_name": "Chef",
-        "start_url": "/app/chef",
-        "id": "/pwa/chef",
-        "home_url": "/chef",
-        "description": "Kitchen cooking orders and preparation status.",
-        "theme": "#16865f"
-    }
-}
-
-@app.route("/installs")
-def installs_page():
-    return render_template("installs.html", roles=PWA_ROLES)
-
-@app.route("/installs/<role>")
-def install_role_page(role):
-    if role not in PWA_ROLES:
-        return redirect(url_for("installs_page"))
-    return render_template("pwa_install.html", role=role, app_info=PWA_ROLES[role])
-
-@app.route("/manifest/<role>.webmanifest")
-def pwa_manifest(role):
-    info = PWA_ROLES.get(role)
-    if not info:
-        return jsonify({"error": "Unknown application"}), 404
-    manifest = {
-        "id": info["id"],
-        "name": info["name"],
-        "short_name": info["short_name"],
-        "description": info["description"],
-        "start_url": info["start_url"],
-        "scope": "/",
-        "display_override": ["window-controls-overlay", "standalone"],
-        "prefer_related_applications": False,
-        "display": "standalone",
-        "orientation": "portrait-primary",
-        "background_color": "#fffdf7",
-        "theme_color": info["theme"],
-        "icons": [
-            {"src": f"/static/icons/{role}-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
-            {"src": f"/static/icons/{role}-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
-        ]
-    }
-    return Response(json.dumps(manifest), mimetype="application/manifest+json", headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
-
-@app.route("/app/<role>")
-def pwa_start(role):
-    if role == "customer":
-        return redirect(url_for("menu_page") if session.get("user_email") else url_for("index"))
-    if role == "reception":
-        return redirect(url_for("admin_page"))
-    if role == "chef":
-        return redirect(url_for("chef_page"))
-    return redirect(url_for("installs_page"))
-
-@app.route("/service-worker.js")
-def service_worker():
-    sw_path = os.path.join(app.root_path, "static", "service-worker.js")
-    with open(sw_path, "r", encoding="utf-8") as f:
-        return Response(f.read(), mimetype="application/javascript",
-                        headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
 
 @app.route("/api/fcm/register", methods=["POST"])
 def fcm_register():
@@ -545,78 +394,6 @@ def fcm_unregister():
 def fcm_status():
     return jsonify({"enabled": fcm_enabled()})
 
-@app.route("/api/push/config")
-def push_config():
-    return jsonify({
-        "enabled": bool(VAPID_PUBLIC_KEY),
-        "public_key": VAPID_PUBLIC_KEY
-    })
-
-@app.route("/api/push/subscribe", methods=["POST"])
-def push_subscribe():
-    data = request.get_json() or {}
-    subscription = data.get("subscription") or {}
-    endpoint = str(subscription.get("endpoint", "")).strip()
-    keys = subscription.get("keys") or {}
-    p256dh = str(keys.get("p256dh", "")).strip()
-    auth = str(keys.get("auth", "")).strip()
-    role = str(data.get("role", "")).strip().lower()
-
-    if not endpoint or not p256dh or not auth:
-        return jsonify({"error": "Invalid push subscription"}), 400
-
-    if role not in PWA_ROLES:
-        return jsonify({"error": "Invalid application role"}), 400
-
-    user_email = session.get("user_email") if role == "customer" else None
-
-    try:
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    CREATE TABLE IF NOT EXISTS push_subscriptions (
-                        id SERIAL PRIMARY KEY,
-                        app_role VARCHAR(20) NOT NULL,
-                        user_email VARCHAR(255) NULL,
-                        endpoint TEXT UNIQUE NOT NULL,
-                        p256dh TEXT NOT NULL,
-                        auth TEXT NOT NULL,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    );
-                """)
-                cur.execute("""
-                    INSERT INTO push_subscriptions
-                        (app_role, user_email, endpoint, p256dh, auth, updated_at)
-                    VALUES (%s, %s, %s, %s, %s, NOW())
-                    ON CONFLICT (endpoint)
-                    DO UPDATE SET app_role = EXCLUDED.app_role,
-                                  user_email = EXCLUDED.user_email,
-                                  p256dh = EXCLUDED.p256dh,
-                                  auth = EXCLUDED.auth,
-                                  updated_at = NOW();
-                """, (role, user_email, endpoint, p256dh, auth))
-                conn.commit()
-        return jsonify({"success": True})
-    except Exception as exc:
-        app.logger.exception("Could not save push subscription: %s", exc)
-        return jsonify({"error": "Could not save notification subscription"}), 500
-
-@app.route("/api/push/unsubscribe", methods=["POST"])
-def push_unsubscribe():
-    data = request.get_json() or {}
-    endpoint = str(data.get("endpoint", "")).strip()
-    if not endpoint:
-        return jsonify({"success": True})
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("DELETE FROM push_subscriptions WHERE endpoint = %s;", (endpoint,))
-            conn.commit()
-    return jsonify({"success": True})
-
-# ==========================================
-# Category & Settings Endpoints
-# ==========================================
 @app.route("/api/categories", methods=["GET"])
 def get_categories():
     with get_db() as conn:
@@ -707,9 +484,6 @@ def admin_service_tax_setting():
 
     return jsonify({"success": True, "service_tax_percent": new_val})
 
-# ==========================================
-# Page Routes
-# ==========================================
 @app.route("/")
 def index():
     clean_old_orders()
@@ -743,9 +517,6 @@ def logout():
     session.clear()
     return redirect(url_for("index"))
 
-# ==========================================
-# Authentication Endpoints
-# ==========================================
 @app.route("/api/auth/google", methods=["POST"])
 def verify_google():
     data = request.get_json() or {}
@@ -833,9 +604,6 @@ def admin_toggle_item_active():
         "is_active": updated["is_active"]
     })
 
-# ==========================================
-# Menu & Cart CRUD Endpoints
-# ==========================================
 @app.route("/api/menu", methods=["GET"])
 def get_menu():
     user_email = session.get("user_email")
@@ -966,9 +734,6 @@ def get_cart_items():
 
     return jsonify({"items": detailed_items, "total_price": cart_row["total_price"], "cart_code": cart_row["cart_code"]})
 
-# ==========================================
-# Real-Time Customer Status Polling
-# ==========================================
 @app.route("/api/order/active", methods=["GET"])
 def check_active_order():
     user_email = session.get("user_email")
@@ -1143,9 +908,6 @@ def check_active_order():
         "service_tax_percent": tax_rate
     })
 
-# ==========================================
-# Two-Stage Order Execution (Live Razorpay)
-# ==========================================
 @app.route("/api/order/submit-request", methods=["POST"])
 def submit_order_request():
     if get_setting("kitchen_open", "true") != "true":
@@ -1214,7 +976,7 @@ def submit_order_request():
     except Exception as e:
         app.logger.exception("Submit order error: %s", e)
         return jsonify({"error": f"Order placement failed: {str(e)}"}), 500
-    
+
 @app.route("/api/order/select-payment-method", methods=["POST"])
 def select_payment_method():
     user_email = session.get("user_email")
@@ -1295,9 +1057,12 @@ def select_payment_method():
         "gateway_order_id": real_gw_id
     })
 
-# Real Razorpay Signature Verification Endpoint
 @app.route("/api/payment/verify", methods=["POST"])
 def verify_razorpay_payment():
+    user_email = session.get("user_email")
+    if not user_email:
+        return jsonify({"success": False, "error": "Unauthorized session."}), 401
+
     data = request.get_json() or {}
     rzp_order_id = data.get("razorpay_order_id")
     rzp_payment_id = data.get("razorpay_payment_id")
@@ -1308,7 +1073,6 @@ def verify_razorpay_payment():
 
     is_valid = False
 
-    # 1. Official SDK HMAC verification
     if client and RAZORPAY_KEY_SECRET and rzp_signature:
         try:
             client.utility.verify_payment_signature({
@@ -1321,13 +1085,11 @@ def verify_razorpay_payment():
             app.logger.warning("Razorpay utility signature mismatch: %s", e)
             is_valid = False
 
-    # 2. Raw HMAC-SHA256 fallback
     if not is_valid and RAZORPAY_KEY_SECRET and rzp_signature:
         msg = f"{rzp_order_id}|{rzp_payment_id}".encode('utf-8')
         generated = hmac.new(RAZORPAY_KEY_SECRET.encode('utf-8'), msg, hashlib.sha256).hexdigest()
         is_valid = hmac.compare_digest(generated, rzp_signature)
 
-    # 3. Test mode fallback when running test keys without client secret match
     if not is_valid:
         if (RAZORPAY_KEY_ID.startswith("rzp_test_") or not RAZORPAY_KEY_SECRET) and rzp_payment_id.startswith("pay_"):
             app.logger.info("Test mode payment accepted for ID: %s", rzp_payment_id)
@@ -1340,42 +1102,47 @@ def verify_razorpay_payment():
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("""
+                SELECT id, daily_order_number, payment_status, user_email 
+                FROM orders 
+                WHERE gateway_order_id = %s;
+            """, (rzp_order_id,))
+            existing = cur.fetchone()
+
+            if not existing:
+                cur.execute("""
+                    SELECT id, daily_order_number, payment_status, user_email 
+                    FROM orders 
+                    WHERE user_email = %s AND payment_status != 'paid' AND order_status IN ('placed', 'accepted', 'preparing')
+                    ORDER BY created_at DESC LIMIT 1;
+                """, (user_email,))
+                existing = cur.fetchone()
+
+            if not existing:
+                return jsonify({"success": False, "error": "Order not found in database"}), 404
+
+            if existing["user_email"] != user_email:
+                return jsonify({"success": False, "error": "Unauthorized order access"}), 403
+
+            if existing["payment_status"] == 'paid':
+                return jsonify({"success": True, "message": "Order already marked as paid."})
+
+            cur.execute("""
                 UPDATE orders
                 SET payment_status = 'paid',
                     payment_id = %s,
+                    gateway_order_id = %s,
                     customer_alert = TRUE,
                     updated_at = NOW()
-                WHERE gateway_order_id = %s
+                WHERE id = %s AND payment_status != 'paid'
                 RETURNING id, daily_order_number, user_email;
-            """, (rzp_payment_id, rzp_order_id))
+            """, (rzp_payment_id, rzp_order_id, existing["id"]))
             order_record = cur.fetchone()
 
-            if not order_record:
-                user_email = session.get("user_email")
-                if user_email:
-                    cur.execute("""
-                        UPDATE orders
-                        SET payment_status = 'paid',
-                            payment_id = %s,
-                            gateway_order_id = %s,
-                            customer_alert = TRUE,
-                            updated_at = NOW()
-                        WHERE id = (
-                            SELECT id FROM orders 
-                            WHERE user_email = %s AND payment_status != 'paid' AND order_status IN ('placed', 'accepted', 'preparing')
-                            ORDER BY created_at DESC LIMIT 1
-                        )
-                        RETURNING id, daily_order_number, user_email;
-                    """, (rzp_payment_id, rzp_order_id, user_email))
-                    order_record = cur.fetchone()
-
-            if order_record and order_record["user_email"]:
-                cur.execute("UPDATE carts SET cart_code = '', total_price = 0 WHERE user_email = %s;", (order_record["user_email"],))
+            cur.execute("UPDATE carts SET cart_code = '', total_price = 0 WHERE user_email = %s;", (user_email,))
             conn.commit()
 
     if not order_record:
-        app.logger.error("Payment valid but order with gateway_order_id=%s not found in DB", rzp_order_id)
-        return jsonify({"success": False, "error": "Order not found in database"}), 404
+        return jsonify({"success": True})
 
     target_email = order_record["user_email"]
     order_id = order_record["id"]
@@ -1386,7 +1153,6 @@ def verify_razorpay_payment():
 
     return jsonify({"success": True})
 
-# Optional Razorpay Webhook Endpoint
 @app.route("/api/payment/webhook", methods=["POST"])
 def razorpay_webhook():
     webhook_body = request.data.decode("utf-8")
@@ -1417,7 +1183,7 @@ def razorpay_webhook():
                             payment_id = %s,
                             customer_alert = TRUE,
                             updated_at = NOW()
-                        WHERE gateway_order_id = %s
+                        WHERE gateway_order_id = %s AND payment_status != 'paid'
                         RETURNING id, user_email;
                     """, (rzp_payment_id, rzp_order_id))
                     row = cur.fetchone()
@@ -1540,9 +1306,6 @@ def acknowledge_order_alert():
 
     return jsonify({"success": True})
 
-# ==========================================
-# Admin Operations & Dashboard APIs
-# ==========================================
 @app.route("/admin")
 def admin_page():
     if not session.get("is_admin"):
@@ -1702,7 +1465,6 @@ def admin_get_orders():
         "kitchen_open": kitchen_open
     })
 
-# Kitchen 5-Order Cap & Waiting Queue APIs
 @app.route("/api/admin/cooking-orders", methods=["GET"])
 def admin_cooking_orders():
     if not session.get("is_admin"):

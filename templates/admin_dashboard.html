@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="manifest" href="/manifest/reception.webmanifest">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Hotel Kitchen Operations</title>
     <style>
         :root {
@@ -82,8 +81,8 @@
             transition: 0.2s;
         }
 
-        .kitchen-open { background: #e8f7ef; color: #13845e; border-color: #9bd7ba; }
-        .kitchen-closed { background: #fff0ee; color: #c53d3d; border-color: #e7aaa5; }
+        .kitchen-open { background: #e8f7ef !important; color: #13845e !important; border-color: #9bd7ba !important; }
+        .kitchen-closed { background: #fff0ee !important; color: #c53d3d !important; border-color: #e7aaa5 !important; }
 
         .admin-profile-btn {
             background: linear-gradient(135deg, #d8bd70, #b8953f);
@@ -486,7 +485,6 @@
         }
         .modal-overlay.open { display: flex; }
         
-        /* Give confirmation modals a higher z-index so they always overlay category list */
         #adminConfirmModal {
             z-index: 3000 !important;
         }
@@ -575,7 +573,6 @@
             width: 100%;
         }
 
-        /* Large password input styling with toggle eye */
         .password-field-container {
             position: relative;
             width: 100%;
@@ -616,7 +613,6 @@
             user-select: none;
         }
     </style>
-<script src="/static/js/pwa.js" defer></script>
 </head>
 <body>
 
@@ -630,7 +626,7 @@
             <button class="kitchen-toggle-btn kitchen-open" id="kitchenToggleBtn" onclick="toggleKitchenStatus()">Kitchen: OPEN</button>
 
             <button class="admin-profile-btn" onclick="toggleDropdown()" title="Options">
-                <span>⚙️️</span>
+                <span>⚙</span>
                 <span class="admin-btn-text">Options</span>
                 <span class="admin-btn-caret">▼</span>
             </button>
@@ -653,7 +649,6 @@
     </header>
 
     <div class="container">
-        <!-- TOP TAB CONTROLS -->
         <div class="main-tab-controls">
             <button class="main-tab-btn active" id="ordersMainTabBtn" onclick="switchMainTab('ordersTab')">
                 <span>Orders Manager</span>
@@ -664,7 +659,6 @@
             </button>
         </div>
 
-        <!-- TAB 1: ORDERS MANAGER -->
         <section id="ordersTab">
             <div class="sub-orders-controls">
                 <button class="sub-order-btn active-new" id="btnSubNew" onclick="switchOrdersSubSection('new')">
@@ -681,7 +675,6 @@
                 </button>
             </div>
 
-            <!-- SECTION 1: REQUESTS -->
             <div class="section-box" id="newOrdersSection" style="border-left: 4px solid var(--amber);">
                 <div class="section-header">
                     <div class="section-title"><span>⏳ Incoming Requests</span></div>
@@ -692,7 +685,6 @@
                 </div>
             </div>
 
-            <!-- SECTION 2: READY FOR DELIVERY -->
             <div class="section-box" id="deliveryOrdersSection" style="display:none; border-left: 4px solid var(--success);">
                 <div class="section-header">
                     <div class="section-title"><span>🚀 Ready for Delivery</span></div>
@@ -703,7 +695,6 @@
                 </div>
             </div>
 
-            <!-- SECTION 3: COUNTER BILLS -->
             <div class="section-box" id="counterOrdersSection" style="display:none; border-left: 4px solid var(--purple);">
                 <div class="section-header">
                     <div class="section-title"><span>🧾 Counter Cash Bills</span></div>
@@ -715,7 +706,6 @@
             </div>
         </section>
 
-        <!-- TAB 2: ITEM STATUS QUICK TOGGLE -->
         <section id="itemStatusTab" style="display:none;">
             <div class="section-box">
                 <div class="section-header">
@@ -729,7 +719,6 @@
         </section>
     </div>
 
-    <!-- UPLOADED PHOTOS GALLERY MODAL -->
     <div class="modal-overlay" id="photosModal">
         <div class="modal-box" style="max-width:480px;">
             <div class="modal-header-row">
@@ -746,7 +735,6 @@
         </div>
     </div>
 
-    <!-- FOOD ITEMS MODAL -->
     <div class="modal-overlay" id="orderItemsModal" onclick="closeOrderItemsModal(event)">
         <div class="modal-box" onclick="event.stopPropagation();">
             <div class="modal-header-row">
@@ -761,7 +749,6 @@
         </div>
     </div>
 
-    <!-- THEMED CONFIRMATION MODAL -->
     <div class="modal-overlay" id="adminConfirmModal">
         <div class="modal-box" style="max-width: 360px; text-align:center;">
             <div style="font-size:2rem; margin-bottom:4px;">⚠️</div>
@@ -774,7 +761,6 @@
         </div>
     </div>
 
-    <!-- THEMED CANCEL PROMPT MODAL -->
     <div class="modal-overlay" id="adminCancelPromptModal">
         <div class="modal-box" style="max-width: 380px;">
             <div class="modal-header-row">
@@ -790,7 +776,6 @@
         </div>
     </div>
 
-    <!-- CATEGORIES MODAL -->
     <div class="modal-overlay" id="categoriesModal">
         <div class="modal-box">
             <div class="modal-header-row">
@@ -809,7 +794,6 @@
         </div>
     </div>
 
-    <!-- DIGITAL SERVICE TAX MODAL -->
     <div class="modal-overlay" id="taxModal">
         <div class="modal-box" style="max-width: 400px;">
             <div class="modal-header-row">
@@ -832,7 +816,6 @@
         </div>
     </div>
 
-    <!-- PASSWORD MODAL (Enhanced with Large Input & Eye Toggle) -->
     <div class="modal-overlay" id="passwordModal">
         <div class="modal-box" style="max-width:390px;">
             <div class="modal-header-row">
@@ -1103,7 +1086,6 @@
             document.getElementById("confirmDialogTitle").textContent = title;
             document.getElementById("confirmDialogMessage").textContent = message;
             document.getElementById("adminConfirmModal").classList.add("open");
-            if (window.appPopupNotification) window.appPopupNotification(title, message, "/admin");
             return new Promise(resolve => { confirmResolve = resolve; });
         }
         function closeAdminConfirm(result) {
@@ -1129,9 +1111,19 @@
             const res = await fetch("/api/admin/kitchen-toggle", { method: "POST" });
             const data = await res.json();
             if (data.success) {
-                const btn = document.getElementById("kitchenToggleBtn");
-                btn.className = "kitchen-toggle-btn " + (data.kitchen_open ? "kitchen-open" : "kitchen-closed");
-                btn.textContent = data.kitchen_open ? "Kitchen: OPEN" : "Kitchen: CLOSED";
+                applyKitchenButtonState(data.kitchen_open);
+            }
+        }
+
+        function applyKitchenButtonState(isOpen) {
+            const btn = document.getElementById("kitchenToggleBtn");
+            if (!btn) return;
+            if (isOpen) {
+                btn.className = "kitchen-toggle-btn kitchen-open";
+                btn.textContent = "Kitchen: OPEN";
+            } else {
+                btn.className = "kitchen-toggle-btn kitchen-closed";
+                btn.textContent = "Kitchen: CLOSED";
             }
         }
 
@@ -1150,6 +1142,11 @@
             try {
                 const res = await fetch("/api/admin/orders", { cache: "no-store" });
                 const data = await res.json();
+
+                // Synchronize kitchen button state on every refresh
+                if (data.kitchen_open !== undefined) {
+                    applyKitchenButtonState(data.kitchen_open);
+                }
 
                 const currentNew = data.new_count || 0;
                 const currentCounter = data.counter_count || 0;
@@ -1440,7 +1437,7 @@
         }
 
         loadAdminOrders();
-        setInterval(loadAdminOrders, 4000);
+        setInterval(loadAdminOrders, 3000);
     </script>
 </body>
 </html>
