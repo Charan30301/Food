@@ -43,3 +43,27 @@ firebase-service-account.json
 *firebase-adminsdk*.json
 firebase-service-account.json
 google-services.json
+
+# ----------------------------------------
+# Gradle & Build Artifacts (All Subdirectories)
+# ----------------------------------------
+.gradle/
+**/build/
+build/
+*.apk
+*.aab
+
+# ----------------------------------------
+# Local Configurations & Keys
+# ----------------------------------------
+local.properties
+.env
+*.lock
+
+# ----------------------------------------
+# IDE & System Files
+# ----------------------------------------
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
