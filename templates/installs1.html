@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Install Customer App</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        body {
+            background-color: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            max-width: 420px;
+            width: 100%;
+            padding: 32px;
+            text-align: center;
+        }
+        .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        h1 {
+            font-size: 24px;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+        p {
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: #2563eb;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+        .btn:hover {
+            background: #1d4ed8;
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+        .note {
+            margin-top: 18px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon">🍔</div>
+        <h1>Customer App</h1>
+        <p>Download the official customer application to view menus, place orders, and receive real-time kitchen updates.</p>
+        
+        <a href="{{ url_for('static', filename='apks/CustomerApp.apk') }}" class="btn" download>
+            <span>📥</span> Download & Install
+        </a>
+
+        <div class="note">Requires Android 8.0 or newer. Allow installation from unknown sources if prompted.</div>
+    </div>
+</body>
+</html>

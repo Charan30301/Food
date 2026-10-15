@@ -1,69 +1,50 @@
-# Python Bytecode and Cache
+# Byte-compiled / optimized / Python artifacts
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-.pytest_cache/
-
-# Virtual Environments
-venv/
+.Python
 env/
+venv/
 ENV/
 .venv/
 
-# Environment Variables & Secret Configuration
+# Environment and Secrets (CRITICAL)
 .env
 .env.*
-secrets.json
+!.env.example
 *.pem
+firebase-service-account*.json
+serviceAccountKey.json
+google-services.json
 
-# Uploaded Media Files (Keep directory structure, ignore user-uploaded files)
-static/uploads/*
-!static/uploads/.gitkeep
-
-# Operating System Files
-.DS_Store
-Thumbs.db
-ehthumbs.db
-
-# IDE and Editor Directories
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# Database & Runtime Logs
-*.log
+# Local SQLite / Databases
 *.sqlite3
-google-services.json
+*.db
 
-firebase-service-account.json
+# Flask / Instance Folders
+instance/
+.webassets-cache
 
-# Firebase private credentials
-*firebase-adminsdk*.json
-firebase-service-account.json
-google-services.json
-
-# ----------------------------------------
-# Gradle & Build Artifacts (All Subdirectories)
-# ----------------------------------------
+# Android & Gradle Build Artifacts
 .gradle/
-**/build/
 build/
+*/build/
+*/*/build/
 *.apk
 *.aab
 
-# ----------------------------------------
-# Local Configurations & Keys
-# ----------------------------------------
-local.properties
-.env
-*.lock
-
-# ----------------------------------------
-# IDE & System Files
-# ----------------------------------------
+# Android Studio / IntelliJ IDEA
 .idea/
 *.iml
+local.properties
+.externalNativeBuild
+.cxx/
+captures/
+
+# OS-generated files
 .DS_Store
 Thumbs.db
+
+# Log files
+*.log

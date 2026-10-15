@@ -517,6 +517,14 @@ def logout():
     session.clear()
     return redirect(url_for("index"))
 
+@app.route('/installs1')
+def installs1():
+    return render_template('installs1.html')
+
+@app.route('/installs2')
+def installs2():
+    return render_template('installs2.html')
+
 @app.route("/api/auth/google", methods=["POST"])
 def verify_google():
     data = request.get_json() or {}
