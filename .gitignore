@@ -31,7 +31,6 @@ instance/
 build/
 */build/
 */*/build/
-*.apk
 *.aab
 
 # Android Studio / IntelliJ IDEA
