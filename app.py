@@ -6,7 +6,8 @@ import hashlib
 import importlib
 from urllib.parse import urlencode
 from urllib.request import urlopen
-from datetime import timezone
+
+from datetime import timezone,datetime, timedelta
 from zoneinfo import ZoneInfo
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -516,6 +517,94 @@ def cart_page():
 def logout():
     session.clear()
     return redirect(url_for("index"))
+
+@app.route('/api/orders/<int:order_id>/cancel', methods=['POST'])
+def customer_cancel_order(order_id):
+    user_email = session.get("user_email")
+    if not user_email:
+        return jsonify({'success': False, 'message': 'Authentication required.'}), 401
+
+    data = request.get_json() or {}
+    if not data.get('acceptPartialRefund'):
+        return jsonify({'success': False, 'message': 'Partial refund terms must be accepted.'}), 400
+
+    now = datetime.utcnow()
+    due_by = now + timedelta(hours=48)
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS refund_amount NUMERIC(10,2) NOT NULL DEFAULT 0.00;")
+            cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS refund_status VARCHAR(30);")
+            cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS refund_due_by TIMESTAMP;")
+            cur.execute("""
+                SELECT total_amount, payment_status, order_status
+                FROM orders
+                WHERE id = %s AND user_email = %s;
+            """, (order_id, user_email))
+            order = cur.fetchone()
+            if not order:
+                return jsonify({'success': False, 'message': 'Order not found.'}), 404
+            if order['order_status'] in ('cancelled', 'delivered'):
+                return jsonify({'success': False, 'message': 'This order cannot be cancelled.'}), 409
+
+            refund_val = round(float(order['total_amount']) * 0.50, 2) if order['payment_status'] == 'paid' else 0.0
+            refund_status = 'PENDING' if refund_val else 'NOT_REQUIRED'
+            cur.execute("""
+                UPDATE orders
+                SET order_status = 'cancelled',
+                    cancellation_reason = 'Cancelled by customer',
+                    customer_alert = TRUE,
+                    updated_at = NOW(),
+                    refund_amount = %s,
+                    refund_status = %s,
+                    refund_due_by = %s
+                WHERE id = %s AND user_email = %s;
+            """, (refund_val, refund_status, due_by if refund_val else None, order_id, user_email))
+            conn.commit()
+
+    return jsonify({
+        'success': True,
+        'message': 'Cancellation recorded. 50% refund will be processed by the admin team within 48 hours.' if refund_val else 'Cancellation recorded. No refund is due for this unpaid order.',
+        'refund_amount': refund_val
+    })
+
+# 1. Fetch pending refunds page for Admin
+@app.route('/admin/refunds', methods=['GET'])
+def admin_refunds_page():
+    # Fetch orders that are cancelled and awaiting refund
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT id, customer_name, customer_email, total_paid, refund_amount, 
+                       cancelled_at, refund_due_by, refund_status 
+                FROM orders 
+                WHERE refund_status IN ('PENDING', 'PROCESSED')
+                ORDER BY refund_status DESC, refund_due_by ASC
+    """)
+    refund_orders = cur.fetchall()
+    return render_template('admin_refunds.html', orders=refund_orders)
+
+# 2. Process / Mark as Paid
+@app.route('/admin/api/orders/<int:order_id>/pay-refund', methods=['POST'])
+def admin_pay_refund(order_id):
+    data = request.get_json() or {}
+    notes = data.get('notes', 'Paid via manual payment / gateway transfer')
+    now = datetime.utcnow()
+
+    # Optional: trigger gateway refund API if using automated provider
+    # gateway.refund(order_id, amount=order.refund_amount)
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE orders 
+                SET refund_status = 'PROCESSED',
+                    refunded_at = %s,
+                    admin_notes = %s
+                WHERE id = %s AND refund_status = 'PENDING'
+            """, (now, notes, order_id))
+            conn.commit()
+
+    return jsonify({'success': True, 'message': f'Order #{order_id} refund marked as processed.'})
 
 @app.route('/installs1')
 def installs1():

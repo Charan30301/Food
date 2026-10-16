@@ -169,3 +169,14 @@ CREATE TABLE IF NOT EXISTS queue_waitlist_alerts (
     notified BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Add cancellation and refund columns to your orders table
+ALTER TABLE orders ADD COLUMN is_cancelled INTEGER DEFAULT 0;
+ALTER TABLE orders ADD COLUMN cancellation_reason TEXT;
+ALTER TABLE orders ADD COLUMN cancelled_at TIMESTAMP;
+ALTER TABLE orders ADD COLUMN total_paid REAL DEFAULT 0.0;
+ALTER TABLE orders ADD COLUMN refund_amount REAL DEFAULT 0.0;     -- 50% of total
+ALTER TABLE orders ADD COLUMN refund_status TEXT DEFAULT 'NONE';  -- 'NONE', 'PENDING', 'PROCESSED', 'REJECTED'
+ALTER TABLE orders ADD COLUMN refund_due_by TIMESTAMP;            -- cancelled_at + 48 hours
+ALTER TABLE orders ADD COLUMN refunded_at TIMESTAMP;
+ALTER TABLE orders ADD COLUMN admin_notes TEXT;
