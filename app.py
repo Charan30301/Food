@@ -82,7 +82,7 @@ def get_db():
     return conn
 
 def init_db_from_sql():
-    sql_path = os.path.join(app.root_path, "your_file.sql")  # Change to your exact .sql filename
+    sql_path = os.path.join(app.root_path, "schema.sql")  # Change to your exact .sql filename
     if not os.path.exists(sql_path):
         app.logger.warning("SQL file not found at %s", sql_path)
         return
