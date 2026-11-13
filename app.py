@@ -81,6 +81,25 @@ def get_db():
         cur.execute("SET TIME ZONE 'Asia/Kolkata';")
     return conn
 
+def init_db_from_sql():
+    sql_path = os.path.join(app.root_path, "your_file.sql")  # Change to your exact .sql filename
+    if not os.path.exists(sql_path):
+        app.logger.warning("SQL file not found at %s", sql_path)
+        return
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT to_regclass('public.users') AS tbl;")
+            if cur.fetchone()["tbl"] is None:
+                with open(sql_path, "r", encoding="utf-8") as f:
+                    cur.execute(f.read())
+                conn.commit()
+                app.logger.info("Database tables created from %s", sql_path)
+
+try:
+    init_db_from_sql()
+except Exception as exc:
+    app.logger.exception("SQL initialization failed: %s", exc)
+
 UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
