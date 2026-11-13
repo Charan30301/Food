@@ -51,6 +51,8 @@ if razorpay and RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET:
     except Exception as exc:
         app.logger.warning("Could not initialize Razorpay Client: %s", exc)
 
+DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
+
 DB_CONFIG = {
     "dbname": os.environ.get("DB_NAME", "hotel_db_aza2"),
     "user": os.environ.get("DB_USER", "hotel_db_aza2_user"),
@@ -71,7 +73,10 @@ def to_ist(dt):
 def get_db():
     if psycopg is None or dict_row is None:
         raise RuntimeError("Install psycopg: pip install psycopg[binary]")
-    conn = psycopg.connect(**DB_CONFIG, row_factory=dict_row)
+    if DATABASE_URL:
+        conn = psycopg.connect(DATABASE_URL, sslmode="require", row_factory=dict_row)
+    else:
+        conn = psycopg.connect(**DB_CONFIG, row_factory=dict_row)
     with conn.cursor() as cur:
         cur.execute("SET TIME ZONE 'Asia/Kolkata';")
     return conn
