@@ -74,18 +74,16 @@ def get_db():
     return conn
 
 def init_db_from_sql():
-    sql_path = os.path.join(app.root_path, "schema.sql")  # Change to your exact .sql filename
+    sql_path = os.path.join(app.root_path, "schema.sql")
     if not os.path.exists(sql_path):
-        app.logger.warning("SQL file not found at %s", sql_path)
-        return
+        raise FileNotFoundError(f"SQL file not found at {sql_path}")
+    with open(sql_path, "r", encoding="utf-8") as f:
+        sql_script = f.read()
     with get_db() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT to_regclass('public.users') AS tbl;")
-            if cur.fetchone()["tbl"] is None:
-                with open(sql_path, "r", encoding="utf-8") as f:
-                    cur.execute(f.read())
-                conn.commit()
-                app.logger.info("Database tables created from %s", sql_path)
+            cur.execute(sql_script)
+        conn.commit()
+    app.logger.info("Database tables created from %s", sql_path)
 
 try:
     init_db_from_sql()

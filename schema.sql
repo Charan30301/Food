@@ -125,7 +125,7 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS tax_rate NUMERIC(6,2) NOT NULL DEFAU
 CREATE INDEX IF NOT EXISTS idx_orders_created_status_payment
     ON orders(created_at, order_status, payment_status, payment_method);
 
-ALTER DATABASE hotel_db_aza2 SET timezone TO 'Asia/Kolkata';
+ALTER DATABASE hotel_db_mqzs SET timezone TO 'Asia/Kolkata';
 
 -- ==========================================
 -- 7. Web Push Notification Subscriptions
@@ -171,12 +171,12 @@ CREATE TABLE IF NOT EXISTS queue_waitlist_alerts (
 );
 
 -- Add cancellation and refund columns to your orders table
-ALTER TABLE orders ADD COLUMN is_cancelled INTEGER DEFAULT 0;
-ALTER TABLE orders ADD COLUMN cancellation_reason TEXT;
-ALTER TABLE orders ADD COLUMN cancelled_at TIMESTAMP;
-ALTER TABLE orders ADD COLUMN total_paid REAL DEFAULT 0.0;
-ALTER TABLE orders ADD COLUMN refund_amount REAL DEFAULT 0.0;     -- 50% of total
-ALTER TABLE orders ADD COLUMN refund_status TEXT DEFAULT 'NONE';  -- 'NONE', 'PENDING', 'PROCESSED', 'REJECTED'
-ALTER TABLE orders ADD COLUMN refund_due_by TIMESTAMP;            -- cancelled_at + 48 hours
-ALTER TABLE orders ADD COLUMN refunded_at TIMESTAMP;
-ALTER TABLE orders ADD COLUMN admin_notes TEXT;
+-- Add cancellation and refund columns to your orders table
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS is_cancelled INTEGER DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMP;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS total_paid REAL DEFAULT 0.0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS refund_amount NUMERIC(10, 2) DEFAULT 0.00;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS refund_status VARCHAR(30) DEFAULT 'NONE';
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS refund_due_by TIMESTAMP;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS refunded_at TIMESTAMP;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS admin_notes TEXT;
