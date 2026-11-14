@@ -53,13 +53,6 @@ if razorpay and RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET:
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 
-DB_CONFIG = {
-    "dbname": os.environ.get("DB_NAME", "hotel_db_aza2"),
-    "user": os.environ.get("DB_USER", "hotel_db_aza2_user"),
-    "password": os.environ.get("DB_PASSWORD", ""),
-    "host": os.environ.get("DB_HOST", "dpg-dauafeo93c1s73de82gg-a"),
-    "port": int(os.environ.get("DB_PORT", 5432))
-}
 
 IST = ZoneInfo("Asia/Kolkata")
 
@@ -73,10 +66,9 @@ def to_ist(dt):
 def get_db():
     if psycopg is None or dict_row is None:
         raise RuntimeError("Install psycopg: pip install psycopg[binary]")
-    if DATABASE_URL:
-        conn = psycopg.connect(DATABASE_URL, sslmode="require", row_factory=dict_row)
-    else:
-        conn = psycopg.connect(**DB_CONFIG, row_factory=dict_row)
+    if not DATABASE_URL:
+        raise RuntimeError("DATABASE_URL is not set. Add the External Database URL in Render Environment Variables.")
+    conn = psycopg.connect(DATABASE_URL, sslmode="require", row_factory=dict_row)
     with conn.cursor() as cur:
         cur.execute("SET TIME ZONE 'Asia/Kolkata';")
     return conn
